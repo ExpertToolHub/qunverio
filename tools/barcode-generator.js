@@ -1,6 +1,6 @@
 /* ============================================================
-   QUNVERIO — ULTRA HD BARCODE GENERATOR
-   Full Pixel Quality + White Padding
+   QUNVERIO — ULTRA HD BARCODE GENERATOR (FIXED)
+   Full Pixel Quality + White Background + No Black Issue
    ============================================================ */
 
 console.log('%c🎫 Barcode Generator Loading...', 'color:#8b5cf6;font-weight:bold');
@@ -56,6 +56,7 @@ window.barGenerate = function() {
   box.appendChild(container);
 
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   container.appendChild(svg);
 
   // Auto format
@@ -92,7 +93,9 @@ window.barGenerate = function() {
         height: 40,
         displayValue: true,
         fontSize: 11,
-        margin: 20
+        margin: 20,
+        background: '#ffffff',
+        lineColor: '#000000'
       });
     } catch (e2) {
       container.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:13px">Barcode generate nahi hua. Kuch aur try karo.</div>';
@@ -116,7 +119,8 @@ window.barGenerate = function() {
 };
 
 /* ============================================================
-   ULTRA HD PNG DOWNLOAD (FULL PIXEL QUALITY)
+   ULTRA HD PNG DOWNLOAD — FIXED VERSION
+   White background guaranteed + Sharp lines
    ============================================================ */
 window.barDownloadPNG = function() {
   const svg = document.querySelector('#barResult svg');
@@ -124,96 +128,142 @@ window.barDownloadPNG = function() {
 
   if (typeof toast === 'function') toast('Generating Ultra HD PNG...');
 
-  // Get real SVG dimensions
+  // Step 1: Get SVG dimensions
   const svgRect = svg.getBoundingClientRect();
-  const svgWidth = svgRect.width || 600;
-  const svgHeight = svgRect.height || 200;
+  const origWidth = Math.max(Math.round(svgRect.width), 300);
+  const origHeight = Math.max(Math.round(svgRect.height), 100);
 
-  // ULTRA HD — 10x Scale + Minimum dimensions
+  // Step 2: HD dimensions — 10x scale + minimum
   const SCALE = 10;
-  const MIN_WIDTH = 4000;   // Minimum 4000px width
-  const MIN_HEIGHT = 1200;  // Minimum 1200px height
+  const finalWidth = Math.max(origWidth * SCALE, 4000);
+  const finalHeight = Math.max(origHeight * SCALE, 1200);
 
-  const canvasWidth = Math.max(svgWidth * SCALE, MIN_WIDTH);
-  const canvasHeight = Math.max(svgHeight * SCALE, MIN_HEIGHT);
-
-  // Clone SVG with explicit dimensions
+  // Step 3: Clone SVG with proper dimensions
   const clone = svg.cloneNode(true);
-  clone.setAttribute('width', canvasWidth);
-  clone.setAttribute('height', canvasHeight);
-  clone.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+  clone.setAttribute('width', finalWidth);
+  clone.setAttribute('height', finalHeight);
+  clone.setAttribute('viewBox', '0 0 ' + origWidth + ' ' + origHeight);
 
-  // Make sure all text/rects scale properly
-  clone.querySelectorAll('rect').forEach(r => {
-    r.setAttribute('fill', '#ffffff');
-  });
+  // Force white rect background inside SVG
+  const existingRect = clone.querySelector('rect');
+  if (existingRect) {
+    existingRect.setAttribute('fill', '#ffffff');
+    existingRect.setAttribute('width', origWidth);
+    existingRect.setAttribute('height', origHeight);
+  } else {
+    const whiteRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    whiteRect.setAttribute('x', '0');
+    whiteRect.setAttribute('y', '0');
+    whiteRect.setAttribute('width', origWidth);
+    whiteRect.setAttribute('height', origHeight);
+    whiteRect.setAttribute('fill', '#ffffff');
+    clone.insertBefore(whiteRect, clone.firstChild);
+  }
+
+  // Force text to be black and bold
   clone.querySelectorAll('text').forEach(t => {
     t.setAttribute('fill', '#000000');
     t.style.fontFamily = 'Arial, sans-serif';
     t.style.fontWeight = 'bold';
   });
 
-  const svgData = new XMLSerializer().serializeToString(clone);
-  const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+  // Step 4: Serialize SVG
+  const svgString = new XMLSerializer().serializeToString(clone);
+
+  // Step 5: Create SVG Data URL (base64)
+  let svgUrl;
+  try {
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    svgUrl = URL.createObjectURL(svgBlob);
+  } catch (e) {
+    const encoded = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+    svgUrl = encoded;
+  }
+
+  // Step 6: Draw on canvas
   const img = new Image();
+  img.crossOrigin = 'anonymous';
 
   img.onload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-    const ctx = canvas.getContext('2d');
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
+      const ctx = canvas.getContext('2d');
 
-    // Pure white background (with extra padding)
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // CRITICAL: White background FIRST (prevents black/transparent)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, finalWidth, finalHeight);
 
-    // Disable smoothing for CRISP barcode lines
-    ctx.imageSmoothingEnabled = false;
-    ctx.webkitImageSmoothingEnabled = false;
-    ctx.mozImageSmoothingEnabled = false;
-    ctx.msImageSmoothingEnabled = false;
+      // Then draw SVG on top
+      ctx.drawImage(img, 0, 0, finalWidth, finalHeight);
 
-    // Draw at full resolution
-    ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+      // Convert to PNG with MAX quality
+      const pngDataUrl = canvas.toDataURL('image/png', 1.0);
 
-    URL.revokeObjectURL(url);
+      // Download
+      const a = document.createElement('a');
+      a.download = 'qunverio-barcode-' + finalWidth + 'x' + finalHeight + 'px.png';
+      a.href = pngDataUrl;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
 
-    // Convert to PNG with MAX quality
-    const dataUrl = canvas.toDataURL('image/png', 1.0);
+      // Cleanup
+      if (svgUrl.startsWith('blob:')) URL.revokeObjectURL(svgUrl);
 
-    const a = document.createElement('a');
-    a.download = 'qunverio-barcode-' + canvasWidth + 'x' + canvasHeight + 'px-' + Date.now() + '.png';
-    a.href = dataUrl;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    if (typeof toast === 'function') toast('Ultra HD PNG (' + canvasWidth + '×' + canvasHeight + 'px) ✅', 'success');
+      if (typeof toast === 'function') toast('Ultra HD PNG (' + finalWidth + '×' + finalHeight + ') ✅', 'success');
+    } catch (err) {
+      console.error('Canvas error:', err);
+      if (typeof toast === 'function') toast('PNG failed — try SVG', 'error');
+    }
   };
 
-  img.onerror = () => {
-    URL.revokeObjectURL(url);
-    if (typeof toast === 'function') toast('Download failed', 'error');
+  img.onerror = (err) => {
+    console.error('Image load error:', err);
+    if (svgUrl.startsWith('blob:')) URL.revokeObjectURL(svgUrl);
+    if (typeof toast === 'function') toast('PNG failed — try SVG button', 'error');
   };
 
-  img.src = url;
+  img.src = svgUrl;
 };
 
 /* ============================================================
-   SVG DOWNLOAD (Vector — Infinite Quality)
+   SVG DOWNLOAD (Vector — Infinite Quality, Always Works)
    ============================================================ */
 window.barDownloadSVG = function() {
   const svg = document.querySelector('#barResult svg');
   if (!svg) { if (typeof toast === 'function') toast('Generate first', 'error'); return; }
 
+  // Clone and ensure clean SVG
   const clone = svg.cloneNode(true);
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 
-  const svgData = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
-  const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  // Ensure white rect background
+  const existingRect = clone.querySelector('rect');
+  if (!existingRect) {
+    const svgRect = svg.getBoundingClientRect();
+    const whiteRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    whiteRect.setAttribute('x', '0');
+    whiteRect.setAttribute('y', '0');
+    whiteRect.setAttribute('width', Math.round(svgRect.width));
+    whiteRect.setAttribute('height', Math.round(svgRect.height));
+    whiteRect.setAttribute('fill', '#ffffff');
+    clone.insertBefore(whiteRect, clone.firstChild);
+  }
+
+  // Force text black
+  clone.querySelectorAll('text').forEach(t => {
+    t.setAttribute('fill', '#000000');
+    t.style.fontFamily = 'Arial, sans-serif';
+    t.style.fontWeight = 'bold';
+  });
+
+  const svgString = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.download = 'qunverio-barcode-' + Date.now() + '.svg';
@@ -222,6 +272,7 @@ window.barDownloadSVG = function() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+
   if (typeof toast === 'function') toast('SVG downloaded ✅ (Infinite quality)', 'success');
 };
 
@@ -292,4 +343,4 @@ window.barReset = function() {
   if (typeof toast === 'function') toast('Reset done', 'success');
 };
 
-console.log('%c✅ Barcode Generator loaded — Ultra HD PNG (4000px+) + SVG + Print', 'color:#8b5cf6;font-weight:bold;font-size:14px');
+console.log('%c✅ Barcode Generator loaded — Ultra HD PNG (Fixed) + SVG + Print', 'color:#8b5cf6;font-weight:bold;font-size:14px');
