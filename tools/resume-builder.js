@@ -1,6 +1,7 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio
-   Self-contained tool: form + CSS + logic + templates + PDF
+   RESUME BUILDER — Qunverio (FINAL)
+   Self-contained: form + CSS + logic + templates + PDF
+   Fixed theme (always dark) — works in all 3 modes
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -11,38 +12,40 @@
   style.textContent = `
     .rb-wrap { max-width: 1100px; margin: 0 auto; padding: 12px; }
     .rb-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
-    .rb-tab { padding: 10px 16px; border-radius: 8px; border: 1px solid var(--border, #2a2a3e); background: var(--card, #1a1a2e); color: var(--text, #e0e0e0); cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s; }
+    .rb-tab { padding: 10px 16px; border-radius: 8px; border: 1px solid #2a2a3e; background: #1a1a2e; color: #e0e0e0; cursor: pointer; font-size: 13px; font-weight: 500; transition: all .2s; font-family: inherit; }
     .rb-tab.active { background: linear-gradient(135deg,#00d4ff,#7b2ff7); color: #fff; border-color: transparent; }
     .rb-panel { display: none; }
     .rb-panel.active { display: block; animation: rbFade .3s ease; }
     @keyframes rbFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-    .rb-section { background: var(--card, #1a1a2e); border: 1px solid var(--border, #2a2a3e); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
-    .rb-section h3 { margin: 0 0 14px; font-size: 16px; display: flex; align-items: center; gap: 8px; color: var(--text, #fff); }
+    .rb-section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+    .rb-section h3 { margin: 0 0 14px; font-size: 16px; display: flex; align-items: center; gap: 8px; color: #fff; }
     .rb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .rb-grid.full { grid-template-columns: 1fr; }
     .rb-field { display: flex; flex-direction: column; gap: 4px; }
-    .rb-field label { font-size: 11px; opacity: .75; font-weight: 500; text-transform: uppercase; letter-spacing: .4px; }
-    .rb-field input, .rb-field select, .rb-field textarea { padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border,#2a2a3e); background: var(--bg,#0f0f1a); color: var(--text,#e0e0e0); font-size: 13px; font-family: inherit; outline: none; transition: border .2s; }
+    .rb-field label { font-size: 11px; opacity: .75; font-weight: 500; text-transform: uppercase; letter-spacing: .4px; color: #e0e0e0; }
+    .rb-field input, .rb-field select, .rb-field textarea { padding: 9px 12px; border-radius: 8px; border: 1px solid #2a2a3e; background: #0f0f1a; color: #e0e0e0; font-size: 13px; font-family: inherit; outline: none; transition: border .2s; width: 100%; box-sizing: border-box; }
     .rb-field input:focus, .rb-field textarea:focus, .rb-field select:focus { border-color: #00d4ff; }
     .rb-field textarea { resize: vertical; min-height: 70px; }
-    .rb-counter { font-size: 10px; opacity: .6; text-align: right; }
-    .rb-item { background: var(--bg,#0f0f1a); border: 1px solid var(--border,#2a2a3e); border-radius: 10px; padding: 14px; margin-bottom: 10px; position: relative; }
+    .rb-field input[type="color"] { height: 40px; padding: 4px; cursor: pointer; }
+    .rb-field input[type="file"] { padding: 8px; font-size: 12px; }
+    .rb-counter { font-size: 10px; opacity: .6; text-align: right; color: #e0e0e0; }
+    .rb-item { background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 10px; padding: 14px; margin-bottom: 10px; position: relative; }
     .rb-item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .rb-item-head strong { font-size: 13px; opacity: .85; }
+    .rb-item-head strong { font-size: 13px; opacity: .85; color: #e0e0e0; }
     .rb-btns { display: flex; gap: 6px; }
     .rb-btn { padding: 7px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 500; font-family: inherit; transition: all .2s; }
     .rb-btn.primary { background: linear-gradient(135deg,#00d4ff,#7b2ff7); color: #fff; }
-    .rb-btn.ghost { background: transparent; border: 1px solid var(--border,#2a2a3e); color: var(--text,#e0e0e0); }
+    .rb-btn.ghost { background: #1a1a2e; border: 1px solid #2a2a3e; color: #e0e0e0; }
     .rb-btn.danger { background: #e74c3c; color: #fff; }
     .rb-btn.small { padding: 4px 8px; font-size: 11px; }
     .rb-btn:hover { transform: translateY(-1px); opacity: .9; }
-    .rb-add { width: 100%; padding: 11px; border-radius: 8px; border: 1px dashed var(--border,#2a2a3e); background: transparent; color: #00d4ff; cursor: pointer; font-size: 13px; font-weight: 500; margin-top: 4px; }
+    .rb-add { width: 100%; padding: 11px; border-radius: 8px; border: 1px dashed #2a2a3e; background: transparent; color: #00d4ff; cursor: pointer; font-size: 13px; font-weight: 500; margin-top: 4px; font-family: inherit; }
     .rb-add:hover { background: rgba(0,212,255,.05); }
-    .rb-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; padding: 14px; background: var(--card,#1a1a2e); border-radius: 12px; border: 1px solid var(--border,#2a2a3e); position: sticky; top: 10px; z-index: 10; }
+    .rb-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; padding: 14px; background: #1a1a2e; border-radius: 12px; border: 1px solid #2a2a3e; position: sticky; top: 10px; z-index: 10; }
     .rb-actions .rb-btn { flex: 1; min-width: 110px; padding: 10px; }
-    .rb-progress { height: 6px; background: var(--border,#2a2a3e); border-radius: 3px; overflow: hidden; margin-bottom: 14px; }
+    .rb-progress { height: 6px; background: #2a2a3e; border-radius: 3px; overflow: hidden; margin-bottom: 14px; }
     .rb-progress-fill { height: 100%; background: linear-gradient(90deg,#00d4ff,#7b2ff7); transition: width .4s; }
-    .rb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg,#0f0f1a); border: 1px solid var(--border,#2a2a3e); border-radius: 20px; font-size: 12px; margin: 4px 4px 0 0; }
+    .rb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 20px; font-size: 12px; color: #e0e0e0; margin: 4px 4px 0 0; }
     .rb-chip button { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
 
     /* ===== PREVIEW ===== */
@@ -75,9 +78,6 @@
     .rb-entry-sub { font-size: 12px; color: #555; margin: 2px 0 4px; }
     .rb-entry ul { margin: 4px 0 0; padding-left: 18px; }
     .rb-entry li { font-size: 12px; line-height: 1.5; color: #333; margin-bottom: 2px; }
-    .rb-skills-list { display: flex; flex-wrap: wrap; gap: 6px; }
-    .rb-skill-tag { background: #f0f0f5; color: #333; padding: 3px 10px; border-radius: 12px; font-size: 11.5px; }
-    .rb-photo-hidden { display: none !important; }
 
     /* ===== PRINT ===== */
     @media print {
@@ -89,9 +89,10 @@
 
     @media (max-width: 768px) {
       .rb-grid { grid-template-columns: 1fr; }
-      .rb-preview-wrap { padding: 8px; }
-      .rb-preview { width: 100%; min-height: auto; transform: scale(.6); transform-origin: top left; }
-      .rb-preview-wrap { overflow-x: auto; }
+      .rb-preview-wrap { padding: 8px; overflow-x: auto; }
+      .rb-preview { width: 794px; min-height: 1123px; transform: scale(.42); transform-origin: top left; margin-bottom: -600px; }
+      .rb-actions { position: static; }
+      .rb-tab { font-size: 12px; padding: 8px 12px; }
     }
   `;
   document.head.appendChild(style);
@@ -275,7 +276,7 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
         </div>
       </div>
       <div style="margin-top:12px">
-        <label style="font-size:11px;opacity:.75;text-transform:uppercase">Section Order (click ↑↓)</label>
+        <label style="font-size:11px;opacity:.75;text-transform:uppercase;color:#e0e0e0">Section Order (click ↑↓)</label>
         <div id="rbOrderList" style="margin-top:6px"></div>
       </div>
     </div>
@@ -292,13 +293,13 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
 
 // ====== INIT ======
 window.EXTRA_TOOL_INITS['resume-builder'] = () => {
-  // Tab switching
   document.querySelectorAll('.rb-tab').forEach(t => {
     t.addEventListener('click', () => {
       document.querySelectorAll('.rb-tab').forEach(x => x.classList.remove('active'));
       document.querySelectorAll('.rb-panel').forEach(x => x.classList.remove('active'));
       t.classList.add('active');
-      document.querySelector(`.rb-panel[data-panel="${t.dataset.tab}"]`).classList.add('active');
+      const panel = document.querySelector(`.rb-panel[data-panel="${t.dataset.tab}"]`);
+      if (panel) panel.classList.add('active');
       if (t.dataset.tab === 'preview') rbPreviewRefresh();
     });
   });
@@ -333,23 +334,25 @@ window.rbSave = () => {
 window.rbLoad = () => {
   try {
     const saved = localStorage.getItem('qunverio_resume_data');
-    if (saved) { Object.assign(rbData, JSON.parse(saved)); rbFillForm(); }
+    if (saved) { Object.assign(rbData, JSON.parse(saved)); }
   } catch(e){}
+  rbFillForm();
 };
 
 window.rbFillForm = () => {
   const p = rbData.personal;
   const map = { rbName:'name', rbTitle:'title', rbPhone:'phone', rbEmail:'email', rbCity:'city', rbState:'state', rbCountry:'country', rbAddress:'address', rbLinkedin:'linkedin', rbPortfolio:'portfolio', rbGithub:'github', rbOther:'other' };
   for (const id in map) { const el = document.getElementById(id); if (el) el.value = p[map[id]] || ''; }
-  const s = document.getElementById('rbSummary'); if (s) { s.value = rbData.summary || ''; document.getElementById('rbSumCount').textContent = (rbData.summary||'').length + '/800'; }
-  document.getElementById('rbTemplate').value = rbData.template || 'modern';
-  document.getElementById('rbTheme').value = rbData.themeColor || '#00d4ff';
-  document.getElementById('rbFont').value = rbData.fontFamily || "'Segoe UI', Arial, sans-serif";
-  document.getElementById('rbFontSize').value = rbData.fontSize || 12;
+  const s = document.getElementById('rbSummary');
+  if (s) { s.value = rbData.summary || ''; document.getElementById('rbSumCount').textContent = (rbData.summary||'').length + '/800'; }
+  const tpl = document.getElementById('rbTemplate'); if (tpl) tpl.value = rbData.template || 'modern';
+  const th = document.getElementById('rbTheme'); if (th) th.value = rbData.themeColor || '#00d4ff';
+  const fn = document.getElementById('rbFont'); if (fn) fn.value = rbData.fontFamily || "'Segoe UI', Arial, sans-serif";
+  const fs = document.getElementById('rbFontSize'); if (fs) fs.value = rbData.fontSize || 12;
   rbRenderEdu(); rbRenderExp(); rbRenderProj(); rbRenderCert(); rbRenderLang();
-  document.getElementById('rbTech').value = rbData.skills.technical.join(', ');
-  document.getElementById('rbSoft').value = rbData.skills.soft.join(', ');
-  document.getElementById('rbLangSkill').value = rbData.skills.languages.join(', ');
+  const t = document.getElementById('rbTech'); if (t) t.value = rbData.skills.technical.join(', ');
+  const sf = document.getElementById('rbSoft'); if (sf) sf.value = rbData.skills.soft.join(', ');
+  const ls = document.getElementById('rbLangSkill'); if (ls) ls.value = rbData.skills.languages.join(', ');
   rbRenderChips();
   rbRenderOrder();
 };
@@ -455,7 +458,7 @@ window.rbRenderExp = () => {
         <div class="rb-field"><label>End Date</label><input value="${e.end||''}" placeholder="Present" oninput="rbExpSet(${i},'end',this.value)" ${e.current?'disabled':''}></div>
       </div>
       <div class="rb-field" style="margin-top:8px">
-        <label><input type="checkbox" ${e.current?'checked':''} onchange="rbExpSet(${i},'current',this.checked);rbRenderExp()"> Currently Working Here</label>
+        <label style="text-transform:none;display:flex;align-items:center;gap:6px"><input type="checkbox" ${e.current?'checked':''} onchange="rbExpSet(${i},'current',this.checked);rbRenderExp()" style="width:auto"> Currently Working Here</label>
       </div>
       <div class="rb-field" style="margin-top:8px"><label>Responsibilities (one per line)</label><textarea oninput="rbExpSet(${i},'resp',this.value)">${e.resp||''}</textarea></div>
       <div class="rb-field" style="margin-top:8px"><label>Achievements (one per line)</label><textarea oninput="rbExpSet(${i},'ach',this.value)">${e.ach||''}</textarea></div>
@@ -555,7 +558,7 @@ window.rbDelLang = (i) => { rbData.languages.splice(i,1); rbRenderLang(); rbAuto
 window.rbRenderOrder = () => {
   const c = document.getElementById('rbOrderList'); if (!c) return;
   c.innerHTML = rbData.sectionOrder.map((s,i) => `
-    <div class="rb-chip" style="cursor:default">${s}
+    <div class="rb-chip" style="cursor:default;text-transform:capitalize">${s}
       ${i>0?`<button onclick="rbMoveSec(${i},-1)" style="color:#00d4ff">↑</button>`:''}
       ${i<rbData.sectionOrder.length-1?`<button onclick="rbMoveSec(${i},1)" style="color:#00d4ff">↓</button>`:''}
     </div>
