@@ -35,6 +35,15 @@ const EXTRA_TOOLS = [
   desc: 'Generate barcodes for products',
   howto: 'Enter barcode text/number. Choose format. Click Generate. Download or Print.',
   kw: ['barcode', 'bar code', 'product', 'scan']
+},
+{
+  id: 'resume-builder',
+  name: 'Resume Builder',
+  cat: 'career',
+  icon: '📄',
+  desc: 'Create professional ATS-friendly resume with PDF download',
+  howto: 'Fill personal info, education, experience, skills. Choose template. Preview and download PDF.',
+  kw: ['resume', 'cv', 'bio data', 'resume maker', 'cv builder', 'job', 'career']
 }
 ];
 
