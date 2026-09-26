@@ -1,6 +1,6 @@
 /* ============================================================
-   QUNVERIO — BARCODE GENERATOR (Simple Version)
-   Sirf URL/Text paste karo → Generate → Done
+   QUNVERIO — ULTRA HD BARCODE GENERATOR
+   Full Pixel Quality + White Padding
    ============================================================ */
 
 console.log('%c🎫 Barcode Generator Loading...', 'color:#8b5cf6;font-weight:bold');
@@ -42,7 +42,6 @@ window.barGenerate = function() {
     return;
   }
 
-  // Check library
   if (typeof JsBarcode === 'undefined') {
     if (typeof toast === 'function') toast('Library missing — refresh page', 'error');
     return;
@@ -53,56 +52,47 @@ window.barGenerate = function() {
 
   const container = document.createElement('div');
   container.className = 'barcode-container';
-  container.style.cssText = 'padding:22px;background:#ffffff;border-radius:12px;text-align:center;margin-top:12px;overflow-x:auto;display:flex;align-items:center;justify-content:center';
+  container.style.cssText = 'padding:24px;background:#ffffff;border-radius:12px;text-align:center;margin-top:12px;overflow-x:auto;display:flex;align-items:center;justify-content:center';
   box.appendChild(container);
 
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   container.appendChild(svg);
 
-  // Auto-select best format
-  let format = 'CODE128'; // Default — works with any text/URL
+  // Auto format
+  let format = 'CODE128';
   let finalText = text;
 
-  // If it's a 13-digit number, use EAN13
-  if (/^\d{13}$/.test(text)) {
-    format = 'EAN13';
-  }
-  // If it's a 12-digit number, use UPC
-  else if (/^\d{12}$/.test(text)) {
-    format = 'UPC';
-  }
-  // Otherwise CODE128 (handles URLs, any text)
+  if (/^\d{13}$/.test(text)) format = 'EAN13';
+  else if (/^\d{12}$/.test(text)) format = 'UPC';
   else {
     format = 'CODE128';
-    // CODE128 has limits — if very long URL, truncate
     if (finalText.length > 80) {
       finalText = finalText.substring(0, 80);
-      if (typeof toast === 'function') toast('Text too long — truncated to 80 chars');
+      if (typeof toast === 'function') toast('Text truncated to 80 chars');
     }
   }
 
   try {
     JsBarcode(svg, finalText, {
       format: format,
-      width: 1,
+      width: 1.0,
       height: 40,
       displayValue: true,
-      fontSize: 9,
-      margin: 30,
+      fontSize: 11,
+      margin: 20,
       background: '#ffffff',
       lineColor: '#000000'
     });
   } catch (e) {
     console.error('Barcode error:', e);
-    // Fallback to CODE128
     try {
       JsBarcode(svg, text.substring(0, 80), {
         format: 'CODE128',
-        width: 2,
-        height: 70,
+        width: 1.0,
+        height: 40,
         displayValue: true,
-        fontSize: 12,
-        margin: 10
+        fontSize: 11,
+        margin: 20
       });
     } catch (e2) {
       container.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:13px">Barcode generate nahi hua. Kuch aur try karo.</div>';
@@ -111,7 +101,6 @@ window.barGenerate = function() {
     }
   }
 
-  // Add actions
   setTimeout(() => {
     const actions = document.createElement('div');
     actions.innerHTML = `
@@ -127,36 +116,82 @@ window.barGenerate = function() {
 };
 
 /* ============================================================
-   DOWNLOAD PNG (Ultra HD)
+   ULTRA HD PNG DOWNLOAD (FULL PIXEL QUALITY)
    ============================================================ */
 window.barDownloadPNG = function() {
   const svg = document.querySelector('#barResult svg');
   if (!svg) { if (typeof toast === 'function') toast('Generate first', 'error'); return; }
-  if (typeof toast === 'function') toast('Generating HD PNG...');
 
-  const svgData = new XMLSerializer().serializeToString(svg);
+  if (typeof toast === 'function') toast('Generating Ultra HD PNG...');
+
+  // Get real SVG dimensions
+  const svgRect = svg.getBoundingClientRect();
+  const svgWidth = svgRect.width || 600;
+  const svgHeight = svgRect.height || 200;
+
+  // ULTRA HD — 10x Scale + Minimum dimensions
+  const SCALE = 10;
+  const MIN_WIDTH = 4000;   // Minimum 4000px width
+  const MIN_HEIGHT = 1200;  // Minimum 1200px height
+
+  const canvasWidth = Math.max(svgWidth * SCALE, MIN_WIDTH);
+  const canvasHeight = Math.max(svgHeight * SCALE, MIN_HEIGHT);
+
+  // Clone SVG with explicit dimensions
+  const clone = svg.cloneNode(true);
+  clone.setAttribute('width', canvasWidth);
+  clone.setAttribute('height', canvasHeight);
+  clone.setAttribute('viewBox', `0 0 ${svgWidth} ${svgHeight}`);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+  // Make sure all text/rects scale properly
+  clone.querySelectorAll('rect').forEach(r => {
+    r.setAttribute('fill', '#ffffff');
+  });
+  clone.querySelectorAll('text').forEach(t => {
+    t.setAttribute('fill', '#000000');
+    t.style.fontFamily = 'Arial, sans-serif';
+    t.style.fontWeight = 'bold';
+  });
+
+  const svgData = new XMLSerializer().serializeToString(clone);
   const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const img = new Image();
 
   img.onload = () => {
-    const SCALE = 4;
     const canvas = document.createElement('canvas');
-    canvas.width = (img.width || 600) * SCALE;
-    canvas.height = (img.height || 200) * SCALE;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
     const ctx = canvas.getContext('2d');
+
+    // Pure white background (with extra padding)
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    // Disable smoothing for CRISP barcode lines
+    ctx.imageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
+
+    // Draw at full resolution
+    ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+
     URL.revokeObjectURL(url);
 
+    // Convert to PNG with MAX quality
+    const dataUrl = canvas.toDataURL('image/png', 1.0);
+
     const a = document.createElement('a');
-    a.download = 'qunverio-barcode-' + Date.now() + '.png';
-    a.href = canvas.toDataURL('image/png');
+    a.download = 'qunverio-barcode-' + canvasWidth + 'x' + canvasHeight + 'px-' + Date.now() + '.png';
+    a.href = dataUrl;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    if (typeof toast === 'function') toast('HD PNG downloaded ✅', 'success');
+
+    if (typeof toast === 'function') toast('Ultra HD PNG (' + canvasWidth + '×' + canvasHeight + 'px) ✅', 'success');
   };
 
   img.onerror = () => {
@@ -168,13 +203,16 @@ window.barDownloadPNG = function() {
 };
 
 /* ============================================================
-   DOWNLOAD SVG
+   SVG DOWNLOAD (Vector — Infinite Quality)
    ============================================================ */
 window.barDownloadSVG = function() {
   const svg = document.querySelector('#barResult svg');
   if (!svg) { if (typeof toast === 'function') toast('Generate first', 'error'); return; }
 
-  const svgData = new XMLSerializer().serializeToString(svg);
+  const clone = svg.cloneNode(true);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+  const svgData = '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(clone);
   const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -184,7 +222,7 @@ window.barDownloadSVG = function() {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  if (typeof toast === 'function') toast('SVG downloaded ✅', 'success');
+  if (typeof toast === 'function') toast('SVG downloaded ✅ (Infinite quality)', 'success');
 };
 
 /* ============================================================
@@ -203,10 +241,10 @@ window.barPrint = function() {
   .header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:600px;padding-bottom:14px;border-bottom:3px solid #6366f1;margin-bottom:24px}
   .brand{font-size:24px;font-weight:900;color:#6366f1}
   .date{font-size:12px;color:#888}
-  .barcode-wrap{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;overflow-x:auto;max-width:100%}
+  .barcode-wrap{background:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;overflow-x:auto;max-width:100%}
   .barcode-wrap svg{max-width:100%;height:auto;display:block}
   .footer{margin-top:24px;font-size:12px;color:#888;text-align:center}
-  @media print{body{padding:15px}.barcode-wrap{box-shadow:none;padding:14px}}
+  @media print{body{padding:15px}.barcode-wrap{box-shadow:none;padding:20px}}
 </style>
 </head>
 <body>
@@ -254,4 +292,4 @@ window.barReset = function() {
   if (typeof toast === 'function') toast('Reset done', 'success');
 };
 
-console.log('%c✅ Barcode Generator loaded — Simple + Auto format + HD download', 'color:#8b5cf6;font-weight:bold;font-size:14px');
+console.log('%c✅ Barcode Generator loaded — Ultra HD PNG (4000px+) + SVG + Print', 'color:#8b5cf6;font-weight:bold;font-size:14px');
