@@ -84,11 +84,11 @@ window.barGenerate = function() {
   try {
     JsBarcode(svg, finalText, {
       format: format,
-      width: 2,
-      height: 70,
+      width: 1,
+      height: 40,
       displayValue: true,
-      fontSize: 12,
-      margin: 10,
+      fontSize: 9,
+      margin: 5,
       background: '#ffffff',
       lineColor: '#000000'
     });
