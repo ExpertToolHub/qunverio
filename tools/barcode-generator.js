@@ -88,7 +88,7 @@ window.barGenerate = function() {
       height: 40,
       displayValue: true,
       fontSize: 9,
-      margin: 5,
+      margin: 30,
       background: '#ffffff',
       lineColor: '#000000'
     });
