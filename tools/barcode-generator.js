@@ -1,22 +1,26 @@
-/* Barcode Generator */
+/* ============================================================
+   QUNVERIO — BARCODE GENERATOR (Simple Version)
+   Sirf URL/Text paste karo → Generate → Done
+   ============================================================ */
+
+console.log('%c🎫 Barcode Generator Loading...', 'color:#8b5cf6;font-weight:bold');
+
+window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
+window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
+
+/* ============================================================
+   FORM
+   ============================================================ */
 window.EXTRA_TOOL_RENDERERS['barcode-generator'] = () => `
   <div class="card">
     <div class="card-title">Barcode Generator</div>
     <div class="field">
-      <label>Barcode Text/Number</label>
-      <input type="text" id="barInput" placeholder="123456789012" maxlength="60" />
-    </div>
-    <div class="field">
-      <label>Format</label>
-      <select id="barFormat">
-        <option value="CODE128">CODE128 (any text)</option>
-        <option value="EAN13">EAN13 (13 digits)</option>
-        <option value="UPC">UPC (12 digits)</option>
-        <option value="CODE39">CODE39</option>
-      </select>
+      <label>Paste URL or Text</label>
+      <textarea id="barInput" placeholder="https://example.com ya koi bhi text/number..." rows="3" style="font-size:15px"></textarea>
+      <div class="hint">Kuch bhi paste karo — barcode automatically ban jayega</div>
     </div>
     <div class="btn-group">
-      <button class="btn btn-primary" onclick="barGenerate()" style="flex:2">🎫 Generate</button>
+      <button class="btn btn-primary" onclick="barGenerate()" style="flex:2">🎫 Generate Barcode</button>
       <button class="btn btn-secondary" onclick="barReset()" style="flex:1">🔄 Reset</button>
     </div>
   </div>
@@ -24,83 +28,230 @@ window.EXTRA_TOOL_RENDERERS['barcode-generator'] = () => `
 `;
 
 window.EXTRA_TOOL_INITS['barcode-generator'] = () => {
-  console.log('%c✅ Barcode Generator loaded', 'color:#10b981');
+  console.log('%c✅ Barcode Generator initialized', 'color:#10b981');
 };
 
+/* ============================================================
+   GENERATE BARCODE
+   ============================================================ */
 window.barGenerate = function() {
   const text = document.getElementById('barInput').value.trim();
-  if (!text) { if (typeof toast === 'function') toast('Enter text first', 'error'); return; }
-  const format = document.getElementById('barFormat').value;
-  const box = document.getElementById('barResult');
-  box.innerHTML = '';
-  const container = document.createElement('div');
-  container.className = 'barcode-container';
-  container.style.cssText = 'padding:22px;background:#ffffff;border-radius:12px;text-align:center;margin-top:12px';
-  box.appendChild(container);
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  container.appendChild(svg);
-  try {
-    JsBarcode(svg, text, { format, width: 2, height: 80, displayValue: true, fontSize: 14, margin: 10 });
-  } catch(e) {
-    container.innerHTML = '<div style="color:#ef4444;padding:20px">Invalid input for ' + format + '</div>';
-    if (typeof toast === 'function') toast('Barcode failed', 'error');
+
+  if (!text) {
+    if (typeof toast === 'function') toast('Paste URL or text first', 'error');
     return;
   }
+
+  // Check library
+  if (typeof JsBarcode === 'undefined') {
+    if (typeof toast === 'function') toast('Library missing — refresh page', 'error');
+    return;
+  }
+
+  const box = document.getElementById('barResult');
+  box.innerHTML = '';
+
+  const container = document.createElement('div');
+  container.className = 'barcode-container';
+  container.style.cssText = 'padding:22px;background:#ffffff;border-radius:12px;text-align:center;margin-top:12px;overflow-x:auto;display:flex;align-items:center;justify-content:center';
+  box.appendChild(container);
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  container.appendChild(svg);
+
+  // Auto-select best format
+  let format = 'CODE128'; // Default — works with any text/URL
+  let finalText = text;
+
+  // If it's a 13-digit number, use EAN13
+  if (/^\d{13}$/.test(text)) {
+    format = 'EAN13';
+  }
+  // If it's a 12-digit number, use UPC
+  else if (/^\d{12}$/.test(text)) {
+    format = 'UPC';
+  }
+  // Otherwise CODE128 (handles URLs, any text)
+  else {
+    format = 'CODE128';
+    // CODE128 has limits — if very long URL, truncate
+    if (finalText.length > 80) {
+      finalText = finalText.substring(0, 80);
+      if (typeof toast === 'function') toast('Text too long — truncated to 80 chars');
+    }
+  }
+
+  try {
+    JsBarcode(svg, finalText, {
+      format: format,
+      width: 2,
+      height: 70,
+      displayValue: true,
+      fontSize: 12,
+      margin: 10,
+      background: '#ffffff',
+      lineColor: '#000000'
+    });
+  } catch (e) {
+    console.error('Barcode error:', e);
+    // Fallback to CODE128
+    try {
+      JsBarcode(svg, text.substring(0, 80), {
+        format: 'CODE128',
+        width: 2,
+        height: 70,
+        displayValue: true,
+        fontSize: 12,
+        margin: 10
+      });
+    } catch (e2) {
+      container.innerHTML = '<div style="color:#ef4444;padding:20px;font-size:13px">Barcode generate nahi hua. Kuch aur try karo.</div>';
+      if (typeof toast === 'function') toast('Barcode failed', 'error');
+      return;
+    }
+  }
+
+  // Add actions
   setTimeout(() => {
     const actions = document.createElement('div');
     actions.innerHTML = `
       <div class="export-btns no-export no-print" style="margin-top:14px">
-        <button class="btn btn-secondary" onclick="barDownloadPNG()"><i>🖼️</i>PNG</button>
+        <button class="btn btn-secondary" onclick="barDownloadPNG()"><i>🖼️</i>HD PNG</button>
+        <button class="btn btn-secondary" onclick="barDownloadSVG()"><i>📐</i>SVG</button>
         <button class="btn btn-secondary" onclick="barPrint()"><i>🖨️</i>Print</button>
       </div>`;
     box.appendChild(actions);
     box.classList.add('active');
+    if (typeof toast === 'function') toast('Barcode generated ✅', 'success');
   }, 100);
 };
 
+/* ============================================================
+   DOWNLOAD PNG (Ultra HD)
+   ============================================================ */
 window.barDownloadPNG = function() {
   const svg = document.querySelector('#barResult svg');
   if (!svg) { if (typeof toast === 'function') toast('Generate first', 'error'); return; }
+  if (typeof toast === 'function') toast('Generating HD PNG...');
+
   const svgData = new XMLSerializer().serializeToString(svg);
-  const blob = new Blob([svgData], { type: 'image/svg+xml' });
+  const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const img = new Image();
+
   img.onload = () => {
+    const SCALE = 4;
     const canvas = document.createElement('canvas');
-    canvas.width = img.width * 4;
-    canvas.height = img.height * 4;
+    canvas.width = (img.width || 600) * SCALE;
+    canvas.height = (img.height || 200) * SCALE;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
+
     const a = document.createElement('a');
-    a.download = 'barcode.png';
+    a.download = 'qunverio-barcode-' + Date.now() + '.png';
     a.href = canvas.toDataURL('image/png');
+    document.body.appendChild(a);
     a.click();
-    if (typeof toast === 'function') toast('Barcode downloaded ✅', 'success');
+    document.body.removeChild(a);
+    if (typeof toast === 'function') toast('HD PNG downloaded ✅', 'success');
   };
+
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    if (typeof toast === 'function') toast('Download failed', 'error');
+  };
+
   img.src = url;
 };
 
-window.barPrint = function() {
+/* ============================================================
+   DOWNLOAD SVG
+   ============================================================ */
+window.barDownloadSVG = function() {
   const svg = document.querySelector('#barResult svg');
-  if (!svg) return;
+  if (!svg) { if (typeof toast === 'function') toast('Generate first', 'error'); return; }
+
   const svgData = new XMLSerializer().serializeToString(svg);
-  const html = `<!DOCTYPE html><html><head><title>Barcode</title><style>
-    body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#fff}
-    svg{max-width:90%;height:auto}
-  </style></head><body>${svgData}</body></html>`;
-  const w = window.open('', '_blank');
-  if (!w) return;
-  w.document.write(html); w.document.close();
-  setTimeout(() => { w.print(); w.close(); }, 500);
+  const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.download = 'qunverio-barcode-' + Date.now() + '.svg';
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (typeof toast === 'function') toast('SVG downloaded ✅', 'success');
 };
 
+/* ============================================================
+   PRINT
+   ============================================================ */
+window.barPrint = function() {
+  const svg = document.querySelector('#barResult svg');
+  if (!svg) { if (typeof toast === 'function') toast('Generate first', 'error'); return; }
+
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const html = `<!DOCTYPE html>
+<html><head><title>Barcode Print — Qunverio</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:30px;background:#fff}
+  .header{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:600px;padding-bottom:14px;border-bottom:3px solid #6366f1;margin-bottom:24px}
+  .brand{font-size:24px;font-weight:900;color:#6366f1}
+  .date{font-size:12px;color:#888}
+  .barcode-wrap{background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;overflow-x:auto;max-width:100%}
+  .barcode-wrap svg{max-width:100%;height:auto;display:block}
+  .footer{margin-top:24px;font-size:12px;color:#888;text-align:center}
+  @media print{body{padding:15px}.barcode-wrap{box-shadow:none;padding:14px}}
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">⚡ Qunverio</div>
+    <div class="date">${new Date().toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</div>
+  </div>
+  <div class="barcode-wrap">${svgData}</div>
+  <div class="footer">Generated by Qunverio — qunverio.vercel.app</div>
+</body>
+</html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) {
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => document.body.removeChild(iframe), 2000);
+    }, 600);
+    return;
+  }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => {
+    w.focus();
+    w.print();
+    setTimeout(() => w.close(), 1000);
+  }, 600);
+};
+
+/* ============================================================
+   RESET
+   ============================================================ */
 window.barReset = function() {
-  document.getElementById('barInput').value = '';
+  const input = document.getElementById('barInput');
+  if (input) input.value = '';
   const box = document.getElementById('barResult');
   box.classList.remove('active');
   box.innerHTML = '';
   if (typeof toast === 'function') toast('Reset done', 'success');
 };
+
+console.log('%c✅ Barcode Generator loaded — Simple + Auto format + HD download', 'color:#8b5cf6;font-weight:bold;font-size:14px');
