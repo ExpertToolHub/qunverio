@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://qunverio.vercel.app/sitemap.xml
