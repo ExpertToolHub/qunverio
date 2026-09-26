@@ -26,7 +26,16 @@ const EXTRA_TOOLS = [
     desc: 'Calculate your take-home salary from CTC',
     howto: 'Enter annual CTC, basic %, HRA %, PF, tax. Click Calculate to see monthly in-hand salary with full breakdown.',
     kw: ['ctc', 'salary', 'in-hand', 'take home', 'monthly salary', 'income', 'pf', 'tax']
-  }
+  },
+{
+  id: 'barcode-generator',
+  name: 'Barcode Generator',
+  cat: 'utility',
+  icon: '🎫',
+  desc: 'Generate barcodes for products',
+  howto: 'Enter barcode text/number. Choose format. Click Generate. Download or Print.',
+  kw: ['barcode', 'bar code', 'product', 'scan']
+}
 ];
 
 window.EXTRA_TOOLS = EXTRA_TOOLS;
