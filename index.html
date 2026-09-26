@@ -1060,3 +1060,221 @@ a { color: inherit; text-decoration: none; }
 }
 </style>
 </head>
+<body data-theme="dark">
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo" id="logo" title="Qunverio">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">Qunverio</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="aboutBtn" title="About">ℹ️</button>
+      <button class="icon-btn" id="themeBtn" title="Theme">🌙</button>
+      <button class="icon-btn" id="menuBtn" title="Menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     DRAWER (SIDE MENU)
+     ============================================================ -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-profile" id="drawerProfile">
+    <div class="drawer-avatar" id="drawerAvatar">U</div>
+    <div style="flex:1;min-width:0">
+      <div class="drawer-pname" id="drawerName">Guest User</div>
+      <div class="drawer-pemail" id="drawerEmail">Tap to set profile</div>
+    </div>
+  </div>
+  <div class="drawer-item" data-menu="profile"><span class="di-icon">👤</span> Profile</div>
+  <div class="drawer-item" data-menu="home"><span class="di-icon">🏠</span> Home</div>
+  <div class="drawer-item" data-menu="favorites"><span class="di-icon">⭐</span> Favorites</div>
+  <div class="drawer-item" data-menu="recent"><span class="di-icon">🕒</span> Recently Used</div>
+  <div class="drawer-item" data-menu="setting"><span class="di-icon">⚙️</span> Setting</div>
+  <div class="drawer-divider"></div>
+  <div class="drawer-item" data-menu="feedback"><span class="di-icon">💬</span> Send Feedback</div>
+  <div class="drawer-item" data-menu="system"><span class="di-icon">🖥️</span> System</div>
+</aside>
+
+<!-- ============================================================
+     MAIN CONTAINER
+     ============================================================ -->
+<main class="container">
+
+  <!-- ==================== HOME VIEW ==================== -->
+  <section id="homeView" class="workspace active">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        <span>100% Free • No Signup Required</span>
+      </div>
+      <h1>Free Online Tools for <span class="grad">Daily Life & Work</span></h1>
+      <p class="sub">Fast, Free &amp; Easy to Use Tools – No Installation Required</p>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-wrap" id="searchWrap">
+      <div class="search-box">
+        <span class="s-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search tools... (qr, ctc, salary)" autocomplete="off" />
+        <button class="search-clear" id="searchClear" aria-label="Clear">✕</button>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-num" id="statTools" data-count="2">0</div>
+        <div class="stat-label">Tools</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statCats" data-count="2">0</div>
+        <div class="stat-label">Categories</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statFeatures" data-count="50">0</div>
+        <div class="stat-label">Features</div>
+      </div>
+    </div>
+
+    <!-- RECENTLY USED -->
+    <div class="section-title" id="recentTitle" style="display:none">
+      <h2>🕒 Recently Used</h2>
+      <span class="see-all" onclick="clearRecent()">Clear</span>
+    </div>
+    <div class="h-scroll" id="recentList" style="display:none"></div>
+
+    <!-- FAVORITES -->
+    <div class="section-title" id="favTitle" style="display:none">
+      <h2>⭐ Your Favorites</h2>
+    </div>
+    <div class="tool-grid" id="favList" style="display:none"></div>
+
+    <!-- ALL TOOLS -->
+    <div class="section-title">
+      <h2>🧰 All Tools</h2>
+    </div>
+    <div class="tool-grid" id="allTools"></div>
+
+  </section>
+
+  <!-- ==================== FAVORITES VIEW ==================== -->
+  <section id="favView" class="workspace">
+    <div class="tool-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div class="tool-header-info">
+        <h3>⭐ Your Favorites</h3>
+        <p id="favSub">Saved tools</p>
+      </div>
+    </div>
+    <div class="tool-grid" id="favViewList"></div>
+  </section>
+
+  <!-- ==================== RECENT VIEW ==================== -->
+  <section id="recentView" class="workspace">
+    <div class="tool-header">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <div class="tool-header-info">
+        <h3>🕒 Recently Used</h3>
+        <p id="recentSub">Last used tools</p>
+      </div>
+    </div>
+    <div class="tool-grid" id="recentViewList"></div>
+  </section>
+
+  <!-- ==================== TOOL VIEW ==================== -->
+  <section id="toolView" class="workspace">
+    <div class="tool-header">
+      <button class="back-btn" onclick="closeTool()">←</button>
+      <div class="tool-header-info">
+        <h3 id="toolTitle">Tool</h3>
+        <p id="toolDesc">Description</p>
+      </div>
+      <button class="fav-btn" id="toolFavBtn" title="Favorite" style="position:static;width:40px;height:40px">☆</button>
+    </div>
+    <div id="toolHowTo" class="how-to-use" style="display:none"></div>
+    <div id="toolBody"></div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer class="footer no-print">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="fb-logo">
+        <div class="logo-icon">⚡</div>
+        <span class="logo-text">Qunverio</span>
+      </div>
+      <p>Free Online Tools for Daily Life &amp; Work. Fast, Free &amp; Easy to Use – No Installation Required.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li onclick="goHome()">Home</li>
+        <li onclick="openFavoritesView()">Favorites</li>
+        <li onclick="openRecentView()">Recently Used</li>
+        <li onclick="openFeedback()">Send Feedback</li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li onclick="openFooterPage('about')">About Us</li>
+        <li onclick="openFooterPage('contact')">Contact Us</li>
+        <li onclick="openFooterPage('privacy')">Privacy Policy</li>
+        <li onclick="openFooterPage('terms')">Terms &amp; Conditions</li>
+        <li onclick="openFooterPage('disclaimer')">Disclaimer</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    © <span id="yearNow">2026</span> <strong>Qunverio</strong> — Made with ❤️ for India. All rights reserved.
+  </div>
+</footer>
+
+<!-- ============================================================
+     BOTTOM NAV (MOBILE)
+     ============================================================ -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bn-item active" data-bn="home">
+    <span class="bn-icon">🏠</span>
+    <span class="bn-label">Home</span>
+  </div>
+  <div class="bn-item" data-bn="favorites">
+    <span class="bn-icon">⭐</span>
+    <span class="bn-label">Favorites</span>
+  </div>
+  <div class="bn-item" data-bn="recent">
+    <span class="bn-icon">🕒</span>
+    <span class="bn-label">Recent</span>
+  </div>
+  <div class="bn-item" data-bn="menu">
+    <span class="bn-icon">☰</span>
+    <span class="bn-label">Menu</span>
+  </div>
+</nav>
+
+<!-- ============================================================
+     BACK TO TOP
+     ============================================================ -->
+<button class="back-to-top" id="backToTop" title="Back to top">↑</button>
+
+<!-- ============================================================
+     MODAL & TOAST & PRINT AREA
+     ============================================================ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div id="printArea" style="display:none"></div>
