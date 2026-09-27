@@ -1,9 +1,10 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v7)
+   RESUME BUILDER — Qunverio (FINAL v8)
+   - 8x ULTRA HD PDF/Print quality
    - Preview button: tab switch + refresh
    - Save button: clear message
    - 7 Templates
-   - PDF/Print full-size fix
+   - Crop photo with fixed rectangle
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -156,7 +157,8 @@
     @media print {
       body * { visibility: hidden !important; }
       .rb-preview, .rb-preview * { visibility: visible !important; }
-      .rb-preview { position: absolute !important; left: 0 !important; top: 0 !important; box-shadow: none !important; width: 794px !important; transform: none !important; }
+      .rb-preview { position: absolute !important; left: 0 !important; top: 0 !important; box-shadow: none !important; width: 794px !important; transform: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+      .rb-preview img { image-rendering: -webkit-optimize-contrast !important; image-rendering: crisp-edges !important; }
       @page { size: A4; margin: 0; }
     }
 
@@ -194,15 +196,15 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
   <div class="rb-actions">
     <button class="rb-btn primary" onclick="rbSave()">💾 Save</button>
     <button class="rb-btn success" onclick="rbGoToPreview()">👁️ Preview</button>
-    <button class="rb-btn ghost" onclick="rbDownloadPDF()">📥 PDF</button>
+    <button class="rb-btn ghost" onclick="rbDownloadPDF()">📥 PDF 8K</button>
     <button class="rb-btn ghost" onclick="rbPrint()">🖨️ Print</button>
     <button class="rb-btn ghost" onclick="rbDuplicate()">📋 Copy</button>
     <button class="rb-btn danger" onclick="rbReset()">🔄 Reset</button>
   </div>
   <div class="rb-actions-hint">
-    💾 <strong>Save</strong> = data browser me save karo (auto-save bhi hota hai) &nbsp;•&nbsp; 
+    💾 <strong>Save</strong> = data browser me save (auto-save bhi hota hai) &nbsp;•&nbsp; 
     👁️ <strong>Preview</strong> = resume dekho &nbsp;•&nbsp; 
-    📥 <strong>PDF</strong> = download
+    📥 <strong>PDF 8K</strong> = ultra HD download (file bada hoga, quality best)
   </div>
 
   <div class="rb-progress"><div class="rb-progress-fill" id="rbProgress" style="width:0%"></div></div>
@@ -417,18 +419,14 @@ window.rbSet = (path, val) => {
   }
 };
 
-// GO TO PREVIEW TAB + REFRESH
 window.rbGoToPreview = () => {
-  // Switch tab
   document.querySelectorAll('.rb-tab').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.rb-panel').forEach(x => x.classList.remove('active'));
   const previewTab = document.querySelector('.rb-tab[data-tab="preview"]');
   const previewPanel = document.querySelector('.rb-panel[data-panel="preview"]');
   if (previewTab) previewTab.classList.add('active');
   if (previewPanel) previewPanel.classList.add('active');
-  // Refresh preview
   rbPreviewRefresh();
-  // Scroll to top
   setTimeout(() => {
     const wrap = document.querySelector('.rb-preview-wrap');
     if (wrap) wrap.scrollTop = 0;
@@ -444,19 +442,16 @@ window.rbAutoSave = () => {
   }, 400);
 };
 
-// SAVE WITH CLEAR FEEDBACK
 window.rbSave = () => {
   try {
     const data = JSON.stringify(rbData);
     localStorage.setItem('qunverio_resume_data', data);
     const sizeKB = (data.length / 1024).toFixed(1);
-    
     const old = document.getElementById('rbSaveToast');
     if (old) old.remove();
-    
     const t = document.createElement('div');
     t.id = 'rbSaveToast';
-    t.innerHTML = `✅ <strong>Resume Saved!</strong><br><span style="font-size:11px;opacity:0.9">Data browser me safe hai — refresh karne pe bhi rahega</span><br><span style="font-size:10px;opacity:0.75">${sizeKB} KB • ${new Date().toLocaleTimeString('en-IN')}</span>`;
+    t.innerHTML = `✅ <strong>Resume Saved!</strong><br><span style="font-size:11px;opacity:0.9">Data browser me safe hai — refresh pe bhi rahega</span><br><span style="font-size:10px;opacity:0.75">${sizeKB} KB • ${new Date().toLocaleTimeString('en-IN')}</span>`;
     t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:16px 24px;border-radius:12px;font-size:14px;z-index:9999999;box-shadow:0 10px 30px rgba(16,185,129,.5);text-align:center;font-weight:600;min-width:240px;max-width:90vw';
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3500);
@@ -565,8 +560,9 @@ window.rbCropCancel = () => { rbCloseCropModal(); rbToast('Photo cancel kiya'); 
 window.rbCropApply = () => {
   if (!rbCropper) return;
   try {
-    const canvas = rbCropper.getCroppedCanvas({ width: 330, height: 390, imageSmoothingQuality: 'high' });
-    rbData.personal.photo = canvas.toDataURL('image/jpeg', 0.92);
+    // 8x resolution: 110*8=880, 130*8=1040
+    const canvas = rbCropper.getCroppedCanvas({ width: 880, height: 1040, imageSmoothingQuality: 'high' });
+    rbData.personal.photo = canvas.toDataURL('image/jpeg', 1.0);
     rbAutoSave();
     rbCloseCropModal();
     rbRenderPhotoPreview();
@@ -923,27 +919,32 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF ======
+// ====== PDF 8K ULTRA HD ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
   if (!el) return;
-  rbToast('⏳ PDF ban raha hai...');
+  rbToast('⏳ 8K PDF ban raha hai... thoda time lagega');
   try {
     if (typeof htmlToImage === 'undefined' || typeof jspdf === 'undefined') {
       rbToast('❌ Libraries load nahi hui'); return;
     }
+
     const oldTransform = el.style.transform;
     const oldWidth = el.style.width;
     const oldHeight = el.style.height;
+    const oldMarginBottom = el.style.marginBottom;
+
     el.style.transform = 'none';
     el.style.width = '794px';
     el.style.height = 'auto';
     el.style.marginBottom = '0';
-    await new Promise(r => setTimeout(r, 100));
 
+    await new Promise(r => setTimeout(r, 150));
+
+    // 8x ULTRA HD capture
     const canvas = await htmlToImage.toCanvas(el, {
-      pixelRatio: 2,
+      pixelRatio: 8,
       backgroundColor: '#ffffff',
       cacheBust: true,
       width: 794,
@@ -953,51 +954,101 @@ window.rbDownloadPDF = async () => {
     el.style.transform = oldTransform;
     el.style.width = oldWidth;
     el.style.height = oldHeight;
-    el.style.marginBottom = '';
+    el.style.marginBottom = oldMarginBottom;
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    // JPEG quality 1.0 (max)
+    const imgData = canvas.toDataURL('image/jpeg', 1.0);
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    // PDF with no compression
+    const pdf = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4',
+      compress: false
+    });
+
+    pdf.setProperties({
+      title: (rbData.personal.name || 'Resume') + ' - Resume',
+      subject: 'Resume',
+      author: rbData.personal.name || 'Qunverio User',
+      creator: 'Qunverio Resume Builder (8K)'
+    });
+
     const pw = pdf.internal.pageSize.getWidth();
     const ph = pdf.internal.pageSize.getHeight();
     const imgW = pw;
     const imgH = (canvas.height * imgW) / canvas.width;
 
     if (imgH <= ph + 5) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH);
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
     } else {
       let heightLeft = imgH;
       let position = 0;
-      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
       heightLeft -= ph;
       while (heightLeft > 5) {
         position = heightLeft - imgH;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
         heightLeft -= ph;
       }
     }
-    pdf.save((rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume.pdf');
-    rbToast('✅ PDF downloaded!');
+
+    const fileName = (rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume_8K.pdf';
+    pdf.save(fileName);
+    rbToast('✅ 8K PDF downloaded!');
   } catch(e) {
     console.error(e);
     rbToast('❌ PDF error: ' + e.message);
   }
 };
 
-// ====== PRINT ======
+// ====== PRINT ULTRA HD ======
 window.rbPrint = () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
   if (!el) { setTimeout(() => window.print(), 300); return; }
+  
+  const printStyle = document.createElement('style');
+  printStyle.id = 'rbPrintHQ';
+  printStyle.textContent = `
+    @media print {
+      body * { visibility: hidden !important; }
+      .rb-preview, .rb-preview * { visibility: visible !important; }
+      .rb-preview { 
+        position: absolute !important; 
+        left: 0 !important; 
+        top: 0 !important; 
+        width: 794px !important; 
+        transform: none !important; 
+        box-shadow: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      .rb-preview img { 
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: crisp-edges !important;
+      }
+      @page { size: A4; margin: 0; }
+    }
+  `;
+  document.head.appendChild(printStyle);
+  
   const oldTransform = el.style.transform;
   const oldWidth = el.style.width;
   el.style.transform = 'none';
   el.style.width = '794px';
+  
   setTimeout(() => {
     window.print();
     el.style.transform = oldTransform;
     el.style.width = oldWidth;
+    setTimeout(() => {
+      const s = document.getElementById('rbPrintHQ');
+      if (s) s.remove();
+    }, 1000);
   }, 400);
 };
 
@@ -1017,4 +1068,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v7 - preview fixed)');
+console.log('✅ Resume Builder loaded (v8 - 8K Ultra HD PDF)');
