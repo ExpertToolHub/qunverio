@@ -1,13 +1,9 @@
 /* ============================================================
-   QUNVERIO — BACKGROUND REMOVER (v3 — RELIABLE)
-   - 3 retry attempts
-   - Better progress tracking
-   - Model cache (browser)
-   - Detailed error messages
-   - Quality: 100% (same library, same output)
+   QUNVERIO — BACKGROUND REMOVER (v4 — RELIABLE)
+   Uses UMD script tag (no dynamic import issues)
    ============================================================ */
 
-console.log('%cBackground Remover v3 loading...', 'color:#ec4899;font-weight:bold');
+console.log('%cBackground Remover v4 loading...', 'color:#ec4899;font-weight:bold');
 
 /* ============================================================
    STATE
@@ -18,8 +14,6 @@ let bgProcessedBlob = null;
 let bgProcessedUrl = null;
 let bgLibraryLoaded = false;
 let bgBusy = false;
-let bgRetryCount = 0;
-const BG_MAX_RETRIES = 3;
 
 let bgSettings = {
   bgType: 'transparent',
@@ -60,47 +54,65 @@ function bgHideProgress() {
   if (wrap) setTimeout(() => wrap.style.display = 'none', 3000);
 }
 
-function bgSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
 /* ============================================================
-   LOAD LIBRARY — v3 (with multiple CDNs + retry)
+   LOAD AI LIBRARY — v4 (script tag based)
    ============================================================ */
 async function bgLoadLibrary() {
   if (bgLibraryLoaded) return true;
 
   bgSetProgress(3, '🔍 AI library check...');
 
-  // Global check
+  // Method 1: Global function (script tag UMD)
   if (typeof window.removeBackground === 'function') {
     window.__bgRemoveFn = window.removeBackground;
     bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready (cached)');
+    bgSetProgress(15, '✅ AI ready (global)');
+    console.log('%c✅ Found: window.removeBackground', 'color:#10b981');
     return true;
   }
 
+  // Method 2: Namespace object (UMD alternate)
   if (window.ImglyBackgroundRemoval && typeof window.ImglyBackgroundRemoval.removeBackground === 'function') {
     window.__bgRemoveFn = window.ImglyBackgroundRemoval.removeBackground;
     bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready');
+    bgSetProgress(15, '✅ AI ready (namespace)');
+    console.log('%c✅ Found: ImglyBackgroundRemoval', 'color:#10b981');
     return true;
   }
 
-  // Dynamic import — single CDN (jsdelivr — most reliable)
-  const cdn = 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm';
-  try {
-    bgSetProgress(5, '📥 AI library loading...');
-    const module = await import(cdn);
-    if (module && typeof module.removeBackground === 'function') {
-      window.__bgRemoveFn = module.removeBackground;
-      bgLibraryLoaded = true;
-      bgSetProgress(15, '✅ AI ready');
-      console.log('%c✅ Library loaded from CDN', 'color:#10b981');
-      return true;
-    }
-  } catch (e) {
-    console.error('Library load failed:', e);
+  // Method 3: Scoped global (UMD alternate)
+  if (window['@imgly/background-removal'] && typeof window['@imgly/background-removal'].removeBackground === 'function') {
+    window.__bgRemoveFn = window['@imgly/background-removal'].removeBackground;
+    bgLibraryLoaded = true;
+    bgSetProgress(15, '✅ AI ready (scoped)');
+    console.log('%c✅ Found: @imgly/background-removal', 'color:#10b981');
+    return true;
   }
 
+  // Method 4: Dynamic import (fallback)
+  console.log('%c⚠️ Script tag failed — trying dynamic import', 'color:#f59e0b');
+  const cdns = [
+    'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm',
+    'https://esm.sh/@imgly/background-removal@1.4.5'
+  ];
+
+  for (let i = 0; i < cdns.length; i++) {
+    try {
+      bgSetProgress(8 + i * 3, `📥 CDN try ${i + 1}/${cdns.length}...`);
+      const mod = await import(cdns[i]);
+      if (mod && typeof mod.removeBackground === 'function') {
+        window.__bgRemoveFn = mod.removeBackground;
+        bgLibraryLoaded = true;
+        bgSetProgress(15, `✅ AI ready (CDN ${i + 1})`);
+        console.log('%c✅ Loaded from:', 'color:#10b981', cdns[i]);
+        return true;
+      }
+    } catch (e) {
+      console.warn(`CDN ${i + 1} fail:`, e.message);
+    }
+  }
+
+  // All failed
   bgSetProgress(0, '❌ Library load failed');
   bgToast('❌ AI library load nahi hui — internet check karo', 'error');
   bgHideProgress();
@@ -108,114 +120,70 @@ async function bgLoadLibrary() {
 }
 
 /* ============================================================
-   PROCESS WITH RETRY
-   ============================================================ */
-async function bgProcessWithRetry(file) {
-  for (let attempt = 1; attempt <= BG_MAX_RETRIES; attempt++) {
-    try {
-      console.log(`%c🎯 Attempt ${attempt}/${BG_MAX_RETRIES}`, 'color:#f59e0b;font-weight:bold');
-      const result = await bgProcessOnce(file, attempt);
-      return result;
-    } catch (e) {
-      console.warn(`Attempt ${attempt} failed:`, e.message);
-      if (attempt < BG_MAX_RETRIES) {
-        const waitTime = attempt * 3;
-        bgSetProgress(20, `⚠️ Attempt ${attempt} fail — retry in ${waitTime}s...`);
-        await bgSleep(waitTime * 1000);
-        bgSetProgress(22, `🔄 Retry ${attempt + 1}/${BG_MAX_RETRIES}...`);
-      } else {
-        throw e;
-      }
-    }
-  }
-}
-
-async function bgProcessOnce(file, attempt) {
-  // Resize if needed (smart — keeps quality)
-  bgSetProgress(25, '⏳ Image prepare ho rahi hai...');
-  const resizedFile = await bgResizeIfNeeded(file);
-
-  // Load library
-  bgSetProgress(28, '📥 AI model load...');
-  const ok = await bgLoadLibrary();
-  if (!ok) throw new Error('Library not loaded');
-
-  bgSetProgress(35, `🎨 Background remove ho raha hai... (Attempt ${attempt})`);
-
-  // Progress callback — track model download
-  let lastLoggedMB = 0;
-  const config = {
-    output: {
-      format: 'image/png',
-      quality: 1
-    },
-    progress: (key, current, total) => {
-      const pct = 35 + Math.round((current / total) * 40);
-      const mb = (current / (1024 * 1024)).toFixed(1);
-      const totalMb = (total / (1024 * 1024)).toFixed(1);
-
-      // Update progress bar
-      if (typeof key === 'string' && (key.includes('fetch') || key.includes('model'))) {
-        bgSetProgress(pct, `📥 Downloading: ${mb}MB / ${totalMb}MB`);
-
-        // Log every 10MB
-        if (current - lastLoggedMB > 10 * 1024 * 1024) {
-          console.log(`%c📥 Downloaded: ${mb}MB / ${totalMb}MB`, 'color:#3b82f6');
-          lastLoggedMB = current;
-        }
-      } else {
-        bgSetProgress(pct, `🎨 Processing: ${mb}MB / ${totalMb}MB`);
-      }
-    },
-    // Smaller internal model = faster (still same output quality)
-    // Uncomment if needed: 
-    // model: 'isnet'
-  };
-
-  // Call the actual AI
-  bgSetProgress(40, '🎨 AI chal raha hai...');
-  const resultBlob = await window.__bgRemoveFn(resizedFile, config);
-
-  bgSetProgress(80, '🖼️ Background apply...');
-  let finalBlob = resultBlob;
-
-  // Apply color bg if needed
-  if (bgSettings.bgType === 'color') {
-    finalBlob = await bgApplyBgColor(finalBlob, bgSettings.bgColor);
-  }
-
-  // Convert to JPG if needed
-  if (bgSettings.outputFormat === 'jpg') {
-    finalBlob = await bgConvertToJpg(finalBlob);
-  }
-
-  return finalBlob;
-}
-
-/* ============================================================
-   MAIN PROCESS ENTRY
+   PROCESS IMAGE
    ============================================================ */
 async function bgProcessImage(file) {
   if (bgBusy) return;
   bgBusy = true;
-  bgRetryCount = 0;
 
   try {
-    const resultBlob = await bgProcessWithRetry(file);
+    bgSetProgress(20, '⏳ Image prepare...');
+    const resizedFile = await bgResizeIfNeeded(file);
+
+    bgSetProgress(25, '📥 AI library load...');
+    const ok = await bgLoadLibrary();
+    if (!ok) {
+      bgBusy = false;
+      return;
+    }
+
+    bgSetProgress(35, '🎨 AI model load ho raha hai...');
+
+    // Config
+    const config = {
+      output: {
+        format: 'image/png',
+        quality: 1
+      },
+      progress: (key, current, total) => {
+        const pct = 35 + Math.round((current / total) * 45);
+        const mb = (current / (1024 * 1024)).toFixed(1);
+        const totalMb = (total / (1024 * 1024)).toFixed(1);
+        if (typeof key === 'string' && (key.includes('fetch') || key.includes('model'))) {
+          bgSetProgress(pct, `📥 Download: ${mb}MB / ${totalMb}MB`);
+        } else {
+          bgSetProgress(pct, `🎨 Processing: ${mb}MB / ${totalMb}MB`);
+        }
+      }
+    };
+
+    bgSetProgress(40, '🎨 Background remove...');
+    const resultBlob = await window.__bgRemoveFn(resizedFile, config);
+
+    bgSetProgress(85, '🖼️ Background apply...');
+    let finalBlob = resultBlob;
+
+    if (bgSettings.bgType === 'color') {
+      finalBlob = await bgApplyBgColor(finalBlob, bgSettings.bgColor);
+    }
+
+    if (bgSettings.outputFormat === 'jpg') {
+      finalBlob = await bgConvertToJpg(finalBlob);
+    }
 
     bgSetProgress(95, '✅ Ready!');
-    bgProcessedBlob = resultBlob;
+    bgProcessedBlob = finalBlob;
 
     if (bgProcessedUrl) URL.revokeObjectURL(bgProcessedUrl);
     bgProcessedUrl = URL.createObjectURL(bgProcessedBlob);
 
     bgRenderResult();
     bgHideProgress();
-    bgToast('✅ Background removed! Quality: 100%', 'success');
+    bgToast('✅ Background removed!', 'success');
   } catch (e) {
     console.error('BG remove error:', e);
     bgToast('❌ Fail: ' + (e.message || 'unknown'), 'error');
-    bgSetProgress(0, '❌ Failed after 3 attempts');
+    bgSetProgress(0, '❌ Failed');
     bgHideProgress();
   } finally {
     bgBusy = false;
@@ -223,7 +191,7 @@ async function bgProcessImage(file) {
 }
 
 /* ============================================================
-   RESIZE IMAGE
+   RESIZE
    ============================================================ */
 function bgResizeIfNeeded(file) {
   return new Promise(resolve => {
@@ -231,7 +199,6 @@ function bgResizeIfNeeded(file) {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       const maxDim = bgSettings.maxDim;
-      // Only resize if VERY large (keeps quality)
       if (img.width <= maxDim && img.height <= maxDim) {
         URL.revokeObjectURL(url);
         resolve(file);
@@ -348,7 +315,7 @@ function bgRenderResult() {
       <img src="${bgProcessedUrl}" alt="Result" style="max-width:100%;max-height:280px;display:block;margin:0 auto">
     </div>
     <div style="margin-top:10px;font-size:12px;color:var(--text-3);text-align:center">
-      ✅ ${bgFmtSize(bgProcessedBlob.size)} • ${bgSettings.outputFormat.toUpperCase()} • Quality 100%
+      ✅ ${bgFmtSize(bgProcessedBlob.size)} • ${bgSettings.outputFormat.toUpperCase()}
     </div>
   `;
 }
@@ -401,9 +368,6 @@ async function bgReprocess() {
   bgRenderResult();
 }
 
-/* ============================================================
-   LOAD FILE
-   ============================================================ */
 window.bgLoadFile = (file) => {
   if (!file) return;
   if (!file.type.startsWith('image/')) {
@@ -456,7 +420,7 @@ window.bgReset = () => {
 };
 
 /* ============================================================
-   RENDER — same as before (no change)
+   RENDER (main HTML)
    ============================================================ */
 window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
 <div class="bg-wrap">
@@ -490,8 +454,7 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
         <div id="bgProgressFill" style="height:100%;width:0%;background:var(--gradient);transition:width .3s"></div>
       </div>
       <div class="hint" style="margin-top:8px;font-size:11px">
-        ⏳ Pehli baar model download hoga (~40MB) — 30-60 sec lag sakte hain<br>
-        🔄 Fail hone pe 3 baar auto-retry hoga
+        ⏳ Pehli baar model download hoga (~40MB) — 30-60 sec lag sakte hain
       </div>
     </div>
 
@@ -568,8 +531,7 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
     </div>
 
     <div class="hint" style="margin-top:14px;text-align:center">
-      🔒 100% browser me process — image upload nahi hoti<br>
-      ⚡ First time: ~40MB AI model download (browser cache me save hoga)
+      🔒 100% browser me process — image upload nahi hoti
     </div>
   </div>
 </div>
@@ -642,4 +604,4 @@ window.EXTRA_TOOL_INITS['background-remover'] = () => {
   });
 };
 
-console.log('%c✅ Background Remover v3 loaded', 'color:#ec4899;font-weight:bold');
+console.log('%c✅ Background Remover v4 loaded', 'color:#ec4899;font-weight:bold');
