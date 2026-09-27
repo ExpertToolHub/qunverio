@@ -1,10 +1,9 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v6)
+   RESUME BUILDER — Qunverio (FINAL v7)
+   - Preview button: tab switch + refresh
+   - Save button: clear message
    - 7 Templates
    - PDF/Print full-size fix
-   - Save visible feedback
-   - Template instant apply
-   - Photo crop with fixed rectangle
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -43,8 +42,10 @@
     .rb-btn:hover { transform: translateY(-1px); opacity: .9; }
     .rb-add { width: 100%; padding: 11px; border-radius: 8px; border: 1px dashed #2a2a3e; background: transparent; color: #00d4ff; cursor: pointer; font-size: 13px; font-weight: 500; margin-top: 4px; font-family: inherit; }
     .rb-add:hover { background: rgba(0,212,255,.05); }
-    .rb-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; padding: 14px; background: #1a1a2e; border-radius: 12px; border: 1px solid #2a2a3e; position: sticky; top: 10px; z-index: 10; }
+    .rb-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 8px; padding: 14px; background: #1a1a2e; border-radius: 12px; border: 1px solid #2a2a3e; position: sticky; top: 10px; z-index: 10; }
     .rb-actions .rb-btn { flex: 1; min-width: 100px; padding: 10px; }
+    .rb-actions-hint { font-size: 10.5px; color: #888; margin-bottom: 12px; text-align: center; line-height: 1.6; padding: 0 6px; }
+    .rb-actions-hint strong { color: #aaa; }
     .rb-progress { height: 6px; background: #2a2a3e; border-radius: 3px; overflow: hidden; margin-bottom: 14px; }
     .rb-progress-fill { height: 100%; background: linear-gradient(90deg,#00d4ff,#7b2ff7); transition: width .4s; }
     .rb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 20px; font-size: 12px; color: #e0e0e0; margin: 4px 4px 0 0; }
@@ -192,11 +193,16 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
 <div class="rb-wrap">
   <div class="rb-actions">
     <button class="rb-btn primary" onclick="rbSave()">💾 Save</button>
-    <button class="rb-btn success" onclick="rbPreviewRefresh()">👁️ Preview</button>
+    <button class="rb-btn success" onclick="rbGoToPreview()">👁️ Preview</button>
     <button class="rb-btn ghost" onclick="rbDownloadPDF()">📥 PDF</button>
     <button class="rb-btn ghost" onclick="rbPrint()">🖨️ Print</button>
     <button class="rb-btn ghost" onclick="rbDuplicate()">📋 Copy</button>
     <button class="rb-btn danger" onclick="rbReset()">🔄 Reset</button>
+  </div>
+  <div class="rb-actions-hint">
+    💾 <strong>Save</strong> = data browser me save karo (auto-save bhi hota hai) &nbsp;•&nbsp; 
+    👁️ <strong>Preview</strong> = resume dekho &nbsp;•&nbsp; 
+    📥 <strong>PDF</strong> = download
   </div>
 
   <div class="rb-progress"><div class="rb-progress-fill" id="rbProgress" style="width:0%"></div></div>
@@ -404,12 +410,31 @@ window.rbSet = (path, val) => {
   o[parts[parts.length - 1]] = val;
   rbAutoSave();
   rbUpdateProgress();
-  // Template/design changes → hamesha preview refresh
   if (path === 'template' || path === 'themeColor' || path === 'fontFamily' || path === 'fontSize') {
     rbPreviewRefresh();
   } else if (document.querySelector('.rb-tab.active')?.dataset.tab === 'preview') {
     rbPreviewRefresh();
   }
+};
+
+// GO TO PREVIEW TAB + REFRESH
+window.rbGoToPreview = () => {
+  // Switch tab
+  document.querySelectorAll('.rb-tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.rb-panel').forEach(x => x.classList.remove('active'));
+  const previewTab = document.querySelector('.rb-tab[data-tab="preview"]');
+  const previewPanel = document.querySelector('.rb-panel[data-panel="preview"]');
+  if (previewTab) previewTab.classList.add('active');
+  if (previewPanel) previewPanel.classList.add('active');
+  // Refresh preview
+  rbPreviewRefresh();
+  // Scroll to top
+  setTimeout(() => {
+    const wrap = document.querySelector('.rb-preview-wrap');
+    if (wrap) wrap.scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, 100);
+  rbToast('👁️ Preview opened');
 };
 
 window.rbAutoSave = () => {
@@ -419,23 +444,22 @@ window.rbAutoSave = () => {
   }, 400);
 };
 
-// BIG VISIBLE SAVE TOAST
+// SAVE WITH CLEAR FEEDBACK
 window.rbSave = () => {
   try {
     const data = JSON.stringify(rbData);
     localStorage.setItem('qunverio_resume_data', data);
     const sizeKB = (data.length / 1024).toFixed(1);
     
-    // Remove any existing save toast
     const old = document.getElementById('rbSaveToast');
     if (old) old.remove();
     
     const t = document.createElement('div');
     t.id = 'rbSaveToast';
-    t.innerHTML = `✅ <strong>Saved successfully!</strong><br><span style="font-size:11px;opacity:0.85">${sizeKB} KB • ${new Date().toLocaleTimeString('en-IN')}</span>`;
-    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:16px 28px;border-radius:12px;font-size:15px;z-index:9999999;box-shadow:0 10px 30px rgba(16,185,129,.5);text-align:center;font-weight:600;min-width:220px';
+    t.innerHTML = `✅ <strong>Resume Saved!</strong><br><span style="font-size:11px;opacity:0.9">Data browser me safe hai — refresh karne pe bhi rahega</span><br><span style="font-size:10px;opacity:0.75">${sizeKB} KB • ${new Date().toLocaleTimeString('en-IN')}</span>`;
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:16px 24px;border-radius:12px;font-size:14px;z-index:9999999;box-shadow:0 10px 30px rgba(16,185,129,.5);text-align:center;font-weight:600;min-width:240px;max-width:90vw';
     document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+    setTimeout(() => t.remove(), 3500);
   } catch(e) {
     console.error('Save error:', e);
     rbToast('❌ ' + (e.name === 'QuotaExceededError' ? 'Storage full!' : 'Save fail: ' + e.message));
@@ -899,7 +923,7 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF (FULL-SIZE FIX) ======
+// ====== PDF ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
@@ -909,19 +933,13 @@ window.rbDownloadPDF = async () => {
     if (typeof htmlToImage === 'undefined' || typeof jspdf === 'undefined') {
       rbToast('❌ Libraries load nahi hui'); return;
     }
-
-    // Save current styles
     const oldTransform = el.style.transform;
     const oldWidth = el.style.width;
     const oldHeight = el.style.height;
-
-    // Force full size
     el.style.transform = 'none';
     el.style.width = '794px';
     el.style.height = 'auto';
     el.style.marginBottom = '0';
-
-    // Wait for layout
     await new Promise(r => setTimeout(r, 100));
 
     const canvas = await htmlToImage.toCanvas(el, {
@@ -932,7 +950,6 @@ window.rbDownloadPDF = async () => {
       height: el.scrollHeight
     });
 
-    // Restore
     el.style.transform = oldTransform;
     el.style.width = oldWidth;
     el.style.height = oldHeight;
@@ -947,10 +964,8 @@ window.rbDownloadPDF = async () => {
     const imgH = (canvas.height * imgW) / canvas.width;
 
     if (imgH <= ph + 5) {
-      // Single page
       pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH);
     } else {
-      // Multi-page
       let heightLeft = imgH;
       let position = 0;
       pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
@@ -970,7 +985,7 @@ window.rbDownloadPDF = async () => {
   }
 };
 
-// ====== PRINT (FULL-SIZE FIX) ======
+// ====== PRINT ======
 window.rbPrint = () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
@@ -1002,4 +1017,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v6 - full fix)');
+console.log('✅ Resume Builder loaded (v7 - preview fixed)');
