@@ -395,7 +395,7 @@ const EXTRA_TOOLS = [
     howto: 'Images add karo. Target format choose karo (JPG/PNG/WebP). Quality set karo. Convert All click karo. Download as ZIP.',
     kw: ['jpg to png', 'png to jpg', 'webp converter', 'image format', 'convert image', 'jpg to webp', 'png to webp', 'image converter']
   },
-  {
+    {
     id: 'image-cropper',
     name: 'Image Cropper',
     cat: 'digital-studio',
@@ -403,6 +403,15 @@ const EXTRA_TOOLS = [
     desc: 'Crop images with aspect ratio presets — rotate, zoom, flip, and download',
     howto: 'Images add karo. Aspect ratio choose karo (1:1, 16:9, Passport, etc). Zoom, rotate, flip karo. Apply Crop click. Download.',
     kw: ['crop', 'cropper', 'image crop', 'photo crop', 'cut image', 'aspect ratio', 'resize crop', 'passport crop']
+  },
+  {
+    id: 'signature-cropper',
+    name: 'Signature Cropper',
+    cat: 'digital-studio',
+    icon: '✍️',
+    desc: 'Crop signature, auto-clean background — perfect for PAN, Aadhaar, bank & exam forms',
+    howto: 'Signature photo upload karo. Crop karo. Auto-white background aur enhancement auto-apply hoga. Preset choose karo (PAN/Aadhaar/Exam). Download.',
+    kw: ['signature', 'signature cropper', 'signature maker', 'pan signature', 'aadhaar signature', 'signature clean', 'signature crop', 'signature background remover']
   }
 ];
 
