@@ -1,11 +1,10 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v13)
-   - Ultra HD Photo (1100×1300 — 10x)
+   RESUME BUILDER — Qunverio (FINAL v14)
+   - Smart Auto-Scale PDF (2x → 4x → 6x)
+   - Photo 1100×1300 Ultra HD
    - Photo limit 20 MB
-   - PDF 6x pixelRatio (576 DPI — safe + crisp)
-   - Memory-safe scaling
-   - 7 Templates perfect
-   - A4 multi-page smart logic
+   - 7 Templates
+   - A4 multi-page
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -157,45 +156,12 @@
     /* ===== PRINT ===== */
     @media print {
       @page { size: A4; margin: 0; }
-      html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: #fff !important;
-        width: 210mm !important;
-        height: auto !important;
-        overflow: visible !important;
-      }
+      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 210mm !important; height: auto !important; overflow: visible !important; }
       body * { visibility: hidden !important; }
       .rb-preview, .rb-preview * { visibility: visible !important; }
-      .rb-preview {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 210mm !important;
-        max-width: 210mm !important;
-        min-height: auto !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-shadow: none !important;
-        transform: none !important;
-        background: #fff !important;
-        display: block !important;
-        visibility: visible !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-      .rb-preview * {
-        visibility: visible !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-      .rb-preview img {
-        image-rendering: -webkit-optimize-contrast !important;
-        image-rendering: crisp-edges !important;
-        max-width: 100% !important;
-      }
+      .rb-preview { position: absolute !important; left: 0 !important; top: 0 !important; width: 210mm !important; max-width: 210mm !important; min-height: auto !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; transform: none !important; background: #fff !important; display: block !important; visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+      .rb-preview * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+      .rb-preview img { image-rendering: -webkit-optimize-contrast !important; image-rendering: crisp-edges !important; max-width: 100% !important; }
     }
 
     @media (max-width: 768px) {
@@ -532,7 +498,7 @@ window.rbToast = (msg) => {
   setTimeout(() => t.remove(), 2400);
 };
 
-// ====== PHOTO (ULTRA HD) ======
+// ====== PHOTO ======
 let rbCropper = null;
 
 window.rbHandlePhoto = (e) => {
@@ -954,7 +920,7 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF ULTRA HD (6x + safe canvas) ======
+// ====== PDF ULTRA HD — SMART AUTO-SCALE ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
@@ -977,27 +943,43 @@ window.rbDownloadPDF = async () => {
 
     await new Promise(r => setTimeout(r, 200));
 
-    // 6x Ultra HD capture (safe for mobile memory)
-    const canvas = await htmlToImage.toCanvas(el, {
-      pixelRatio: 6,
-      backgroundColor: '#ffffff',
-      cacheBust: true,
-      width: 794,
-      height: el.scrollHeight
-    });
+    // 🎯 SMART SCALE: Try 6x → 4x → 2x
+    const ratios = [6, 4, 2];
+    let canvas = null;
+    let usedRatio = 2;
+
+    for (const ratio of ratios) {
+      try {
+        console.log('Trying pixelRatio:', ratio);
+        const c = await htmlToImage.toCanvas(el, {
+          pixelRatio: ratio,
+          backgroundColor: '#ffffff',
+          cacheBust: true,
+          width: 794,
+          height: el.scrollHeight
+        });
+        if (c && c.width > 0 && c.height > 0) {
+          canvas = c;
+          usedRatio = ratio;
+          console.log('✅ Success at', ratio + 'x — canvas:', c.width, '×', c.height);
+          break;
+        }
+      } catch (err) {
+        console.warn('Failed at', ratio + 'x:', err.message);
+      }
+    }
 
     el.style.transform = oldTransform;
     el.style.width = oldWidth;
     el.style.height = oldHeight;
     el.style.marginBottom = oldMarginBottom;
 
-    // Safety check
-    if (!canvas || !canvas.width || !canvas.height) {
-      rbToast('❌ Canvas empty — retry');
+    if (!canvas) {
+      rbToast('❌ PDF nahi ban paya — retry karein');
       return;
     }
 
-    // Scale canvas to max 3500px (jsPDF safe)
+    // Scale canvas to safe max 3500px if needed
     const MAX_PX = 3500;
     let finalCanvas = canvas;
     if (canvas.width > MAX_PX || canvas.height > MAX_PX) {
@@ -1050,14 +1032,14 @@ window.rbDownloadPDF = async () => {
 
     const fileName = (rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume.pdf';
     pdf.save(fileName);
-    rbToast('✅ Ultra HD PDF downloaded!');
+    rbToast(`✅ PDF downloaded (${usedRatio}x quality)!`);
   } catch(e) {
     console.error(e);
     rbToast('❌ PDF error: ' + e.message);
   }
 };
 
-// ====== PRINT ULTRA HD ======
+// ====== PRINT ======
 window.rbPrint = () => {
   rbPreviewRefresh();
   setTimeout(() => {
@@ -1081,4 +1063,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v13 - 6x safe + 3500px scale + FAST)');
+console.log('✅ Resume Builder loaded (v14 - Smart Auto-Scale)');
