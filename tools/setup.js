@@ -386,7 +386,7 @@ const EXTRA_TOOLS = [
     howto: 'Photo upload karo. Face crop karo. Size choose karo (Passport/Stamp/Visa). Background color set karo. A4 sheet automatically generate hoga. Download JPG/PDF ya Print.',
     kw: ['passport photo', 'passport size photo', 'id photo', 'photo maker', 'a4 sheet', 'stamp size', 'visa photo', '35x45mm', 'passport photo online']
   },
-  {
+    {
     id: 'format-converter',
     name: 'Image Format Converter',
     cat: 'digital-studio',
@@ -394,6 +394,15 @@ const EXTRA_TOOLS = [
     desc: 'Convert images between JPG, PNG, WebP — bulk conversion with quality control',
     howto: 'Images add karo. Target format choose karo (JPG/PNG/WebP). Quality set karo. Convert All click karo. Download as ZIP.',
     kw: ['jpg to png', 'png to jpg', 'webp converter', 'image format', 'convert image', 'jpg to webp', 'png to webp', 'image converter']
+  },
+  {
+    id: 'image-cropper',
+    name: 'Image Cropper',
+    cat: 'digital-studio',
+    icon: '✂️',
+    desc: 'Crop images with aspect ratio presets — rotate, zoom, flip, and download',
+    howto: 'Images add karo. Aspect ratio choose karo (1:1, 16:9, Passport, etc). Zoom, rotate, flip karo. Apply Crop click. Download.',
+    kw: ['crop', 'cropper', 'image crop', 'photo crop', 'cut image', 'aspect ratio', 'resize crop', 'passport crop']
   }
 ];
 
