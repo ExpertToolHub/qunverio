@@ -1,584 +1,423 @@
-/* ============================================================
-   QUNVERIO — BACKGROUND REMOVER (v9 — FINAL, Mobile First)
-   Uses isnet_quint8 (smallest model) directly
-   ============================================================ */
+// Background Remover — Hybrid Color-Based (Mobile-First, 100% Client-Side)
 
-console.log('%cBackground Remover v9 loading...', 'color:#ec4899;font-weight:bold');
-
-let bgOriginalFile = null;
-let bgOriginalUrl = null;
-let bgProcessedBlob = null;
-let bgProcessedUrl = null;
-let bgLibraryLoaded = false;
-let bgBusy = false;
-
-let bgSettings = {
-  bgType: 'transparent',
-  bgColor: '#ffffff',
-  outputFormat: 'png',
-  quality: 92,
-  maxDim: 600
-};
-
-/* ============================================================
-   HELPERS
-   ============================================================ */
-function bgFmtSize(bytes) {
-  if (!bytes && bytes !== 0) return '0 B';
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
-}
-
-function bgToast(msg, type) {
-  if (typeof toast === 'function') toast(msg, type || '');
-  else console.log('[TOAST]', msg);
-}
-
-function bgSetProgress(pct, text) {
-  const wrap = document.getElementById('bgProgressWrap');
-  const fill = document.getElementById('bgProgressFill');
-  const pctEl = document.getElementById('bgProgressPct');
-  const textEl = document.getElementById('bgProgressText');
-  if (wrap) wrap.style.display = 'block';
-  if (fill) fill.style.width = Math.round(pct) + '%';
-  if (pctEl) pctEl.textContent = Math.round(pct) + '%';
-  if (textEl) textEl.textContent = text || '';
-}
-
-function bgHideProgress() {
-  const wrap = document.getElementById('bgProgressWrap');
-  if (wrap) setTimeout(() => wrap.style.display = 'none', 3000);
-}
-
-/* ============================================================
-   LOAD LIBRARY — v9 (multiple fallbacks)
-   ============================================================ */
-async function bgLoadLibrary() {
-  if (bgLibraryLoaded) return true;
-  bgSetProgress(3, '🔍 AI check...');
-
-  // 1. Global (script tag)
-  if (typeof window.removeBackground === 'function') {
-    window.__bgRemoveFn = window.removeBackground;
-    bgLibraryLoaded = true;
-    bgSetProgress(10, '✅ AI ready');
-    console.log('%c✅ Global removeBackground found', 'color:#10b981');
-    return true;
-  }
-
-  // 2. Namespace
-  if (window.ImglyBackgroundRemoval && typeof window.ImglyBackgroundRemoval.removeBackground === 'function') {
-    window.__bgRemoveFn = window.ImglyBackgroundRemoval.removeBackground;
-    bgLibraryLoaded = true;
-    bgSetProgress(10, '✅ AI ready (namespace)');
-    return true;
-  }
-
-  // 3. Scoped
-  if (window['@imgly/background-removal'] && typeof window['@imgly/background-removal'].removeBackground === 'function') {
-    window.__bgRemoveFn = window['@imgly/background-removal'].removeBackground;
-    bgLibraryLoaded = true;
-    bgSetProgress(10, '✅ AI ready (scoped)');
-    return true;
-  }
-
-  // 4. Dynamic import fallback
-  console.log('%c⚠️ Trying dynamic import', 'color:#f59e0b');
-  const cdns = [
-    'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm',
-    'https://esm.sh/@imgly/background-removal@1.4.5',
-    'https://unpkg.com/@imgly/background-removal@1.4.5/+esm'
-  ];
-  for (let i = 0; i < cdns.length; i++) {
-    try {
-      bgSetProgress(5 + i * 2, `📥 CDN ${i + 1}/${cdns.length}...`);
-      const mod = await import(cdns[i]);
-      if (mod && typeof mod.removeBackground === 'function') {
-        window.__bgRemoveFn = mod.removeBackground;
-        bgLibraryLoaded = true;
-        bgSetProgress(10, `✅ AI ready`);
-        return true;
-      }
-    } catch (e) {
-      console.warn(`CDN ${i + 1} fail:`, e.message);
-    }
-  }
-
-  bgSetProgress(0, '❌ AI load failed');
-  bgToast('❌ AI library load nahi hui — desktop pe try karo', 'error');
-  bgHideProgress();
-  return false;
-}
-
-/* ============================================================
-   PROCESS — Smallest model (isnet_quint8)
-   ============================================================ */
-async function bgProcessWithFallback(file) {
-  bgSetProgress(20, '⏳ Image prepare...');
-  const resizedFile = await bgResizeIfNeeded(file);
-
-  bgSetProgress(22, '📥 AI library load...');
-  const ok = await bgLoadLibrary();
-  if (!ok) throw new Error('Library load nahi hui');
-
-  bgSetProgress(25, '📥 AI model load ho raha hai...');
-  console.log('%c🎯 Using smallest model: isnet_quint8', 'color:#f59e0b;font-weight:bold');
-
-  const config = {
-    output: {
-      format: 'image/png',
-      quality: 1
-    },
-    model: 'isnet_quint8',   // smallest model (~20MB)
-    progress: (key, current, total) => {
-      const pct = 25 + Math.round((current / total) * 55);
-      const mb = (current / (1024 * 1024)).toFixed(1);
-      const totalMb = (total / (1024 * 1024)).toFixed(1);
-      if (typeof key === 'string' && (key.includes('fetch') || key.includes('model'))) {
-        bgSetProgress(pct, `📥 Model: ${mb}MB / ${totalMb}MB`);
-      } else {
-        bgSetProgress(pct, `🎨 Processing: ${mb}MB`);
-      }
-    }
-  };
-
-  let resultBlob = null;
-  try {
-    resultBlob = await window.__bgRemoveFn(resizedFile, config);
-    console.log('%c✅ Success with isnet_quint8', 'color:#10b981');
-  } catch (e) {
-    console.warn('isnet_quint8 failed:', e.message);
-    // Fallback to default (no model param)
-    console.log('%c⚠️ Trying default model', 'color:#f59e0b');
-    bgSetProgress(30, '🎨 Processing (default)...');
-    resultBlob = await window.__bgRemoveFn(resizedFile, {
-      output: { format: 'image/png', quality: 1 }
-    });
-  }
-
-  bgSetProgress(85, '🖼️ Background apply...');
-  let finalBlob = resultBlob;
-
-  if (bgSettings.bgType === 'color') {
-    finalBlob = await bgApplyBgColor(finalBlob, bgSettings.bgColor);
-  }
-  if (bgSettings.outputFormat === 'jpg') {
-    finalBlob = await bgConvertToJpg(finalBlob);
-  }
-
-  return finalBlob;
-}
-
-/* ============================================================
-   MAIN
-   ============================================================ */
-async function bgProcessImage(file) {
-  if (bgBusy) return;
-  bgBusy = true;
-
-  try {
-    const resultBlob = await bgProcessWithFallback(file);
-
-    bgSetProgress(95, '✅ Ready!');
-    bgProcessedBlob = resultBlob;
-
-    if (bgProcessedUrl) URL.revokeObjectURL(bgProcessedUrl);
-    bgProcessedUrl = URL.createObjectURL(bgProcessedBlob);
-
-    bgRenderResult();
-    bgHideProgress();
-    bgToast('✅ Background removed!', 'success');
-  } catch (e) {
-    console.error('BG remove error:', e);
-    bgToast('❌ Fail: ' + (e.message || 'unknown'), 'error');
-    bgSetProgress(0, '❌ Failed');
-    bgHideProgress();
-  } finally {
-    bgBusy = false;
-  }
-}
-
-/* ============================================================
-   RESIZE
-   ============================================================ */
-function bgResizeIfNeeded(file) {
-  return new Promise(resolve => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const maxDim = bgSettings.maxDim;
-      if (img.width <= maxDim && img.height <= maxDim) {
-        URL.revokeObjectURL(url);
-        resolve(file);
-        return;
-      }
-      let w = img.width, h = img.height;
-      if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
-      else { w = Math.round(w * (maxDim / h)); h = maxDim; }
-
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0, w, h);
-
-      canvas.toBlob(blob => {
-        URL.revokeObjectURL(url);
-        resolve(blob || file);
-      }, 'image/png');
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
-    img.src = url;
-  });
-}
-
-function bgApplyBgColor(blob, color) {
-  return new Promise(resolve => {
-    const img = new Image();
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = color;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
-      canvas.toBlob(b => resolve(b), 'image/png');
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(blob); };
-    img.src = url;
-  });
-}
-
-function bgConvertToJpg(blob) {
-  return new Promise(resolve => {
-    const img = new Image();
-    const url = URL.createObjectURL(blob);
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = bgSettings.bgType === 'color' ? bgSettings.bgColor : '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
-      URL.revokeObjectURL(url);
-      canvas.toBlob(b => resolve(b), 'image/jpeg', bgSettings.quality / 100);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(blob); };
-    img.src = url;
-  });
-}
-
-/* ============================================================
-   RENDER
-   ============================================================ */
-function bgRenderDrop() {
-  const drop = document.getElementById('bgDrop');
-  const panel = document.getElementById('bgPanel');
-  if (drop) drop.style.display = 'block';
-  if (panel) panel.style.display = 'none';
-}
-
-function bgRenderPanel() {
-  const drop = document.getElementById('bgDrop');
-  const panel = document.getElementById('bgPanel');
-  if (drop) drop.style.display = 'none';
-  if (panel) panel.style.display = 'block';
-
-  const orig = document.getElementById('bgOriginalPreview');
-  if (orig && bgOriginalUrl) {
-    orig.innerHTML = `<img src="${bgOriginalUrl}" alt="Original" style="max-width:100%;max-height:180px;border-radius:10px;display:block;margin:0 auto">`;
-  }
-  bgRenderResult();
-}
-
-function bgRenderResult() {
-  const result = document.getElementById('bgResultPreview');
-  if (!result) return;
-  if (!bgProcessedUrl) {
-    result.innerHTML = `
-      <div style="text-align:center;padding:24px 12px;color:var(--text-3)">
-        <div style="font-size:42px;opacity:.4;margin-bottom:8px">🎨</div>
-        <div style="font-size:13px">Click <strong>Remove Background</strong> to start</div>
-      </div>`;
-    return;
-  }
-  result.innerHTML = `
-    <div style="background:${bgSettings.bgType === 'transparent' ? 'repeating-conic-gradient(#e5e7eb 0 25%, transparent 0 50%) 50% / 16px 16px' : bgSettings.bgColor};padding:10px;border-radius:12px;border:1px solid var(--border)">
-      <img src="${bgProcessedUrl}" alt="Result" style="max-width:100%;max-height:280px;display:block;margin:0 auto">
-    </div>
-    <div style="margin-top:10px;font-size:12px;color:var(--text-3);text-align:center">
-      ✅ ${bgFmtSize(bgProcessedBlob.size)} • ${bgSettings.outputFormat.toUpperCase()}
-    </div>`;
-}
-
-/* ============================================================
-   SETTINGS
-   ============================================================ */
-window.bgSetSetting = (key, val) => {
-  bgSettings[key] = val;
-  if (key === 'bgType') {
-    document.querySelectorAll('.bg-type-chip').forEach(c => {
-      c.classList.toggle('active', c.dataset.val === val);
-    });
-    const colorBox = document.getElementById('bgColorBox');
-    if (colorBox) colorBox.style.display = val === 'color' ? 'block' : 'none';
-  }
-  if (key === 'outputFormat') {
-    document.querySelectorAll('.bg-format-chip').forEach(c => {
-      c.classList.toggle('active', c.dataset.val === val);
-    });
-  }
-  if (key === 'quality') {
-    const el = document.getElementById('bgQualityVal');
-    if (el) el.textContent = val + '%';
-  }
-  if (key === 'maxDim') {
-    bgSettings.maxDim = parseInt(val, 10) || 600;
-  }
-  if (bgProcessedBlob && (key === 'bgType' || key === 'bgColor' || key === 'outputFormat')) {
-    bgReprocess();
-  }
-};
-
-window.bgSetBgColor = (val) => {
-  bgSettings.bgColor = val;
-  if (bgProcessedBlob) bgReprocess();
-};
-window.bgSetBgPreset = (val) => {
-  bgSettings.bgColor = val;
-  const el = document.getElementById('bgColorPicker');
-  if (el) el.value = val;
-  if (bgProcessedBlob) bgReprocess();
-};
-
-async function bgReprocess() {
-  if (!bgProcessedBlob) return;
-  if (bgProcessedUrl) URL.revokeObjectURL(bgProcessedUrl);
-  bgProcessedUrl = URL.createObjectURL(bgProcessedBlob);
-  bgRenderResult();
-}
-
-window.bgLoadFile = (file) => {
-  if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    bgToast('❌ Sirf image select karo', 'error'); return;
-  }
-  if (file.size > 30 * 1024 * 1024) {
-    bgToast('❌ Image 30MB se choti', 'error'); return;
-  }
-  bgOriginalFile = file;
-  if (bgOriginalUrl) URL.revokeObjectURL(bgOriginalUrl);
-  bgOriginalUrl = URL.createObjectURL(file);
-  bgProcessedBlob = null;
-  bgProcessedUrl = null;
-  bgRenderPanel();
-};
-
-window.bgRemoveBackground = async () => {
-  if (!bgOriginalFile) { bgToast('❌ Pehle image upload karo', 'error'); return; }
-  if (bgBusy) { bgToast('⏳ Please wait...', 'error'); return; }
-  await bgProcessImage(bgOriginalFile);
-};
-
-window.bgDownload = () => {
-  if (!bgProcessedBlob || !bgProcessedUrl) {
-    bgToast('❌ Pehle background remove karo', 'error'); return;
-  }
-  const ext = bgSettings.outputFormat === 'jpg' ? 'jpg' : 'png';
-  const a = document.createElement('a');
-  a.href = bgProcessedUrl;
-  a.download = `nobg_${Date.now()}.${ext}`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  bgToast('✅ Downloaded!', 'success');
-};
-
-window.bgReset = () => {
-  if (!confirm('Reset kar dein?')) return;
-  if (bgOriginalUrl) URL.revokeObjectURL(bgOriginalUrl);
-  if (bgProcessedUrl) URL.revokeObjectURL(bgProcessedUrl);
-  bgOriginalFile = null;
-  bgOriginalUrl = null;
-  bgProcessedBlob = null;
-  bgProcessedUrl = null;
-  bgRenderDrop();
-  bgToast('🔄 Reset done');
-};
-
-/* ============================================================
-   RENDER HTML
-   ============================================================ */
 window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
-<div class="bg-wrap">
-
-  <div id="bgDrop" class="bg-drop">
-    <div class="bg-drop-icon">🎨</div>
-    <div class="bg-drop-title">Image upload karo</div>
-    <div class="bg-drop-sub">JPG • PNG • WebP • Max 30MB</div>
-    <button class="btn btn-primary" onclick="document.getElementById('bgInput').click()">
-      📁 Select Image
-    </button>
-    <input type="file" id="bgInput" accept="image/*" hidden>
-  </div>
-
-  <div id="bgPanel" style="display:none;margin-top:14px">
-
-    <div class="card" style="text-align:center">
-      <div class="card-title">📸 Original</div>
-      <div id="bgOriginalPreview"></div>
-      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="bgRemoveBackground()">
-        ✨ Remove Background
-      </button>
+  <div class="card">
+    <div class="field">
+      <label>Upload Image</label>
+      <input type="file" id="bgrm-file" accept="image/*" />
     </div>
 
-    <div id="bgProgressWrap" style="display:none;margin-top:14px;padding:14px;background:var(--surface);border-radius:14px;border:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);margin-bottom:8px">
-        <span id="bgProgressText">Processing...</span>
-        <span id="bgProgressPct">0%</span>
+    <div id="bgrm-workspace" style="display:none;">
+      <div style="position:relative;margin:16px 0;background:
+        repeating-conic-gradient(#2a2f55 0% 25%, #1c2250 0% 50%) 50%/20px 20px;
+        border-radius:12px;overflow:hidden;touch-action:none;">
+        <canvas id="bgrm-canvas" style="max-width:100%;display:block;margin:0 auto;"></canvas>
       </div>
-      <div style="height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden">
-        <div id="bgProgressFill" style="height:100%;width:0%;background:var(--gradient);transition:width .3s"></div>
+
+      <div class="field">
+        <label>Tolerance: <span id="bgrm-tol-val">30</span></label>
+        <input type="range" id="bgrm-tol" min="5" max="120" value="30" style="width:100%;" />
+        <div class="hint">Zyada = zyada background remove. Kam = safe.</div>
       </div>
-      <div class="hint" style="margin-top:8px;font-size:11px">
-        ⚡ Smallest AI model (mobile-friendly) — please wait 30-60 sec
-      </div>
-    </div>
 
-    <div class="card" style="margin-top:14px;text-align:center">
-      <div class="card-title">🎨 Result</div>
-      <div id="bgResultPreview"></div>
-    </div>
-
-    <div class="bg-settings">
-      <div class="card-title" style="margin-bottom:10px">🎨 New Background</div>
-
-      <div class="bg-type-chips">
-        <div class="bg-type-chip active" data-val="transparent" onclick="bgSetSetting('bgType','transparent')">
-          <span style="font-size:18px">🔲</span>
-          <span>Transparent</span>
-        </div>
-        <div class="bg-type-chip" data-val="color" onclick="bgSetSetting('bgType','color')">
-          <span style="font-size:18px">🎨</span>
-          <span>Solid Color</span>
+      <div class="field">
+        <label>Tool Mode</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="chip" id="bgrm-mode-auto" data-active="1">🎯 Auto Remove</button>
+          <button class="chip" id="bgrm-mode-brush">🖌️ Erase Brush</button>
+          <button class="chip" id="bgrm-mode-restore">↩️ Restore</button>
+          <button class="chip" id="bgrm-mode-pick">💧 Pick Color</button>
         </div>
       </div>
 
-      <div id="bgColorBox" style="display:none;margin-top:14px">
-        <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px">
-          Choose Color
-        </label>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input type="color" id="bgColorPicker" value="${bgSettings.bgColor}" onchange="bgSetBgColor(this.value)"
-            style="width:60px;height:44px;padding:4px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer">
-          <button class="bg-color-btn" onclick="bgSetBgPreset('#ffffff')" style="background:#fff;border:1px solid #ccc">White</button>
-          <button class="bg-color-btn" onclick="bgSetBgPreset('#000000')" style="background:#000;color:#fff">Black</button>
-          <button class="bg-color-btn" onclick="bgSetBgPreset('#3b82f6')" style="background:#3b82f6;color:#fff">Blue</button>
-          <button class="bg-color-btn" onclick="bgSetBgPreset('#ef4444')" style="background:#ef4444;color:#fff">Red</button>
-          <button class="bg-color-btn" onclick="bgSetBgPreset('#10b981')" style="background:#10b981;color:#fff">Green</button>
+      <div class="field" id="bgrm-brush-size-wrap" style="display:none;">
+        <label>Brush Size: <span id="bgrm-brush-val">25</span>px</label>
+        <input type="range" id="bgrm-brush" min="5" max="80" value="25" style="width:100%;" />
+      </div>
+
+      <div class="field">
+        <label>Background</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="chip" data-bg="transparent" data-active="1">⬜ Transparent</button>
+          <button class="chip" data-bg="#ffffff">⬜ White</button>
+          <button class="chip" data-bg="#000000">⬛ Black</button>
+          <button class="chip" data-bg="#6366f1">🟦 Blue</button>
+          <button class="chip" data-bg="#ef4444">🟥 Red</button>
+          <button class="chip" data-bg="#10b981">🟩 Green</button>
         </div>
       </div>
-    </div>
 
-    <div class="bg-settings">
-      <div class="card-title" style="margin-bottom:10px">📤 Output</div>
-      <div class="bg-format-chips">
-        <div class="bg-format-chip active" data-val="png" onclick="bgSetSetting('outputFormat','png')">PNG (transparent)</div>
-        <div class="bg-format-chip" data-val="jpg" onclick="bgSetSetting('outputFormat','jpg')">JPG (smaller)</div>
-      </div>
-
-      <div style="margin-top:12px">
-        <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
-          Max Dimension (px)
-        </label>
-        <input type="number" value="${bgSettings.maxDim}" min="400" max="2000" step="100"
-          onchange="bgSetSetting('maxDim',this.value)"
-          style="width:100%;padding:10px;background:var(--surface-2);border:1.5px solid var(--border-strong);border-radius:10px;color:var(--text)">
-        <div class="hint">600 = fast mobile • 1200 = quality</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
+        <button class="btn btn-primary" id="bgrm-download">⬇️ Download PNG</button>
+        <button class="btn btn-secondary" id="bgrm-reset">🔄 Reset</button>
       </div>
     </div>
 
-    <div class="btn-group" style="margin-top:14px">
-      <button class="btn btn-secondary" onclick="bgReset()">🔄 Reset</button>
-      <button class="btn btn-primary" onclick="bgDownload()">⬇ Download</button>
-    </div>
-
-    <div class="hint" style="margin-top:14px;text-align:center">
-      🔒 100% browser me process — image upload nahi hoti
+    <div class="hint" style="margin-top:12px;">
+      💡 <b>Tip:</b> Solid/plain background wali images best result deti hain
+      (passport photo, product shot, studio background). Complex backgrounds ke liye
+      "Erase Brush" use karo.
     </div>
   </div>
-</div>
-
-<style>
-  .bg-wrap { padding: 4px 0; }
-  .bg-drop { border: 2px dashed var(--border-strong); border-radius: 16px; padding: 30px 20px; text-align: center; background: var(--surface); cursor: pointer; transition: all .2s; }
-  .bg-drop:hover { border-color: var(--primary); background: var(--surface-hover); }
-  .bg-drop-icon { font-size: 42px; margin-bottom: 8px; }
-  .bg-drop-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-  .bg-drop-sub { font-size: 12.5px; color: var(--text-3); margin-bottom: 14px; }
-
-  .bg-settings { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-top: 12px; }
-
-  .bg-type-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .bg-type-chip { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; border-radius: 12px; background: var(--surface-2); border: 2px solid var(--border); color: var(--text-2); font-size: 12.5px; font-weight: 700; cursor: pointer; transition: all .15s; }
-  .bg-type-chip:hover { background: var(--surface-hover); }
-  .bg-type-chip.active { background: var(--gradient); color: #fff; border-color: transparent; }
-
-  .bg-color-btn { padding: 8px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; }
-
-  .bg-format-chips { display: flex; gap: 6px; flex-wrap: wrap; }
-  .bg-format-chip { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1.5px solid var(--border); color: var(--text-2); font-size: 12px; font-weight: 600; cursor: pointer; }
-  .bg-format-chip:hover { background: var(--surface-hover); }
-  .bg-format-chip.active { background: var(--gradient); color: #fff; border-color: transparent; }
-
-  @media (max-width: 480px) {
-    .bg-type-chips { grid-template-columns: 1fr; }
-  }
-</style>
 `;
 
-/* ============================================================
-   INIT
-   ============================================================ */
 window.EXTRA_TOOL_INITS['background-remover'] = () => {
-  const input = document.getElementById('bgInput');
-  const drop = document.getElementById('bgDrop');
-  if (!input || !drop) return;
+  const fileInput = document.getElementById('bgrm-file');
+  const workspace = document.getElementById('bgrm-workspace');
+  const canvas = document.getElementById('bgrm-canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const tolSlider = document.getElementById('bgrm-tol');
+  const tolVal = document.getElementById('bgrm-tol-val');
+  const brushSlider = document.getElementById('bgrm-brush');
+  const brushVal = document.getElementById('bgrm-brush-val');
+  const brushWrap = document.getElementById('bgrm-brush-size-wrap');
 
-  drop.addEventListener('click', e => {
-    if (e.target.tagName === 'BUTTON') return;
-    input.click();
+  let origCanvas = null;      // pristine copy
+  let workCanvas = null;      // current editable
+  let origData = null;        // pristine ImageData
+  let working = false;
+  let mode = 'auto';          // auto | brush | restore | pick
+  let pickedColor = null;
+  let bgColor = 'transparent';
+  let displayCanvas = null;   // for compositing bg preview
+
+  // ---------- Load Image ----------
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast('Please select an image file', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        // Cap dimension for mobile perf (max 1600px)
+        const MAX = 1600;
+        let w = img.width, h = img.height;
+        if (Math.max(w, h) > MAX) {
+          const scale = MAX / Math.max(w, h);
+          w = Math.round(w * scale);
+          h = Math.round(h * scale);
+        }
+
+        canvas.width = w;
+        canvas.height = h;
+        ctx.clearRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+
+        origData = ctx.getImageData(0, 0, w, h);
+        workCanvas = document.createElement('canvas');
+        workCanvas.width = w; workCanvas.height = h;
+        workCanvas.getContext('2d').putImageData(origData, 0, 0);
+        origCanvas = workCanvas;
+
+        workspace.style.display = 'block';
+        autoRemove();
+        render();
+        toast('Image loaded. Auto-removing background...', 'success');
+      };
+      img.onerror = () => toast('Failed to load image', 'error');
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
   });
-  input.addEventListener('change', e => {
-    if (e.target.files && e.target.files[0]) {
-      bgLoadFile(e.target.files[0]);
-      e.target.value = '';
+
+  // ---------- Auto Background Removal (Flood-fill from edges) ----------
+  function autoRemove() {
+    if (!origData) return;
+    const w = origData.width, h = origData.height;
+    const src = new Uint8ClampedArray(origData.data);
+    const out = new Uint8ClampedArray(src); // copy
+    const tol = parseInt(tolSlider.value);
+    const tolSq = tol * tol * 3;
+
+    // Sample background color from 4 corners + edge midpoints
+    const samples = [
+      [0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1],
+      [w >> 1, 0], [w >> 1, h - 1], [0, h >> 1], [w - 1, h >> 1]
+    ];
+    let rSum = 0, gSum = 0, bSum = 0;
+    for (const [x, y] of samples) {
+      const i = (y * w + x) * 4;
+      rSum += src[i]; gSum += src[i + 1]; bSum += src[i + 2];
+    }
+    const n = samples.length;
+    const bgR = rSum / n, bgG = gSum / n, bgB = bSum / n;
+
+    // BFS from all 4 edges
+    const visited = new Uint8Array(w * h);
+    const queue = [];
+
+    function tryPush(x, y) {
+      if (x < 0 || y < 0 || x >= w || y >= h) return;
+      const idx = y * w + x;
+      if (visited[idx]) return;
+      const i = idx * 4;
+      const dr = src[i] - bgR, dg = src[i + 1] - bgG, db = src[i + 2] - bgB;
+      if (dr * dr + dg * dg + db * db <= tolSq) {
+        visited[idx] = 1;
+        queue.push(idx);
+      }
+    }
+
+    for (let x = 0; x < w; x++) { tryPush(x, 0); tryPush(x, h - 1); }
+    for (let y = 0; y < h; y++) { tryPush(0, y); tryPush(w - 1, y); }
+
+    let head = 0;
+    while (head < queue.length) {
+      const idx = queue[head++];
+      const x = idx % w, y = (idx / w) | 0;
+      // Mark transparent
+      out[idx * 4 + 3] = 0;
+      tryPush(x + 1, y); tryPush(x - 1, y);
+      tryPush(x, y + 1); tryPush(x, y - 1);
+    }
+
+    // Feathering: soften edges (1-pass)
+    featherAlpha(out, w, h);
+
+    const wctx = workCanvas.getContext('2d');
+    wctx.putImageData(new ImageData(out, w, h), 0, 0);
+  }
+
+  function featherAlpha(data, w, h) {
+    // Simple 1-pixel blur on alpha channel edges
+    const copy = new Uint8ClampedArray(data.length);
+    copy.set(data);
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = (y * w + x) * 4 + 3;
+        const a = copy[i];
+        if (a === 0 || a === 255) continue;
+        let sum = 0, cnt = 0;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            sum += copy[((y + dy) * w + (x + dx)) * 4 + 3];
+            cnt++;
+          }
+        data[i] = sum / cnt;
+      }
+    }
+  }
+
+  // ---------- Render (composite with background color) ----------
+  function render() {
+    if (!workCanvas) return;
+    const w = workCanvas.width, h = workCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    if (bgColor !== 'transparent') {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, w, h);
+    } else {
+      // Checkerboard for transparency preview
+      const s = 10;
+      for (let y = 0; y < h; y += s) {
+        for (let x = 0; x < w; x += s) {
+          ctx.fillStyle = ((x / s + y / s) % 2 === 0) ? '#2a2f55' : '#1c2250';
+          ctx.fillRect(x, y, s, s);
+        }
+      }
+    }
+    ctx.drawImage(workCanvas, 0, 0);
+  }
+
+  // ---------- Tolerance slider ----------
+  tolSlider.addEventListener('input', () => {
+    tolVal.textContent = tolSlider.value;
+    if (mode === 'auto' && origData) {
+      debounceAuto();
     }
   });
-  ['dragenter', 'dragover'].forEach(ev => {
-    drop.addEventListener(ev, e => {
-      e.preventDefault(); e.stopPropagation();
-      drop.classList.add('dragover');
+
+  let autoTimer = null;
+  function debounceAuto() {
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => { autoRemove(); render(); }, 150);
+  }
+
+  // ---------- Mode switching ----------
+  const modeBtns = {
+    auto: document.getElementById('bgrm-mode-auto'),
+    brush: document.getElementById('bgrm-mode-brush'),
+    restore: document.getElementById('bgrm-mode-restore'),
+    pick: document.getElementById('bgrm-mode-pick'),
+  };
+
+  function setMode(m) {
+    mode = m;
+    Object.entries(modeBtns).forEach(([k, btn]) => {
+      btn.dataset.active = (k === m) ? '1' : '0';
+      btn.style.background = (k === m) ? 'var(--gradient)' : '';
+      btn.style.color = (k === m) ? '#fff' : '';
+    });
+    brushWrap.style.display = (m === 'brush' || m === 'restore') ? 'block' : 'none';
+    canvas.style.cursor = (m === 'pick') ? 'crosshair' : 'default';
+  }
+
+  modeBtns.auto.addEventListener('click', () => { setMode('auto'); autoRemove(); render(); });
+  modeBtns.brush.addEventListener('click', () => setMode('brush'));
+  modeBtns.restore.addEventListener('click', () => setMode('restore'));
+  modeBtns.pick.addEventListener('click', () => setMode('pick'));
+  setMode('auto');
+
+  brushSlider.addEventListener('input', () => {
+    brushVal.textContent = brushSlider.value;
+  });
+
+  // ---------- Background color chips ----------
+  document.querySelectorAll('#bgrm-workspace .chip[data-bg]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#bgrm-workspace .chip[data-bg]').forEach(c => {
+        c.dataset.active = '0'; c.style.background = ''; c.style.color = '';
+      });
+      chip.dataset.active = '1';
+      chip.style.background = 'var(--gradient)';
+      chip.style.color = '#fff';
+      bgColor = chip.dataset.bg;
+      render();
     });
   });
-  ['dragleave', 'drop'].forEach(ev => {
-    drop.addEventListener(ev, e => {
-      e.preventDefault(); e.stopPropagation();
-      drop.classList.remove('dragover');
-    });
-  });
-  drop.addEventListener('drop', e => {
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      bgLoadFile(e.dataTransfer.files[0]);
+
+  // ---------- Canvas interaction (brush / pick) ----------
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+
+  function canvasCoords(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    let cx, cy;
+    if (e.touches && e.touches[0]) {
+      cx = (e.touches[0].clientX - rect.left) * scaleX;
+      cy = (e.touches[0].clientY - rect.top) * scaleY;
+    } else {
+      cx = (e.clientX - rect.left) * scaleX;
+      cy = (e.clientY - rect.top) * scaleY;
     }
+    return { x: cx, y: cy };
+  }
+
+  function paint(x, y, erase) {
+    const wctx = workCanvas.getContext('2d');
+    const size = parseInt(brushSlider.value);
+    wctx.save();
+    wctx.globalCompositeOperation = erase ? 'destination-out' : 'source-over';
+    if (!erase) {
+      // Restore from original
+      const r = size / 2;
+      wctx.beginPath();
+      wctx.arc(x, y, r, 0, Math.PI * 2);
+      wctx.clip();
+      wctx.drawImage(origCanvas, 0, 0);
+    } else {
+      wctx.beginPath();
+      wctx.arc(x, y, size / 2, 0, Math.PI * 2);
+      wctx.fill();
+    }
+    wctx.restore();
+  }
+
+  function startDraw(e) {
+    if (mode !== 'brush' && mode !== 'restore') return;
+    e.preventDefault();
+    drawing = true;
+    const { x, y } = canvasCoords(e);
+    lastX = x; lastY = y;
+    paint(x, y, mode === 'brush');
+    render();
+  }
+
+  function moveDraw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const { x, y } = canvasCoords(e);
+    // Interpolate between points for smooth stroke
+    const dist = Math.hypot(x - lastX, y - lastY);
+    const steps = Math.max(1, Math.floor(dist / 3));
+    for (let s = 1; s <= steps; s++) {
+      const ix = lastX + (x - lastX) * (s / steps);
+      const iy = lastY + (y - lastY) * (s / steps);
+      paint(ix, iy, mode === 'brush');
+    }
+    lastX = x; lastY = y;
+    render();
+  }
+
+  function endDraw() { drawing = false; }
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', moveDraw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('mouseleave', endDraw);
+  canvas.addEventListener('touchstart', startDraw, { passive: false });
+  canvas.addEventListener('touchmove', moveDraw, { passive: false });
+  canvas.addEventListener('touchend', endDraw);
+
+  // Pick color mode
+  canvas.addEventListener('click', (e) => {
+    if (mode !== 'pick') return;
+    const { x, y } = canvasCoords(e);
+    const px = ctx.getImageData(Math.round(x), Math.round(y), 1, 1).data;
+    pickedColor = [px[0], px[1], px[2]];
+    toast(`Color picked: RGB(${px[0]}, ${px[1]}, ${px[2]})`, 'success');
+    // Auto switch to auto mode and remove from this color
+    removeColor(pickedColor, parseInt(tolSlider.value));
+    render();
+  });
+
+  function removeColor(rgb, tol) {
+    if (!origData) return;
+    const w = origData.width, h = origData.height;
+    const src = new Uint8ClampedArray(origData.data);
+    const out = new Uint8ClampedArray(src);
+    const tolSq = tol * tol * 3;
+    const [tr, tg, tb] = rgb;
+    for (let i = 0; i < src.length; i += 4) {
+      const dr = src[i] - tr, dg = src[i + 1] - tg, db = src[i + 2] - tb;
+      if (dr * dr + dg * dg + db * db <= tolSq) {
+        out[i + 3] = 0;
+      }
+    }
+    const wctx = workCanvas.getContext('2d');
+    wctx.putImageData(new ImageData(out, w, h), 0, 0);
+  }
+
+  // ---------- Reset ----------
+  document.getElementById('bgrm-reset').addEventListener('click', () => {
+    if (!origData) return;
+    const wctx = workCanvas.getContext('2d');
+    wctx.putImageData(origData, 0, 0);
+    render();
+    toast('Reset done', 'success');
+  });
+
+  // ---------- Download ----------
+  document.getElementById('bgrm-download').addEventListener('click', () => {
+    if (!workCanvas) return;
+    // Export at original resolution (composite bg if set)
+    const w = workCanvas.width, h = workCanvas.height;
+    const exp = document.createElement('canvas');
+    exp.width = w; exp.height = h;
+    const ectx = exp.getContext('2d');
+    if (bgColor !== 'transparent') {
+      ectx.fillStyle = bgColor;
+      ectx.fillRect(0, 0, w, h);
+    }
+    ectx.drawImage(workCanvas, 0, 0);
+
+    exp.toBlob((blob) => {
+      if (!blob) { toast('Export failed', 'error'); return; }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `qunverio-bg-removed-${Date.now()}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast('Downloaded!', 'success');
+    }, 'image/png');
   });
 };
-
-console.log('%c✅ Background Remover v9 loaded', 'color:#ec4899;font-weight:bold');
