@@ -1,10 +1,10 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v5)
-   - 7 Templates: Modern, Professional, Minimal, ATS Classic,
-     Executive, Sidebar Professional, Modern Simple
-   - Photo: fixed rectangle, right top (except sidebar/simple)
-   - Save/PDF/Print fixed
-   - Fixed dark theme (works in all modes)
+   RESUME BUILDER — Qunverio (FINAL v6)
+   - 7 Templates
+   - PDF/Print full-size fix
+   - Save visible feedback
+   - Template instant apply
+   - Photo crop with fixed rectangle
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -38,24 +38,23 @@
     .rb-btn.primary { background: linear-gradient(135deg,#00d4ff,#7b2ff7); color: #fff; }
     .rb-btn.ghost { background: #1a1a2e; border: 1px solid #2a2a3e; color: #e0e0e0; }
     .rb-btn.danger { background: #e74c3c; color: #fff; }
+    .rb-btn.success { background: #10b981; color: #fff; }
     .rb-btn.small { padding: 4px 8px; font-size: 11px; }
     .rb-btn:hover { transform: translateY(-1px); opacity: .9; }
     .rb-add { width: 100%; padding: 11px; border-radius: 8px; border: 1px dashed #2a2a3e; background: transparent; color: #00d4ff; cursor: pointer; font-size: 13px; font-weight: 500; margin-top: 4px; font-family: inherit; }
     .rb-add:hover { background: rgba(0,212,255,.05); }
     .rb-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; padding: 14px; background: #1a1a2e; border-radius: 12px; border: 1px solid #2a2a3e; position: sticky; top: 10px; z-index: 10; }
-    .rb-actions .rb-btn { flex: 1; min-width: 110px; padding: 10px; }
+    .rb-actions .rb-btn { flex: 1; min-width: 100px; padding: 10px; }
     .rb-progress { height: 6px; background: #2a2a3e; border-radius: 3px; overflow: hidden; margin-bottom: 14px; }
     .rb-progress-fill { height: 100%; background: linear-gradient(90deg,#00d4ff,#7b2ff7); transition: width .4s; }
     .rb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 20px; font-size: 12px; color: #e0e0e0; margin: 4px 4px 0 0; }
     .rb-chip button { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
 
-    /* ===== PHOTO PREVIEW IN FORM ===== */
     .rb-photo-preview { display: flex; align-items: center; gap: 12px; margin-top: 8px; padding: 10px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 10px; }
     .rb-photo-preview img { width: 80px; height: 100px; object-fit: cover; border-radius: 6px; border: 1px solid #2a2a3e; }
     .rb-photo-preview .rpp-info { flex: 1; font-size: 12px; color: #a0a0a0; }
     .rb-photo-preview .rpp-info strong { color: #00d4ff; display: block; margin-bottom: 4px; }
 
-    /* ===== CROP MODAL ===== */
     .rb-crop-modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 99999; display: none; flex-direction: column; }
     .rb-crop-modal.active { display: flex; }
     .rb-crop-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; background: #1a1a2e; }
@@ -68,10 +67,9 @@
     .rb-crop-footer .apply { background: linear-gradient(135deg,#00d4ff,#7b2ff7); color: #fff; }
 
     /* ===== PREVIEW ===== */
-    .rb-preview-wrap { background: #333; padding: 14px; border-radius: 12px; overflow: auto; max-height: 85vh; }
+    .rb-preview-wrap { background: #555; padding: 14px; border-radius: 12px; overflow: auto; max-height: 85vh; }
     .rb-preview { width: 794px; min-height: auto; margin: 0 auto; background: #fff; color: #222; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
 
-    /* Common header for modern/professional/minimal/ats/executive */
     .rb-preview .rb-h { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
     .rb-preview .rb-h-info { flex: 1; min-width: 0; }
     .rb-preview .rb-h-photo { flex-shrink: 0; }
@@ -141,7 +139,7 @@
     .rb-preview.tpl-simple .rb-body { padding: 20px 40px; }
     .rb-preview.tpl-simple .rb-sec-title { color: #333; border-bottom: 2px solid #333; letter-spacing: 1.5px; }
 
-    /* ===== SECTIONS COMMON ===== */
+    /* ===== SECTIONS ===== */
     .rb-sec { margin-bottom: 18px; }
     .rb-sec-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--rc,#00d4ff); border-bottom: 1.5px solid var(--rc,#00d4ff); padding-bottom: 4px; margin-bottom: 10px; }
     .rb-sec p { margin: 0 0 6px; font-size: 12.5px; line-height: 1.55; color: #333; }
@@ -157,14 +155,14 @@
     @media print {
       body * { visibility: hidden !important; }
       .rb-preview, .rb-preview * { visibility: visible !important; }
-      .rb-preview { position: absolute; left: 0; top: 0; box-shadow: none; width: 100%; }
+      .rb-preview { position: absolute !important; left: 0 !important; top: 0 !important; box-shadow: none !important; width: 794px !important; transform: none !important; }
       @page { size: A4; margin: 0; }
     }
 
     @media (max-width: 768px) {
       .rb-grid { grid-template-columns: 1fr; }
-      .rb-preview-wrap { padding: 8px; overflow-x: auto; }
-      .rb-preview { width: 794px; transform: scale(.42); transform-origin: top left; margin-bottom: -600px; }
+      .rb-preview-wrap { padding: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .rb-preview { width: 794px; transform: none; }
       .rb-actions { position: static; }
       .rb-tab { font-size: 12px; padding: 8px 12px; }
     }
@@ -194,10 +192,10 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
 <div class="rb-wrap">
   <div class="rb-actions">
     <button class="rb-btn primary" onclick="rbSave()">💾 Save</button>
-    <button class="rb-btn ghost" onclick="rbPreviewRefresh()">👁️ Preview</button>
+    <button class="rb-btn success" onclick="rbPreviewRefresh()">👁️ Preview</button>
     <button class="rb-btn ghost" onclick="rbDownloadPDF()">📥 PDF</button>
     <button class="rb-btn ghost" onclick="rbPrint()">🖨️ Print</button>
-    <button class="rb-btn ghost" onclick="rbDuplicate()">📋 Duplicate</button>
+    <button class="rb-btn ghost" onclick="rbDuplicate()">📋 Copy</button>
     <button class="rb-btn danger" onclick="rbReset()">🔄 Reset</button>
   </div>
 
@@ -318,7 +316,7 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
       <h3>🎨 Design Customization</h3>
       <div class="rb-grid">
         <div class="rb-field"><label>Template</label>
-          <select id="rbTemplate" onchange="rbSet('template',this.value);rbPreviewRefresh()">
+          <select id="rbTemplate" onchange="rbSet('template',this.value)">
             <option value="modern">Modern</option>
             <option value="professional">Professional</option>
             <option value="minimal">Minimal</option>
@@ -329,10 +327,10 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
           </select>
         </div>
         <div class="rb-field"><label>Theme Color</label>
-          <input type="color" id="rbTheme" value="#00d4ff" onchange="rbSet('themeColor',this.value);rbPreviewRefresh()">
+          <input type="color" id="rbTheme" value="#00d4ff" onchange="rbSet('themeColor',this.value)">
         </div>
         <div class="rb-field"><label>Font Family</label>
-          <select id="rbFont" onchange="rbSet('fontFamily',this.value);rbPreviewRefresh()">
+          <select id="rbFont" onchange="rbSet('fontFamily',this.value)">
             <option value="'Segoe UI', Arial, sans-serif">Segoe UI</option>
             <option value="Arial, Helvetica, sans-serif">Arial</option>
             <option value="Georgia, serif">Georgia</option>
@@ -342,7 +340,7 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
           </select>
         </div>
         <div class="rb-field"><label>Font Size (px)</label>
-          <input type="number" id="rbFontSize" min="9" max="16" value="12" oninput="rbSet('fontSize',+this.value);rbPreviewRefresh()">
+          <input type="number" id="rbFontSize" min="9" max="16" value="12" oninput="rbSet('fontSize',+this.value)">
         </div>
       </div>
       <div style="margin-top:12px">
@@ -406,7 +404,12 @@ window.rbSet = (path, val) => {
   o[parts[parts.length - 1]] = val;
   rbAutoSave();
   rbUpdateProgress();
-  if (document.querySelector('.rb-tab.active')?.dataset.tab === 'preview') rbPreviewRefresh();
+  // Template/design changes → hamesha preview refresh
+  if (path === 'template' || path === 'themeColor' || path === 'fontFamily' || path === 'fontSize') {
+    rbPreviewRefresh();
+  } else if (document.querySelector('.rb-tab.active')?.dataset.tab === 'preview') {
+    rbPreviewRefresh();
+  }
 };
 
 window.rbAutoSave = () => {
@@ -416,19 +419,26 @@ window.rbAutoSave = () => {
   }, 400);
 };
 
+// BIG VISIBLE SAVE TOAST
 window.rbSave = () => {
   try {
     const data = JSON.stringify(rbData);
     localStorage.setItem('qunverio_resume_data', data);
-    const sizeKB = Math.round(data.length / 1024);
-    rbToast('✅ Saved! (' + sizeKB + ' KB)');
+    const sizeKB = (data.length / 1024).toFixed(1);
+    
+    // Remove any existing save toast
+    const old = document.getElementById('rbSaveToast');
+    if (old) old.remove();
+    
+    const t = document.createElement('div');
+    t.id = 'rbSaveToast';
+    t.innerHTML = `✅ <strong>Saved successfully!</strong><br><span style="font-size:11px;opacity:0.85">${sizeKB} KB • ${new Date().toLocaleTimeString('en-IN')}</span>`;
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:16px 28px;border-radius:12px;font-size:15px;z-index:9999999;box-shadow:0 10px 30px rgba(16,185,129,.5);text-align:center;font-weight:600;min-width:220px';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
   } catch(e) {
     console.error('Save error:', e);
-    if (e.name === 'QuotaExceededError') {
-      rbToast('❌ Storage full! Photo chhota karo');
-    } else {
-      rbToast('❌ Save fail: ' + e.message);
-    }
+    rbToast('❌ ' + (e.name === 'QuotaExceededError' ? 'Storage full!' : 'Save fail: ' + e.message));
   }
 };
 
@@ -462,7 +472,7 @@ window.rbFillForm = () => {
 window.rbToast = (msg) => {
   const t = document.createElement('div');
   t.textContent = msg;
-  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999999;border:1px solid #00d4ff;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:90vw;text-align:center';
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:12px 22px;border-radius:10px;font-size:13px;z-index:999999;border:1px solid #00d4ff;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:90vw;text-align:center';
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2400);
 };
@@ -815,9 +825,7 @@ window.rbPreviewRefresh = () => {
     </div>`;
 
   let header;
-  if (tpl === 'sidebar') {
-    header = `<div class="rb-h">${photoHtml}${infoHtml}</div>`;
-  } else if (tpl === 'simple') {
+  if (tpl === 'sidebar' || tpl === 'simple') {
     header = `<div class="rb-h">${photoHtml}${infoHtml}</div>`;
   } else {
     header = `<div class="rb-h">${infoHtml}${photoHtml}</div>`;
@@ -846,7 +854,6 @@ function rbRenderSection(sec, tpl) {
       </div>`).join('')}</div>`;
   }
   if (sec === 'education' && rbData.education.length) {
-    // ATS template: table format
     if (tpl === 'ats') {
       return `<div class="rb-sec"><div class="rb-sec-title">Education</div>
         <table class="rb-edu-table">
@@ -892,7 +899,7 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF ======
+// ====== PDF (FULL-SIZE FIX) ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
@@ -902,7 +909,35 @@ window.rbDownloadPDF = async () => {
     if (typeof htmlToImage === 'undefined' || typeof jspdf === 'undefined') {
       rbToast('❌ Libraries load nahi hui'); return;
     }
-    const canvas = await htmlToImage.toCanvas(el, { pixelRatio: 3, backgroundColor: '#ffffff', cacheBust: true });
+
+    // Save current styles
+    const oldTransform = el.style.transform;
+    const oldWidth = el.style.width;
+    const oldHeight = el.style.height;
+
+    // Force full size
+    el.style.transform = 'none';
+    el.style.width = '794px';
+    el.style.height = 'auto';
+    el.style.marginBottom = '0';
+
+    // Wait for layout
+    await new Promise(r => setTimeout(r, 100));
+
+    const canvas = await htmlToImage.toCanvas(el, {
+      pixelRatio: 2,
+      backgroundColor: '#ffffff',
+      cacheBust: true,
+      width: 794,
+      height: el.scrollHeight
+    });
+
+    // Restore
+    el.style.transform = oldTransform;
+    el.style.width = oldWidth;
+    el.style.height = oldHeight;
+    el.style.marginBottom = '';
+
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -911,9 +946,11 @@ window.rbDownloadPDF = async () => {
     const imgW = pw;
     const imgH = (canvas.height * imgW) / canvas.width;
 
-    if (imgH <= ph) {
+    if (imgH <= ph + 5) {
+      // Single page
       pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH);
     } else {
+      // Multi-page
       let heightLeft = imgH;
       let position = 0;
       pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
@@ -929,14 +966,24 @@ window.rbDownloadPDF = async () => {
     rbToast('✅ PDF downloaded!');
   } catch(e) {
     console.error(e);
-    rbToast('❌ PDF banane me error: ' + e.message);
+    rbToast('❌ PDF error: ' + e.message);
   }
 };
 
-// ====== PRINT ======
+// ====== PRINT (FULL-SIZE FIX) ======
 window.rbPrint = () => {
   rbPreviewRefresh();
-  setTimeout(() => window.print(), 300);
+  const el = document.getElementById('rbPreview');
+  if (!el) { setTimeout(() => window.print(), 300); return; }
+  const oldTransform = el.style.transform;
+  const oldWidth = el.style.width;
+  el.style.transform = 'none';
+  el.style.width = '794px';
+  setTimeout(() => {
+    window.print();
+    el.style.transform = oldTransform;
+    el.style.width = oldWidth;
+  }, 400);
 };
 
 // ====== DUPLICATE / RESET ======
@@ -955,4 +1002,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v5 - 7 templates)');
+console.log('✅ Resume Builder loaded (v6 - full fix)');
