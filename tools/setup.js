@@ -325,7 +325,7 @@ const EXTRA_TOOLS = [
     howto: 'PDF files select karo ya drag karo. ↑↓ buttons ya drag se order change karo. Merge PDFs click karo.',
     kw: ['pdf', 'merge', 'merger', 'combine', 'join', 'pdf merge', 'pdf merger', 'pdf combine']
   },
-  {
+    {
     id: 'pdf-splitter',
     name: 'PDF Splitter',
     cat: 'pdf',
@@ -333,6 +333,15 @@ const EXTRA_TOOLS = [
     desc: 'Split PDF into multiple files — by range, every page, or every N pages',
     howto: 'PDF upload karo. Split mode choose karo (range, every page, every N). Split click karo. ZIP download hoga.',
     kw: ['pdf', 'split', 'splitter', 'cut', 'extract', 'pages', 'range', 'separate']
+  },
+  {
+    id: 'jpg-to-pdf',
+    name: 'JPG to PDF',
+    cat: 'pdf',
+    icon: '🖼️',
+    desc: 'Convert JPG, PNG, WebP images to a single PDF — reorder, set page size & margin',
+    howto: 'Images drag ya select karo. Reorder karo. Page size, orientation, margin choose karo. Create PDF click karo.',
+    kw: ['jpg', 'jpeg', 'png', 'image', 'to pdf', 'jpg to pdf', 'png to pdf', 'images to pdf', 'convert']
   }
 ];
 
