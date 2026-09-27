@@ -57,14 +57,13 @@ const CATEGORIES = [
    TOOLS DATA
    ============================================================ */
 const EXTRA_TOOLS = [
-  /* ===== EXISTING TOOLS ===== */
   {
     id: 'qr-generator',
     name: 'QR Code Generator',
     cat: 'generators',
     icon: '📱',
     desc: 'Generate QR codes for URLs and text instantly',
-    howto: 'Paste any URL or text. Click Generate QR. Download as PNG or SVG, or Print. Perfect for sharing links, WiFi, contacts.',
+    howto: 'Paste any URL or text. Click Generate QR. Download as PNG or SVG, or Print.',
     kw: ['qr', 'qr code', 'generator', 'url', 'link', 'scan']
   },
   {
@@ -73,7 +72,7 @@ const EXTRA_TOOLS = [
     cat: 'calculators',
     icon: '💼',
     desc: 'Calculate your take-home salary from CTC',
-    howto: 'Enter annual CTC, basic %, HRA %, PF, tax. Click Calculate to see monthly in-hand salary with full breakdown.',
+    howto: 'Enter annual CTC, basic %, HRA %, PF, tax. Click Calculate.',
     kw: ['ctc', 'salary', 'in-hand', 'take home', 'monthly salary', 'income', 'pf', 'tax']
   },
   {
@@ -82,7 +81,7 @@ const EXTRA_TOOLS = [
     cat: 'generators',
     icon: '🎫',
     desc: 'Generate barcodes for products',
-    howto: 'Enter barcode text/number. Choose format. Click Generate. Download or Print.',
+    howto: 'Enter barcode text/number. Choose format. Click Generate.',
     kw: ['barcode', 'bar code', 'product', 'scan']
   },
   {
@@ -91,11 +90,9 @@ const EXTRA_TOOLS = [
     cat: 'students',
     icon: '📄',
     desc: 'Create professional ATS-friendly resume with PDF download',
-    howto: 'Fill personal info, education, experience, skills. Choose template. Preview and download PDF.',
-    kw: ['resume', 'cv', 'bio data', 'resume maker', 'cv builder', 'job', 'career']
+    howto: 'Fill personal info, education, experience, skills. Download PDF.',
+    kw: ['resume', 'cv', 'bio data', 'resume maker', 'cv builder', 'job']
   },
-
-  /* ===== CALCULATORS (24) ===== */
   {
     id: 'gst-calculator',
     name: 'GST Calculator',
@@ -103,7 +100,7 @@ const EXTRA_TOOLS = [
     icon: '💰',
     desc: 'Calculate GST for any amount — inclusive or exclusive',
     howto: 'Enter amount and GST rate. Choose add or remove GST. Click Calculate.',
-    kw: ['gst', 'tax', 'goods', 'services', 'gst calculator', 'cgst', 'sgst']
+    kw: ['gst', 'tax', 'goods', 'services', 'cgst', 'sgst']
   },
   {
     id: 'age-calculator',
@@ -112,7 +109,7 @@ const EXTRA_TOOLS = [
     icon: '🎂',
     desc: 'Calculate exact age in years, months, days',
     howto: 'Enter date of birth and current date. Click Calculate Age.',
-    kw: ['age', 'age calculator', 'birthday', 'dob', 'date of birth']
+    kw: ['age', 'age calculator', 'birthday', 'dob']
   },
   {
     id: 'percentage-calculator',
@@ -121,7 +118,7 @@ const EXTRA_TOOLS = [
     icon: '📊',
     desc: 'Calculate percentages, increase, decrease easily',
     howto: 'Enter values. Choose calculation type. Click Calculate.',
-    kw: ['percentage', 'percent', 'increase', 'decrease', 'discount percent']
+    kw: ['percentage', 'percent', 'increase', 'decrease']
   },
   {
     id: 'discount-calculator',
@@ -130,7 +127,7 @@ const EXTRA_TOOLS = [
     icon: '🏷️',
     desc: 'Calculate discount and final price after discount',
     howto: 'Enter original price and discount %. Click Calculate.',
-    kw: ['discount', 'sale', 'off', 'price', 'discount calculator']
+    kw: ['discount', 'sale', 'off', 'price']
   },
   {
     id: 'bmi-calculator',
@@ -148,7 +145,7 @@ const EXTRA_TOOLS = [
     icon: '📈',
     desc: 'Calculate mutual fund SIP returns and maturity',
     howto: 'Enter monthly amount, rate, years. Click Calculate SIP.',
-    kw: ['sip', 'mutual fund', 'investment', 'returns', 'sip calculator']
+    kw: ['sip', 'mutual fund', 'investment', 'returns']
   },
   {
     id: 'emi-calculator',
@@ -157,7 +154,7 @@ const EXTRA_TOOLS = [
     icon: '🏦',
     desc: 'Calculate monthly EMI for home, car, personal loan',
     howto: 'Enter loan amount, interest rate, tenure. Click Calculate EMI.',
-    kw: ['emi', 'loan', 'home loan', 'car loan', 'emi calculator']
+    kw: ['emi', 'loan', 'home loan', 'car loan']
   },
   {
     id: 'fd-calculator',
@@ -166,7 +163,7 @@ const EXTRA_TOOLS = [
     icon: '💵',
     desc: 'Calculate Fixed Deposit maturity and interest',
     howto: 'Enter principal, rate, tenure, compounding. Click Calculate.',
-    kw: ['fd', 'fixed deposit', 'bank', 'interest', 'fd calculator']
+    kw: ['fd', 'fixed deposit', 'bank', 'interest']
   },
   {
     id: 'simple-interest-calculator',
@@ -175,7 +172,7 @@ const EXTRA_TOOLS = [
     icon: '📉',
     desc: 'Calculate simple interest on principal amount',
     howto: 'Enter principal, rate, time. Click Calculate.',
-    kw: ['simple interest', 'si', 'interest', 'loan interest']
+    kw: ['simple interest', 'si', 'interest', 'loan']
   },
   {
     id: 'compound-interest-calculator',
@@ -256,7 +253,7 @@ const EXTRA_TOOLS = [
     icon: '📉',
     desc: 'Calculate impact of inflation on money value',
     howto: 'Enter amount, inflation rate, years. Click Calculate.',
-    kw: ['inflation', 'price rise', 'value of money', 'purchasing power']
+    kw: ['inflation', 'price rise', 'value of money']
   },
   {
     id: 'retirement-calculator',
@@ -283,7 +280,7 @@ const EXTRA_TOOLS = [
     icon: '💹',
     desc: 'Calculate profit margin and markup percentage',
     howto: 'Enter cost and selling price. Click Calculate.',
-    kw: ['profit margin', 'markup', 'business', 'profit', 'margin']
+    kw: ['profit margin', 'markup', 'business', 'profit']
   },
   {
     id: 'rent-vs-buy-calculator',
@@ -292,7 +289,7 @@ const EXTRA_TOOLS = [
     icon: '🏘️',
     desc: 'Compare cost of renting vs buying a property',
     howto: 'Enter property price, rent, tenure. Click Compare.',
-    kw: ['rent vs buy', 'property', 'home loan', 'renting', 'buying']
+    kw: ['rent vs buy', 'property', 'home loan', 'renting']
   },
   {
     id: 'marriage-planner-calculator',
@@ -304,14 +301,14 @@ const EXTRA_TOOLS = [
     kw: ['marriage', 'baby', 'planning', 'savings', 'goal']
   },
   {
-  id: 'production-yield-calculator',
-  name: 'Production Yield Calculator',
-  cat: 'calculators',
-  icon: '📊',
-  desc: 'Calculate yield rate from total and achieved quantity',
-  howto: 'Enter total quantity and achieved quantity. Click Calculate to get yield rate percentage.',
-  kw: ['yield', 'yield rate', 'production', 'quality', 'achieved', 'total quantity']
-}
+    id: 'production-yield-calculator',
+    name: 'Production Yield Calculator',
+    cat: 'calculators',
+    icon: '📊',
+    desc: 'Calculate yield rate from total and achieved quantity',
+    howto: 'Enter total quantity and achieved quantity. Click Calculate to get yield rate percentage.',
+    kw: ['yield', 'yield rate', 'production', 'quality', 'achieved', 'total quantity']
+  }
 ];
 
 /* ============================================================
@@ -340,7 +337,7 @@ function extraToolCardHTML(t) {
 window.extraToolCardHTML = extraToolCardHTML;
 
 /* ============================================================
-   AUTO-INJECT CARDS (Home pe saare tools — hidden, sirf fallback)
+   AUTO-INJECT CARDS
    ============================================================ */
 function injectExtraTools() {
   const allToolsGrid = document.getElementById('allTools');
@@ -404,7 +401,7 @@ window.openExtraTool = function(toolId) {
 };
 
 /* ============================================================
-   ULTRA HD PDF DOWNLOAD (4x resolution)
+   ULTRA HD PDF DOWNLOAD
    ============================================================ */
 window.extraDownloadPDF = function(boxId, filename) {
   const el = document.getElementById(boxId);
@@ -493,7 +490,7 @@ window.extraDownloadPDF = function(boxId, filename) {
 };
 
 /* ============================================================
-   ULTRA HD IMAGE DOWNLOAD (4x resolution)
+   ULTRA HD IMAGE DOWNLOAD
    ============================================================ */
 window.extraDownloadImage = function(boxId, filename) {
   const el = document.getElementById(boxId);
