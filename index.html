@@ -281,7 +281,6 @@ a { color: inherit; text-decoration: none; }
 .back-to-top { position: fixed; bottom: 90px; right: 18px; width: 46px; height: 46px; border-radius: 50%; background: var(--gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 90; box-shadow: 0 6px 20px rgba(99,102,241,0.45); opacity: 0; pointer-events: none; transform: translateY(20px) scale(0.8); transition: opacity 0.3s, transform 0.3s; }
 .back-to-top.show { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
 
-/* BOTTOM NAV — 5 tabs */
 .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: color-mix(in srgb, var(--surface) 95%, transparent); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 2px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 95; }
 .bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; border-radius: 12px; font-size: 10px; font-weight: 600; color: var(--text-3); cursor: pointer; min-width: 0; }
 .bn-item .bn-icon { font-size: 19px; line-height: 1; }
@@ -358,7 +357,6 @@ a { color: inherit; text-decoration: none; }
 
 <main class="container">
 
-  <!-- HOME VIEW -->
   <section id="homeView" class="workspace active">
     <div class="hero">
       <div class="hero-badge">
@@ -440,7 +438,6 @@ a { color: inherit; text-decoration: none; }
     </div>
   </section>
 
-  <!-- TOOLS VIEW -->
   <section id="toolsView" class="workspace">
     <div class="section-title" style="margin-top:0">
       <h2>🧰 Browse by Category</h2>
@@ -448,7 +445,6 @@ a { color: inherit; text-decoration: none; }
     <div class="category-grid" id="categoryGrid"></div>
   </section>
 
-  <!-- CATEGORY VIEW -->
   <section id="categoryView" class="workspace">
     <div class="tool-header">
       <button class="back-btn" onclick="openToolsView()">←</button>
@@ -460,7 +456,6 @@ a { color: inherit; text-decoration: none; }
     <div class="tool-grid" id="catViewList"></div>
   </section>
 
-  <!-- FAV VIEW -->
   <section id="favView" class="workspace">
     <div class="tool-header">
       <button class="back-btn" onclick="goHome()">←</button>
@@ -472,7 +467,6 @@ a { color: inherit; text-decoration: none; }
     <div class="tool-grid" id="favViewList"></div>
   </section>
 
-  <!-- RECENT VIEW -->
   <section id="recentView" class="workspace">
     <div class="tool-header">
       <button class="back-btn" onclick="goHome()">←</button>
@@ -485,7 +479,6 @@ a { color: inherit; text-decoration: none; }
     <div class="tool-grid" id="recentViewList"></div>
   </section>
 
-  <!-- TOOL VIEW -->
   <section id="toolView" class="workspace">
     <div class="tool-header">
       <button class="back-btn" onclick="closeTool()">←</button>
@@ -536,7 +529,6 @@ a { color: inherit; text-decoration: none; }
   </div>
 </footer>
 
-<!-- BOTTOM NAV — 5 TABS -->
 <nav class="bottom-nav" id="bottomNav">
   <div class="bn-item active" data-bn="home"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></div>
   <div class="bn-item" data-bn="tools"><span class="bn-icon">🧰</span><span class="bn-label">Tools</span></div>
@@ -1057,10 +1049,8 @@ document.addEventListener('DOMContentLoaded', init);
 <script src="tools/ctc-salary.js"></script>
 <script src="tools/barcode-generator.js"></script>
 <script src="tools/resume-builder.js"></script>
-<script src="tools/resume-builder.js"></script>
 
 <!-- All 24 Calculators -->
 <script src="tools/calculators/all.js"></script>
-</body>
 </body>
 </html>
