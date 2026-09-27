@@ -1,9 +1,10 @@
 /* ============================================================
-   QUNVERIO — BACKGROUND REMOVER (v4 — RELIABLE)
-   Uses UMD script tag (no dynamic import issues)
+   QUNVERIO — BACKGROUND REMOVER (v6 — AUTO-FALLBACK)
+   Tries 3 AI models in order: isnet → isnet_fp16 → isnet_quint8
+   Best quality first, small models if device can't handle
    ============================================================ */
 
-console.log('%cBackground Remover v4 loading...', 'color:#ec4899;font-weight:bold');
+console.log('%cBackground Remover v6 loading...', 'color:#ec4899;font-weight:bold');
 
 /* ============================================================
    STATE
@@ -20,7 +21,7 @@ let bgSettings = {
   bgColor: '#ffffff',
   outputFormat: 'png',
   quality: 92,
-  maxDim: 1500
+  maxDim: 1200
 };
 
 /* ============================================================
@@ -55,7 +56,7 @@ function bgHideProgress() {
 }
 
 /* ============================================================
-   LOAD AI LIBRARY — v4 (script tag based)
+   LOAD AI LIBRARY
    ============================================================ */
 async function bgLoadLibrary() {
   if (bgLibraryLoaded) return true;
@@ -71,25 +72,23 @@ async function bgLoadLibrary() {
     return true;
   }
 
-  // Method 2: Namespace object (UMD alternate)
+  // Method 2: Namespace object
   if (window.ImglyBackgroundRemoval && typeof window.ImglyBackgroundRemoval.removeBackground === 'function') {
     window.__bgRemoveFn = window.ImglyBackgroundRemoval.removeBackground;
     bgLibraryLoaded = true;
     bgSetProgress(15, '✅ AI ready (namespace)');
-    console.log('%c✅ Found: ImglyBackgroundRemoval', 'color:#10b981');
     return true;
   }
 
-  // Method 3: Scoped global (UMD alternate)
+  // Method 3: Scoped
   if (window['@imgly/background-removal'] && typeof window['@imgly/background-removal'].removeBackground === 'function') {
     window.__bgRemoveFn = window['@imgly/background-removal'].removeBackground;
     bgLibraryLoaded = true;
     bgSetProgress(15, '✅ AI ready (scoped)');
-    console.log('%c✅ Found: @imgly/background-removal', 'color:#10b981');
     return true;
   }
 
-  // Method 4: Dynamic import (fallback)
+  // Method 4: Dynamic import fallback
   console.log('%c⚠️ Script tag failed — trying dynamic import', 'color:#f59e0b');
   const cdns = [
     'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm',
@@ -104,7 +103,6 @@ async function bgLoadLibrary() {
         window.__bgRemoveFn = mod.removeBackground;
         bgLibraryLoaded = true;
         bgSetProgress(15, `✅ AI ready (CDN ${i + 1})`);
-        console.log('%c✅ Loaded from:', 'color:#10b981', cdns[i]);
         return true;
       }
     } catch (e) {
@@ -112,74 +110,104 @@ async function bgLoadLibrary() {
     }
   }
 
-  // All failed
   bgSetProgress(0, '❌ Library load failed');
-  bgToast('❌ AI library load nahi hui — internet check karo', 'error');
+  bgToast('❌ AI library load nahi hui', 'error');
   bgHideProgress();
   return false;
 }
 
 /* ============================================================
-   PROCESS IMAGE
+   PROCESS WITH AUTO-FALLBACK (3 models)
+   ============================================================ */
+async function bgProcessWithFallback(file) {
+  bgSetProgress(25, '⏳ Image prepare...');
+  const resizedFile = await bgResizeIfNeeded(file);
+
+  bgSetProgress(28, '📥 AI library load...');
+  const ok = await bgLoadLibrary();
+  if (!ok) throw new Error('Library load nahi hui');
+
+  // 3 models — pehle best, phir fast, phir ultra-fast
+  const modelTiers = [
+    { name: 'isnet', label: '🎨 Best quality (84MB)', startPct: 30 },
+    { name: 'isnet_fp16', label: '⚡ Fast (40MB, 95%)', startPct: 45 },
+    { name: 'isnet_quint8', label: '🚀 Ultra-fast (20MB, 85%)', startPct: 60 }
+  ];
+
+  let resultBlob = null;
+  let lastError = null;
+
+  for (let tier = 0; tier < modelTiers.length; tier++) {
+    const t = modelTiers[tier];
+    try {
+      console.log(`%c🎯 Trying model: ${t.name}`, 'color:#f59e0b;font-weight:bold');
+      bgSetProgress(t.startPct, `${t.label} — try ${tier + 1}/${modelTiers.length}`);
+
+      const config = {
+        output: {
+          format: 'image/png',
+          quality: 1
+        },
+        model: t.name,
+        progress: (key, current, total) => {
+          const pct = t.startPct + Math.round((current / total) * 10);
+          const mb = (current / (1024 * 1024)).toFixed(1);
+          const totalMb = (total / (1024 * 1024)).toFixed(1);
+          if (typeof key === 'string' && (key.includes('fetch') || key.includes('model'))) {
+            bgSetProgress(pct, `📥 ${t.label}: ${mb}MB / ${totalMb}MB`);
+          } else {
+            bgSetProgress(pct, `🎨 Processing: ${mb}MB`);
+          }
+        }
+      };
+
+      resultBlob = await window.__bgRemoveFn(resizedFile, config);
+      console.log(`%c✅ Success with: ${t.name}`, 'color:#10b981;font-weight:bold');
+      bgToast(`✅ Done with ${t.name}`, 'success');
+      break;
+    } catch (e) {
+      console.warn(`%c❌ Model ${t.name} failed: ${e.message}`, 'color:#ef4444');
+      lastError = e;
+      // Continue to next model
+    }
+  }
+
+  if (!resultBlob) {
+    throw lastError || new Error('Saare models fail ho gaye');
+  }
+
+  bgSetProgress(80, '🖼️ Background apply...');
+  let finalBlob = resultBlob;
+
+  if (bgSettings.bgType === 'color') {
+    finalBlob = await bgApplyBgColor(finalBlob, bgSettings.bgColor);
+  }
+
+  if (bgSettings.outputFormat === 'jpg') {
+    finalBlob = await bgConvertToJpg(finalBlob);
+  }
+
+  return finalBlob;
+}
+
+/* ============================================================
+   MAIN PROCESS
    ============================================================ */
 async function bgProcessImage(file) {
   if (bgBusy) return;
   bgBusy = true;
 
   try {
-    bgSetProgress(20, '⏳ Image prepare...');
-    const resizedFile = await bgResizeIfNeeded(file);
-
-    bgSetProgress(25, '📥 AI library load...');
-    const ok = await bgLoadLibrary();
-    if (!ok) {
-      bgBusy = false;
-      return;
-    }
-
-    bgSetProgress(35, '🎨 AI model load ho raha hai...');
-
-    // Config
-    const config = {
-      output: {
-        format: 'image/png',
-        quality: 1
-      },
-      progress: (key, current, total) => {
-        const pct = 35 + Math.round((current / total) * 45);
-        const mb = (current / (1024 * 1024)).toFixed(1);
-        const totalMb = (total / (1024 * 1024)).toFixed(1);
-        if (typeof key === 'string' && (key.includes('fetch') || key.includes('model'))) {
-          bgSetProgress(pct, `📥 Download: ${mb}MB / ${totalMb}MB`);
-        } else {
-          bgSetProgress(pct, `🎨 Processing: ${mb}MB / ${totalMb}MB`);
-        }
-      }
-    };
-
-    bgSetProgress(40, '🎨 Background remove...');
-    const resultBlob = await window.__bgRemoveFn(resizedFile, config);
-
-    bgSetProgress(85, '🖼️ Background apply...');
-    let finalBlob = resultBlob;
-
-    if (bgSettings.bgType === 'color') {
-      finalBlob = await bgApplyBgColor(finalBlob, bgSettings.bgColor);
-    }
-
-    if (bgSettings.outputFormat === 'jpg') {
-      finalBlob = await bgConvertToJpg(finalBlob);
-    }
+    const resultBlob = await bgProcessWithFallback(file);
 
     bgSetProgress(95, '✅ Ready!');
-    bgProcessedBlob = finalBlob;
+    bgProcessedBlob = resultBlob;
 
     if (bgProcessedUrl) URL.revokeObjectURL(bgProcessedUrl);
     bgProcessedUrl = URL.createObjectURL(bgProcessedBlob);
 
     bgRenderResult();
     bgHideProgress();
-    bgToast('✅ Background removed!', 'success');
   } catch (e) {
     console.error('BG remove error:', e);
     bgToast('❌ Fail: ' + (e.message || 'unknown'), 'error');
@@ -342,7 +370,7 @@ window.bgSetSetting = (key, val) => {
     if (el) el.textContent = val + '%';
   }
   if (key === 'maxDim') {
-    bgSettings.maxDim = parseInt(val, 10) || 1500;
+    bgSettings.maxDim = parseInt(val, 10) || 1200;
   }
   if (bgProcessedBlob && (key === 'bgType' || key === 'bgColor' || key === 'outputFormat')) {
     bgReprocess();
@@ -375,7 +403,7 @@ window.bgLoadFile = (file) => {
     return;
   }
   if (file.size > 30 * 1024 * 1024) {
-    bgToast('❌ Image 30MB se choti honi chahiye', 'error');
+    bgToast('❌ Image 30MB se choti', 'error');
     return;
   }
   bgOriginalFile = file;
@@ -454,7 +482,8 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
         <div id="bgProgressFill" style="height:100%;width:0%;background:var(--gradient);transition:width .3s"></div>
       </div>
       <div class="hint" style="margin-top:8px;font-size:11px">
-        ⏳ Pehli baar model download hoga (~40MB) — 30-60 sec lag sakte hain
+        ⚡ Auto-fallback: isnet → fp16 → quint8<br>
+        🎨 Best quality pehle try hoga, agar device support nahi kare toh chhota model
       </div>
     </div>
 
@@ -489,39 +518,25 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
           <button class="bg-color-btn" onclick="bgSetBgPreset('#3b82f6')" style="background:#3b82f6;color:#fff">Blue</button>
           <button class="bg-color-btn" onclick="bgSetBgPreset('#ef4444')" style="background:#ef4444;color:#fff">Red</button>
           <button class="bg-color-btn" onclick="bgSetBgPreset('#10b981')" style="background:#10b981;color:#fff">Green</button>
-          <button class="bg-color-btn" onclick="bgSetBgPreset('#f59e0b')" style="background:#f59e0b;color:#fff">Orange</button>
         </div>
       </div>
     </div>
 
     <div class="bg-settings">
       <div class="card-title" style="margin-bottom:10px">📤 Output</div>
-
-      <div style="margin-bottom:12px">
-        <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
-          Format
-        </label>
-        <div class="bg-format-chips">
-          <div class="bg-format-chip active" data-val="png" onclick="bgSetSetting('outputFormat','png')">PNG (transparent)</div>
-          <div class="bg-format-chip" data-val="jpg" onclick="bgSetSetting('outputFormat','jpg')">JPG (smaller)</div>
-        </div>
+      <div class="bg-format-chips">
+        <div class="bg-format-chip active" data-val="png" onclick="bgSetSetting('outputFormat','png')">PNG (transparent)</div>
+        <div class="bg-format-chip" data-val="jpg" onclick="bgSetSetting('outputFormat','jpg')">JPG (smaller)</div>
       </div>
 
-      <div style="margin-bottom:12px">
+      <div style="margin-top:12px">
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
-          Max Dimension (px) — quality ke liye
+          Max Dimension (px)
         </label>
-        <input type="number" value="${bgSettings.maxDim}" min="800" max="4000" step="100"
+        <input type="number" value="${bgSettings.maxDim}" min="600" max="3000" step="100"
           onchange="bgSetSetting('maxDim',this.value)"
           style="width:100%;padding:10px;background:var(--surface-2);border:1.5px solid var(--border-strong);border-radius:10px;color:var(--text)">
-        <div class="hint">1500-2000 recommended (full quality)</div>
-      </div>
-
-      <div>
-        <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
-          JPG Quality: <span id="bgQualityVal">${bgSettings.quality}%</span>
-        </label>
-        <input type="range" min="50" max="100" value="${bgSettings.quality}" oninput="bgSetSetting('quality',parseInt(this.value))" style="width:100%">
+        <div class="hint">1200 = fast + quality achhi</div>
       </div>
     </div>
 
@@ -557,9 +572,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
   .bg-format-chip { padding: 8px 12px; border-radius: 8px; background: var(--surface-2); border: 1.5px solid var(--border); color: var(--text-2); font-size: 12px; font-weight: 600; cursor: pointer; }
   .bg-format-chip:hover { background: var(--surface-hover); }
   .bg-format-chip.active { background: var(--gradient); color: #fff; border-color: transparent; }
-
-  input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--surface-2); outline: none; }
-  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gradient); cursor: pointer; }
 
   @media (max-width: 480px) {
     .bg-type-chips { grid-template-columns: 1fr; }
@@ -604,4 +616,4 @@ window.EXTRA_TOOL_INITS['background-remover'] = () => {
   });
 };
 
-console.log('%c✅ Background Remover v4 loaded', 'color:#ec4899;font-weight:bold');
+console.log('%c✅ Background Remover v6 loaded', 'color:#ec4899;font-weight:bold');
