@@ -1,6 +1,8 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v2)
-   Photo: right top corner in all 3 templates
+   RESUME BUILDER — Qunverio (FINAL v4)
+   - Photo upload with CROP option (Cropper.js)
+   - Fixed rectangle size, right top corner
+   - Fixed dark theme (works in all modes)
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -19,14 +21,12 @@
     .rb-section { background: #1a1a2e; border: 1px solid #2a2a3e; border-radius: 12px; padding: 18px; margin-bottom: 14px; }
     .rb-section h3 { margin: 0 0 14px; font-size: 16px; display: flex; align-items: center; gap: 8px; color: #fff; }
     .rb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .rb-grid.full { grid-template-columns: 1fr; }
     .rb-field { display: flex; flex-direction: column; gap: 4px; }
     .rb-field label { font-size: 11px; opacity: .75; font-weight: 500; text-transform: uppercase; letter-spacing: .4px; color: #e0e0e0; }
     .rb-field input, .rb-field select, .rb-field textarea { padding: 9px 12px; border-radius: 8px; border: 1px solid #2a2a3e; background: #0f0f1a; color: #e0e0e0; font-size: 13px; font-family: inherit; outline: none; transition: border .2s; width: 100%; box-sizing: border-box; }
     .rb-field input:focus, .rb-field textarea:focus, .rb-field select:focus { border-color: #00d4ff; }
     .rb-field textarea { resize: vertical; min-height: 70px; }
     .rb-field input[type="color"] { height: 40px; padding: 4px; cursor: pointer; }
-    .rb-field input[type="file"] { padding: 8px; font-size: 12px; }
     .rb-counter { font-size: 10px; opacity: .6; text-align: right; color: #e0e0e0; }
     .rb-item { background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 10px; padding: 14px; margin-bottom: 10px; position: relative; }
     .rb-item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -47,36 +47,53 @@
     .rb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 20px; font-size: 12px; color: #e0e0e0; margin: 4px 4px 0 0; }
     .rb-chip button { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
 
-    /* ===== PREVIEW COMMON ===== */
+    /* Photo preview in form */
+    .rb-photo-preview { display: flex; align-items: center; gap: 12px; margin-top: 8px; padding: 10px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 10px; }
+    .rb-photo-preview img { width: 80px; height: 100px; object-fit: cover; border-radius: 6px; border: 1px solid #2a2a3e; }
+    .rb-photo-preview .rpp-info { flex: 1; font-size: 12px; color: #a0a0a0; }
+    .rb-photo-preview .rpp-info strong { color: #00d4ff; display: block; margin-bottom: 4px; }
+
+    /* Crop Modal */
+    .rb-crop-modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 99999; display: none; flex-direction: column; }
+    .rb-crop-modal.active { display: flex; }
+    .rb-crop-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; background: #1a1a2e; }
+    .rb-crop-header h3 { color: #fff; font-size: 15px; margin: 0; }
+    .rb-crop-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; overflow: hidden; position: relative; }
+    .rb-crop-body img { max-width: 100%; max-height: 100%; display: block; }
+    .rb-crop-footer { padding: 14px 18px; display: flex; gap: 10px; border-top: 1px solid #2a2a3e; background: #1a1a2e; }
+    .rb-crop-footer button { flex: 1; padding: 12px; border-radius: 10px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .rb-crop-footer .cancel { background: #2a2a3e; color: #e0e0e0; }
+    .rb-crop-footer .apply { background: linear-gradient(135deg,#00d4ff,#7b2ff7); color: #fff; }
+
+    /* ===== PREVIEW ===== */
     .rb-preview-wrap { background: #333; padding: 14px; border-radius: 12px; overflow: auto; max-height: 85vh; }
     .rb-preview { width: 794px; min-height: 1123px; margin: 0 auto; background: #fff; color: #222; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
-    .rb-preview .rb-h-photo { flex-shrink: 0; }
 
     /* ===== MODERN ===== */
     .rb-preview.tpl-modern .rb-h { background: linear-gradient(135deg, var(--rc, #00d4ff), #7b2ff7); color: #fff; padding: 32px 40px; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
-    .rb-preview.tpl-modern .rb-h-info { flex: 1; }
-    .rb-preview.tpl-modern .rb-h-photo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,.5); }
+    .rb-preview.tpl-modern .rb-h-info { flex: 1; min-width: 0; }
+    .rb-preview.tpl-modern .rb-h-photo { width: 110px; height: 130px; border-radius: 8px; object-fit: cover; border: 3px solid rgba(255,255,255,.5); flex-shrink: 0; }
     .rb-preview.tpl-modern .rb-h-info h1 { margin: 0 0 6px; font-size: 30px; font-weight: 700; }
     .rb-preview.tpl-modern .rb-h-info .rb-title { font-size: 15px; opacity: .9; margin-bottom: 10px; }
-    .rb-preview.tpl-modern .rb-h-info .rb-contacts { font-size: 12px; opacity: .95; line-height: 1.7; }
+    .rb-preview.tpl-modern .rb-h-info .rb-contacts { font-size: 12px; opacity: .95; line-height: 1.7; word-break: break-word; }
     .rb-preview.tpl-modern .rb-body { padding: 30px 40px; }
 
     /* ===== PROFESSIONAL ===== */
     .rb-preview.tpl-professional .rb-h { padding: 30px 40px 20px; border-bottom: 2px solid #222; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
-    .rb-preview.tpl-professional .rb-h-info { flex: 1; }
-    .rb-preview.tpl-professional .rb-h-photo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #222; }
+    .rb-preview.tpl-professional .rb-h-info { flex: 1; min-width: 0; }
+    .rb-preview.tpl-professional .rb-h-photo { width: 100px; height: 120px; border-radius: 6px; object-fit: cover; border: 2px solid #222; flex-shrink: 0; }
     .rb-preview.tpl-professional .rb-h-info h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: 2px; text-transform: uppercase; }
     .rb-preview.tpl-professional .rb-h-info .rb-title { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #666; margin-bottom: 12px; }
-    .rb-preview.tpl-professional .rb-h-info .rb-contacts { font-size: 12px; color: #444; line-height: 1.7; }
+    .rb-preview.tpl-professional .rb-h-info .rb-contacts { font-size: 12px; color: #444; line-height: 1.7; word-break: break-word; }
     .rb-preview.tpl-professional .rb-body { padding: 24px 40px; }
 
     /* ===== MINIMAL ===== */
     .rb-preview.tpl-minimal .rb-h { padding: 30px 40px 16px; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
-    .rb-preview.tpl-minimal .rb-h-info { flex: 1; }
-    .rb-preview.tpl-minimal .rb-h-photo { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; }
+    .rb-preview.tpl-minimal .rb-h-info { flex: 1; min-width: 0; }
+    .rb-preview.tpl-minimal .rb-h-photo { width: 90px; height: 110px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
     .rb-preview.tpl-minimal .rb-h-info h1 { margin: 0 0 4px; font-size: 30px; font-weight: 300; letter-spacing: 1px; }
     .rb-preview.tpl-minimal .rb-h-info .rb-title { font-size: 14px; color: #888; margin-bottom: 10px; }
-    .rb-preview.tpl-minimal .rb-h-info .rb-contacts { font-size: 12px; color: #666; line-height: 1.7; }
+    .rb-preview.tpl-minimal .rb-h-info .rb-contacts { font-size: 12px; color: #666; line-height: 1.7; word-break: break-word; }
     .rb-preview.tpl-minimal .rb-body { padding: 16px 40px 30px; }
 
     /* ===== SECTIONS ===== */
@@ -175,6 +192,7 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
       <div class="rb-field" style="margin-top:10px">
         <label>Profile Photo (optional)</label>
         <input type="file" accept="image/*" id="rbPhoto">
+        <div id="rbPhotoPreviewWrap"></div>
       </div>
     </div>
   </div>
@@ -301,6 +319,21 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 </div>
+
+<!-- CROP MODAL -->
+<div class="rb-crop-modal" id="rbCropModal">
+  <div class="rb-crop-header">
+    <h3>✂️ Crop Photo</h3>
+    <button class="rb-btn ghost small" onclick="rbCropCancel()" style="padding:8px 14px">✕</button>
+  </div>
+  <div class="rb-crop-body">
+    <img id="rbCropImage" src="" alt="Crop">
+  </div>
+  <div class="rb-crop-footer">
+    <button class="cancel" onclick="rbCropCancel()">Cancel</button>
+    <button class="apply" onclick="rbCropApply()">✓ Apply Crop</button>
+  </div>
+</div>
 `;
 
 // ====== INIT ======
@@ -316,7 +349,6 @@ window.EXTRA_TOOL_INITS['resume-builder'] = () => {
     });
   });
 
-  // Photo upload listener
   const photoInput = document.getElementById('rbPhoto');
   if (photoInput) {
     photoInput.addEventListener('change', window.rbHandlePhoto);
@@ -325,6 +357,7 @@ window.EXTRA_TOOL_INITS['resume-builder'] = () => {
   rbLoad();
   rbUpdateProgress();
   rbRenderOrder();
+  rbRenderPhotoPreview();
 };
 
 // ====== HELPERS ======
@@ -374,33 +407,146 @@ window.rbFillForm = () => {
   const ls = document.getElementById('rbLangSkill'); if (ls) ls.value = rbData.skills.languages.join(', ');
   rbRenderChips();
   rbRenderOrder();
+  rbRenderPhotoPreview();
 };
 
 window.rbToast = (msg) => {
   const t = document.createElement('div');
   t.textContent = msg;
-  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;border:1px solid #00d4ff;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999999;border:1px solid #00d4ff;box-shadow:0 4px 20px rgba(0,0,0,.4)';
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2000);
+  setTimeout(() => t.remove(), 2200);
 };
 
-// ====== PHOTO ======
+// ====== PHOTO UPLOAD + CROP ======
+let rbCropper = null;
+let rbOriginalImage = null;
+
 window.rbHandlePhoto = (e) => {
   const f = e.target.files[0];
   if (!f) return;
-  if (f.size > 5 * 1024 * 1024) {
-    rbToast('❌ Photo 5MB se choti honi chahiye');
+  if (f.size > 10 * 1024 * 1024) {
+    rbToast('❌ Photo 10MB se choti honi chahiye');
+    e.target.value = '';
     return;
   }
   const r = new FileReader();
   r.onload = ev => {
-    rbData.personal.photo = ev.target.result;
-    rbAutoSave();
-    rbPreviewRefresh();
-    rbToast('✅ Photo added! Preview tab me dekho');
+    rbOriginalImage = ev.target.result;
+    rbOpenCropModal(ev.target.result);
   };
   r.onerror = () => rbToast('❌ Photo read nahi hui');
   r.readAsDataURL(f);
+  e.target.value = ''; // reset so same file can be selected again
+};
+
+window.rbOpenCropModal = (src) => {
+  const modal = document.getElementById('rbCropModal');
+  const img = document.getElementById('rbCropImage');
+  if (!modal || !img) return;
+  img.src = src;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  // Wait for image load, then init cropper
+  img.onload = () => {
+    if (rbCropper) { rbCropper.destroy(); rbCropper = null; }
+    if (typeof Cropper === 'undefined') {
+      // Fallback: no crop, just use as-is
+      rbData.personal.photo = src;
+      rbAutoSave();
+      rbCloseCropModal();
+      rbRenderPhotoPreview();
+      rbPreviewRefresh();
+      rbToast('⚠️ Crop library load nahi hui — original photo use ki');
+      return;
+    }
+    rbCropper = new Cropper(img, {
+      aspectRatio: 110 / 130, // matches resume photo ratio
+      viewMode: 1,
+      dragMode: 'move',
+      autoCropArea: 0.9,
+      background: false,
+      responsive: true,
+      checkOrientation: false,
+      modal: true,
+      guides: true,
+      center: true,
+      highlight: false,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      toggleDragModeOnDblclick: false,
+      minContainerHeight: 300
+    });
+  };
+};
+
+window.rbCloseCropModal = () => {
+  const modal = document.getElementById('rbCropModal');
+  if (modal) modal.classList.remove('active');
+  document.body.style.overflow = '';
+  if (rbCropper) { rbCropper.destroy(); rbCropper = null; }
+};
+
+window.rbCropCancel = () => {
+  rbCloseCropModal();
+  rbToast('Photo cancel kiya');
+};
+
+window.rbCropApply = () => {
+  if (!rbCropper) return;
+  try {
+    const canvas = rbCropper.getCroppedCanvas({
+      width: 330,   // 3x of 110
+      height: 390,  // 3x of 130
+      imageSmoothingQuality: 'high'
+    });
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    rbData.personal.photo = dataUrl;
+    rbAutoSave();
+    rbCloseCropModal();
+    rbRenderPhotoPreview();
+    rbPreviewRefresh();
+    rbToast('✅ Photo cropped & added!');
+  } catch(e) {
+    console.error(e);
+    rbToast('❌ Crop apply nahi hua');
+  }
+};
+
+window.rbRenderPhotoPreview = () => {
+  const wrap = document.getElementById('rbPhotoPreviewWrap');
+  if (!wrap) return;
+  const photo = rbData.personal.photo;
+  if (!photo) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `
+    <div class="rb-photo-preview">
+      <img src="${photo}" alt="Photo">
+      <div class="rpp-info">
+        <strong>✅ Photo ready</strong>
+        <div>Preview tab me dekho</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <button class="rb-btn ghost small" onclick="rbEditPhoto()">✏️ Edit</button>
+        <button class="rb-btn danger small" onclick="rbRemovePhoto()">🗑️ Remove</button>
+      </div>
+    </div>
+  `;
+};
+
+window.rbEditPhoto = () => {
+  if (rbData.personal.photo) {
+    rbOpenCropModal(rbData.personal.photo);
+  }
+};
+
+window.rbRemovePhoto = () => {
+  if (!confirm('Photo remove kar dein?')) return;
+  rbData.personal.photo = '';
+  rbAutoSave();
+  rbRenderPhotoPreview();
+  rbPreviewRefresh();
+  rbToast('Photo removed');
 };
 
 // ====== SKILLS ======
@@ -638,7 +784,6 @@ window.rbPreviewRefresh = () => {
 
   const photoHtml = p.photo ? `<img src="${p.photo}" class="rb-h-photo" alt="Profile">` : '';
 
-  // Text always first, photo second (photo goes right due to flex justify-between)
   const infoHtml = `
     <div class="rb-h-info">
       <h1>${p.name || 'Your Name'}</h1>
@@ -766,4 +911,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v2 - photo right top)');
+console.log('✅ Resume Builder loaded (v4 - crop feature)');
