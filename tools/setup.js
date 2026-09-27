@@ -51,12 +51,19 @@ const CATEGORIES = [
     desc: 'Word Counter, Image Tools & more',
     gradient: 'linear-gradient(135deg,#14b8a6,#06b6d4)'
   },
-  {
+    {
     id: 'pdf',
     name: 'PDF Tools',
     icon: '📄',
     desc: 'Merge, split, compress & more',
     gradient: 'linear-gradient(135deg,#ec4899,#ef4444)'
+  },
+  {
+    id: 'digital-studio',
+    name: 'Digital Studio',
+    icon: '📸',
+    desc: 'Image tools for photo studios & print shops',
+    gradient: 'linear-gradient(135deg,#8b5cf6,#ec4899)'
   }
 ];
 
@@ -343,7 +350,7 @@ const EXTRA_TOOLS = [
     howto: 'Images drag ya select karo. Reorder karo. Page size, orientation, margin choose karo. Create PDF click karo.',
     kw: ['jpg', 'jpeg', 'png', 'image', 'to pdf', 'jpg to pdf', 'png to pdf', 'images to pdf', 'convert']
   },
-  {
+    {
     id: 'pdf-to-jpg',
     name: 'PDF to JPG',
     cat: 'pdf',
@@ -351,6 +358,15 @@ const EXTRA_TOOLS = [
     desc: 'Convert PDF pages to JPG or PNG images — choose quality, download as ZIP',
     howto: 'PDF upload karo. Quality aur format choose karo. Pages select karo. Convert click karo.',
     kw: ['pdf', 'to jpg', 'to png', 'pdf to jpg', 'pdf to image', 'pdf to png', 'convert', 'extract images']
+  },
+  {
+    id: 'image-resizer',
+    name: 'Image Resizer',
+    cat: 'digital-studio',
+    icon: '📐',
+    desc: 'Resize images by pixels, percentage, or preset sizes — bulk support',
+    howto: 'Images drag ya select karo. Resize mode choose karo (pixels/percent/preset). Dimensions set karo. Resize All click karo.',
+    kw: ['image', 'resize', 'resizer', 'scale', 'dimensions', 'compress', 'bulk resize', 'photo resize']
   }
 ];
 
