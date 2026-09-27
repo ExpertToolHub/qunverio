@@ -1272,55 +1272,5 @@ window.mpCalculate = function() {
   toast('Timeline calculated ✅', 'success');
 };
 
-/* ============================================================
-   24. YIELD CALCULATOR
-   ============================================================ */
-window.EXTRA_TOOL_RENDERERS['yield-calculator'] = () => `
-  <div class="card">
-    <div class="card-title">Yield Calculator</div>
-    <div class="field"><label>Investment Amount (₹)</label><input type="number" id="yInvest" placeholder="100000" step="1000"></div>
-    <div class="field"><label>Current / Maturity Value (₹)</label><input type="number" id="yCurrent" placeholder="150000" step="1000"></div>
-    <div class="field"><label>Time Period (Years)</label><input type="number" id="yYears" placeholder="5" step="0.5"></div>
-    <button class="btn btn-primary btn-block" onclick="yCalculate()">📈 Calculate Yield</button>
-  </div>
-  <div class="result-box" id="yResult">
-    <div class="result-title">Yield Result</div>
-    <div class="result-main" id="yMain">0%</div>
-    <div class="result-sub">Annual Yield (CAGR)</div>
-    <div class="result-row"><span class="k">Investment</span><span class="v" id="yInvestShow">₹0</span></div>
-    <div class="result-row"><span class="k">Final Value</span><span class="v" id="yCurrentShow">₹0</span></div>
-    <div class="result-row"><span class="k">Total Gain</span><span class="v" id="yGain" style="color:#10b981">₹0</span></div>
-    <div class="result-row"><span class="k">Total Return</span><span class="v" id="yTotalReturn" style="color:#10b981">0%</span></div>
-    <div class="result-row"><span class="k">Simple Annual Yield</span><span class="v" id="ySimple">0%</span></div>
-    <div class="result-row" style="background:var(--surface-2);padding:12px;border-radius:8px;margin-top:8px"><span class="k" style="color:#fff">Effective Annual Yield (CAGR)</span><span class="v" id="yCAGR" style="color:#fff">0%</span></div>
-    <div class="export-btns">
-      <button class="btn btn-secondary btn-sm" onclick="extraDownloadPDF('yResult','yield')"><i>📥</i>PDF</button>
-      <button class="btn btn-secondary btn-sm" onclick="extraDownloadImage('yResult','yield')"><i>🖼️</i>Image</button>
-      <button class="btn btn-secondary btn-sm" onclick="extraPrint('yResult','Yield')"><i>🖨️</i>Print</button>
-    </div>
-  </div>
-`;
-window.EXTRA_TOOL_INITS['yield-calculator'] = () => { console.log('✅ Yield Calculator ready'); };
-window.yCalculate = function() {
-  const invest = parseFloat(document.getElementById('yInvest').value);
-  const current = parseFloat(document.getElementById('yCurrent').value);
-  const years = parseFloat(document.getElementById('yYears').value);
-  if (!invest || !current || !years || invest <= 0 || years <= 0) { toast('Enter valid values', 'error'); return; }
-  const gain = current - invest;
-  const totalReturn = (gain / invest) * 100;
-  const simpleYield = totalReturn / years;
-  const cagr = (Math.pow(current / invest, 1 / years) - 1) * 100;
-  const fmt = (n) => '₹' + Math.round(n).toLocaleString('en-IN');
-  document.getElementById('yMain').textContent = cagr.toFixed(2) + '%';
-  document.getElementById('yInvestShow').textContent = fmt(invest);
-  document.getElementById('yCurrentShow').textContent = fmt(current);
-  document.getElementById('yGain').textContent = fmt(gain);
-  document.getElementById('yTotalReturn').textContent = totalReturn.toFixed(2) + '%';
-  document.getElementById('ySimple').textContent = simpleYield.toFixed(2) + '%';
-  document.getElementById('yCAGR').textContent = cagr.toFixed(2) + '%';
-  document.getElementById('yResult').classList.add('active');
-  toast('Yield calculated ✅', 'success');
-};
-
-console.log('%c🎉 ALL 24 CALCULATORS LOADED SUCCESSFULLY!', 'color:#10b981;font-weight:bold;font-size:16px');
+console.log('%c🎉 ALL 23 CALCULATORS LOADED SUCCESSFULLY!', 'color:#10b981;font-weight:bold;font-size:16px');
 console.log('%c✅ Total: 24 calculators ready', 'color:#6366f1;font-weight:bold');
