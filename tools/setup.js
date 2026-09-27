@@ -1,4 +1,3 @@
-
 /* ============================================================
    QUNVERIO — COMMON SETUP (tools/setup.js)
    Sab tools ke liye common code + Categories
@@ -51,7 +50,12 @@ const CATEGORIES = [
     icon: '🛠️',
     desc: 'Word Counter, Image Tools & more',
     gradient: 'linear-gradient(135deg,#14b8a6,#06b6d4)'
-  },
+  }
+];
+
+/* ============================================================
+   TOOLS DATA
+   ============================================================ */
 const EXTRA_TOOLS = [
   /* ===== EXISTING TOOLS ===== */
   {
@@ -60,7 +64,7 @@ const EXTRA_TOOLS = [
     cat: 'generators',
     icon: '📱',
     desc: 'Generate QR codes for URLs and text instantly',
-    howto: 'Paste any URL or text. Click Generate QR. Download as PNG or SVG, or Print.',
+    howto: 'Paste any URL or text. Click Generate QR. Download as PNG or SVG, or Print. Perfect for sharing links, WiFi, contacts.',
     kw: ['qr', 'qr code', 'generator', 'url', 'link', 'scan']
   },
   {
@@ -69,7 +73,7 @@ const EXTRA_TOOLS = [
     cat: 'calculators',
     icon: '💼',
     desc: 'Calculate your take-home salary from CTC',
-    howto: 'Enter annual CTC, basic %, HRA %, PF, tax. Click Calculate to see monthly in-hand salary.',
+    howto: 'Enter annual CTC, basic %, HRA %, PF, tax. Click Calculate to see monthly in-hand salary with full breakdown.',
     kw: ['ctc', 'salary', 'in-hand', 'take home', 'monthly salary', 'income', 'pf', 'tax']
   },
   {
@@ -310,51 +314,10 @@ const EXTRA_TOOLS = [
   }
 ];
 
-
-window.CATEGORIES = CATEGORIES;
-
 /* ============================================================
-   TOOLS DATA
+   EXPOSE TO WINDOW
    ============================================================ */
-const EXTRA_TOOLS = [
-  {
-    id: 'qr-generator',
-    name: 'QR Code Generator',
-    cat: 'generators',
-    icon: '📱',
-    desc: 'Generate QR codes for URLs and text instantly',
-    howto: 'Paste any URL or text. Click Generate QR. Download as PNG or SVG, or Print. Perfect for sharing links, WiFi, contacts.',
-    kw: ['qr', 'qr code', 'generator', 'url', 'link', 'scan']
-  },
-  {
-    id: 'ctc-salary',
-    name: 'CTC → In-Hand Salary',
-    cat: 'calculators',
-    icon: '💼',
-    desc: 'Calculate your take-home salary from CTC',
-    howto: 'Enter annual CTC, basic %, HRA %, PF, tax. Click Calculate to see monthly in-hand salary with full breakdown.',
-    kw: ['ctc', 'salary', 'in-hand', 'take home', 'monthly salary', 'income', 'pf', 'tax']
-  },
-  {
-    id: 'barcode-generator',
-    name: 'Barcode Generator',
-    cat: 'generators',
-    icon: '🎫',
-    desc: 'Generate barcodes for products',
-    howto: 'Enter barcode text/number. Choose format. Click Generate. Download or Print.',
-    kw: ['barcode', 'bar code', 'product', 'scan']
-  },
-  {
-    id: 'resume-builder',
-    name: 'Resume Builder',
-    cat: 'students',
-    icon: '📄',
-    desc: 'Create professional ATS-friendly resume with PDF download',
-    howto: 'Fill personal info, education, experience, skills. Choose template. Preview and download PDF.',
-    kw: ['resume', 'cv', 'bio data', 'resume maker', 'cv builder', 'job', 'career']
-  }
-];
-
+window.CATEGORIES = CATEGORIES;
 window.EXTRA_TOOLS = EXTRA_TOOLS;
 
 /* ============================================================
