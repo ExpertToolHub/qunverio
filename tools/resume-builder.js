@@ -1,10 +1,11 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v9)
-   - 4x Ultra HD PDF/Print (safe + maximum quality)
+   RESUME BUILDER — Qunverio (FINAL v10)
+   - PDF error fixed (jsPDF.scale issue)
+   - Print white screen fixed
+   - 3x Ultra HD quality (safe, no crash)
    - Preview button: tab switch + refresh
    - Save button: clear message
    - 7 Templates
-   - Crop photo with fixed rectangle
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -153,13 +154,48 @@
     .rb-entry ul { margin: 4px 0 0; padding-left: 18px; }
     .rb-entry li { font-size: 12px; line-height: 1.5; color: #333; margin-bottom: 2px; }
 
-    /* ===== PRINT ===== */
+    /* ===== PRINT (FIXED — no white screen) ===== */
     @media print {
+      @page { size: A4; margin: 0; }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        width: 210mm !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
       body * { visibility: hidden !important; }
       .rb-preview, .rb-preview * { visibility: visible !important; }
-      .rb-preview { position: absolute !important; left: 0 !important; top: 0 !important; box-shadow: none !important; width: 794px !important; transform: none !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-      .rb-preview img { image-rendering: -webkit-optimize-contrast !important; image-rendering: crisp-edges !important; }
-      @page { size: A4; margin: 0; }
+      .rb-preview {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 210mm !important;
+        max-width: 210mm !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        transform: none !important;
+        background: #fff !important;
+        display: block !important;
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      .rb-preview * {
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      .rb-preview img {
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: crisp-edges !important;
+        max-width: 100% !important;
+      }
     }
 
     @media (max-width: 768px) {
@@ -560,7 +596,6 @@ window.rbCropCancel = () => { rbCloseCropModal(); rbToast('Photo cancel kiya'); 
 window.rbCropApply = () => {
   if (!rbCropper) return;
   try {
-    // 4x resolution for photo: 110*4=440, 130*4=520
     const canvas = rbCropper.getCroppedCanvas({ width: 440, height: 520, imageSmoothingQuality: 'high' });
     rbData.personal.photo = canvas.toDataURL('image/jpeg', 1.0);
     rbAutoSave();
@@ -919,7 +954,7 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF 4X ULTRA HD (SAFE) ======
+// ====== PDF ULTRA HD (SAFE) ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
@@ -942,9 +977,9 @@ window.rbDownloadPDF = async () => {
 
     await new Promise(r => setTimeout(r, 150));
 
-    // 4x Ultra HD capture (safe, no crash)
+    // 3x Ultra HD (safe — no jsPDF.scale error)
     const canvas = await htmlToImage.toCanvas(el, {
-      pixelRatio: 4,
+      pixelRatio: 3,
       backgroundColor: '#ffffff',
       cacheBust: true,
       width: 794,
@@ -956,11 +991,9 @@ window.rbDownloadPDF = async () => {
     el.style.height = oldHeight;
     el.style.marginBottom = oldMarginBottom;
 
-    // JPEG quality 1.0 (max)
     const imgData = canvas.toDataURL('image/jpeg', 1.0);
     const { jsPDF } = window.jspdf;
 
-    // PDF with no compression
     const pdf = new jsPDF({
       orientation: 'p',
       unit: 'mm',
@@ -1007,49 +1040,9 @@ window.rbDownloadPDF = async () => {
 // ====== PRINT ULTRA HD ======
 window.rbPrint = () => {
   rbPreviewRefresh();
-  const el = document.getElementById('rbPreview');
-  if (!el) { setTimeout(() => window.print(), 300); return; }
-  
-  const printStyle = document.createElement('style');
-  printStyle.id = 'rbPrintHQ';
-  printStyle.textContent = `
-    @media print {
-      body * { visibility: hidden !important; }
-      .rb-preview, .rb-preview * { visibility: visible !important; }
-      .rb-preview { 
-        position: absolute !important; 
-        left: 0 !important; 
-        top: 0 !important; 
-        width: 794px !important; 
-        transform: none !important; 
-        box-shadow: none !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-      .rb-preview img { 
-        image-rendering: -webkit-optimize-contrast !important;
-        image-rendering: crisp-edges !important;
-      }
-      @page { size: A4; margin: 0; }
-    }
-  `;
-  document.head.appendChild(printStyle);
-  
-  const oldTransform = el.style.transform;
-  const oldWidth = el.style.width;
-  el.style.transform = 'none';
-  el.style.width = '794px';
-  
   setTimeout(() => {
     window.print();
-    el.style.transform = oldTransform;
-    el.style.width = oldWidth;
-    setTimeout(() => {
-      const s = document.getElementById('rbPrintHQ');
-      if (s) s.remove();
-    }, 1000);
-  }, 400);
+  }, 500);
 };
 
 // ====== DUPLICATE / RESET ======
@@ -1068,4 +1061,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v9 - 4x Ultra HD, no errors)');
+console.log('✅ Resume Builder loaded (v10 - all fixes)');
