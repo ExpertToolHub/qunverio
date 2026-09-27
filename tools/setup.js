@@ -401,6 +401,71 @@ window.openExtraTool = function(toolId) {
 };
 
 /* ============================================================
+   HELPER: Fix colors for PDF/Image export (LIGHT BACKGROUND)
+   ============================================================ */
+function extraFixColorsForExport(clone) {
+  // 1. Remove buttons, no-print sections
+  clone.querySelectorAll('.btn-group, .export-btns, .how-to-use, .no-print').forEach(n => n.remove());
+
+  // 2. Base styling
+  clone.style.background = '#ffffff';
+  clone.style.color = '#111111';
+  clone.style.padding = '40px';
+  clone.style.width = '820px';
+  clone.style.boxSizing = 'border-box';
+  clone.style.fontFamily = 'Arial, sans-serif';
+
+  // 3. Fix result-main (gradient text) — make it solid purple
+  clone.querySelectorAll('.result-main').forEach(e => {
+    e.style.background = 'none';
+    e.style.webkitTextFillColor = '#4f46e5';
+    e.style.color = '#4f46e5';
+    e.style.fontSize = '36px';
+    e.style.fontWeight = '900';
+  });
+
+  // 4. Fix all transparent text
+  clone.querySelectorAll('*').forEach(e => {
+    const cs = window.getComputedStyle(e);
+    if (cs.webkitTextFillColor === 'transparent' || cs.color === 'rgba(0, 0, 0, 0)') {
+      e.style.webkitTextFillColor = '#111111';
+      e.style.color = '#111111';
+      e.style.background = 'none';
+    }
+  });
+
+  // 5. FIX: Boxes with var(--surface-2) background → LIGHT background + DARK text
+  clone.querySelectorAll('[style*="var(--surface-2)"]').forEach(row => {
+    row.style.background = '#f5f5f7';
+    row.style.border = '1px solid #e0e0e5';
+    row.querySelectorAll('*').forEach(el => {
+      el.style.color = '#111111';
+      el.style.webkitTextFillColor = '#111111';
+    });
+  });
+
+  // 6. Fix labels and sub-texts
+  clone.querySelectorAll('.k, .result-sub, .result-title, .card-title').forEach(e => {
+    if (e.closest('[style*="var(--surface-2)"]')) return;
+    e.style.color = '#555555';
+  });
+
+  // 7. Fix values
+  clone.querySelectorAll('.v').forEach(e => {
+    if (e.closest('[style*="var(--surface-2)"]')) return;
+    e.style.color = '#111111';
+  });
+
+  // 8. Fix inline color:#fff spans (jo var(--surface-2) box ke andar hain)
+  clone.querySelectorAll('span[style*="color:#fff"], span[style*="color: #fff"]').forEach(el => {
+    el.style.color = '#111111';
+    el.style.webkitTextFillColor = '#111111';
+  });
+
+  return clone;
+}
+
+/* ============================================================
    ULTRA HD PDF DOWNLOAD
    ============================================================ */
 window.extraDownloadPDF = function(boxId, filename) {
@@ -411,46 +476,7 @@ window.extraDownloadPDF = function(boxId, filename) {
   }
   if (typeof toast === 'function') toast('Generating Ultra HD PDF...');
 
-  const clone = el.cloneNode(true);
-  clone.querySelectorAll('.btn-group, .export-btns, .how-to-use, .no-print').forEach(n => n.remove());
-  clone.style.background = '#ffffff';
-  clone.style.color = '#111111';
-  clone.style.padding = '40px';
-  clone.style.width = '820px';
-  clone.style.boxSizing = 'border-box';
-  clone.style.fontFamily = 'Arial, sans-serif';
-
-  clone.querySelectorAll('.result-main').forEach(e => {
-    const c = e.style.color || '#4f46e5';
-    e.style.background = 'none';
-    e.style.webkitTextFillColor = c;
-    e.style.color = c;
-    e.style.fontSize = '36px';
-    e.style.fontWeight = '900';
-  });
-  clone.querySelectorAll('*').forEach(e => {
-    const cs = window.getComputedStyle(e);
-    if (cs.webkitTextFillColor === 'transparent' || cs.color === 'rgba(0, 0, 0, 0)') {
-      e.style.webkitTextFillColor = '#111111';
-      e.style.color = '#111111';
-      e.style.background = 'none';
-    }
-  });
-  clone.querySelectorAll('[style*="var(--surface-2)"]').forEach(row => {
-    row.style.background = '#1c2250';
-    row.querySelectorAll('*').forEach(el => {
-      el.style.color = '#ffffff';
-      el.style.webkitTextFillColor = '#ffffff';
-    });
-  });
-  clone.querySelectorAll('.k, .result-sub, .result-title, .card-title').forEach(e => {
-    if (e.closest('[style*="var(--surface-2)"]')) return;
-    e.style.color = '#555555';
-  });
-  clone.querySelectorAll('.v').forEach(e => {
-    if (e.closest('[style*="var(--surface-2)"]')) return;
-    e.style.color = '#111111';
-  });
+  const clone = extraFixColorsForExport(el.cloneNode(true));
 
   const header = document.createElement('div');
   header.innerHTML = `
@@ -500,46 +526,7 @@ window.extraDownloadImage = function(boxId, filename) {
   }
   if (typeof toast === 'function') toast('Generating Ultra HD Image...');
 
-  const clone = el.cloneNode(true);
-  clone.querySelectorAll('.btn-group, .export-btns, .how-to-use, .no-print').forEach(n => n.remove());
-  clone.style.background = '#ffffff';
-  clone.style.color = '#111111';
-  clone.style.padding = '40px';
-  clone.style.width = '820px';
-  clone.style.boxSizing = 'border-box';
-  clone.style.fontFamily = 'Arial, sans-serif';
-
-  clone.querySelectorAll('.result-main').forEach(e => {
-    const c = e.style.color || '#4f46e5';
-    e.style.background = 'none';
-    e.style.webkitTextFillColor = c;
-    e.style.color = c;
-    e.style.fontSize = '36px';
-    e.style.fontWeight = '900';
-  });
-  clone.querySelectorAll('*').forEach(e => {
-    const cs = window.getComputedStyle(e);
-    if (cs.webkitTextFillColor === 'transparent' || cs.color === 'rgba(0, 0, 0, 0)') {
-      e.style.webkitTextFillColor = '#111111';
-      e.style.color = '#111111';
-      e.style.background = 'none';
-    }
-  });
-  clone.querySelectorAll('[style*="var(--surface-2)"]').forEach(row => {
-    row.style.background = '#1c2250';
-    row.querySelectorAll('*').forEach(el => {
-      el.style.color = '#ffffff';
-      el.style.webkitTextFillColor = '#ffffff';
-    });
-  });
-  clone.querySelectorAll('.k, .result-sub, .result-title, .card-title').forEach(e => {
-    if (e.closest('[style*="var(--surface-2)"]')) return;
-    e.style.color = '#555555';
-  });
-  clone.querySelectorAll('.v').forEach(e => {
-    if (e.closest('[style*="var(--surface-2)"]')) return;
-    e.style.color = '#111111';
-  });
+  const clone = extraFixColorsForExport(el.cloneNode(true));
 
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:fixed;left:-99999px;top:0;background:#fff;width:820px;padding:0;margin:0;';
@@ -571,38 +558,9 @@ window.extraPrint = function(boxId, title) {
     return;
   }
 
-  const clone = el.cloneNode(true);
-  clone.querySelectorAll('.btn-group, .export-btns, .how-to-use, .no-print').forEach(n => n.remove());
+  const clone = extraFixColorsForExport(el.cloneNode(true));
   clone.querySelectorAll('.result-main').forEach(e => {
-    const c = e.style.color || '#4f46e5';
-    e.style.background = 'none';
-    e.style.webkitTextFillColor = c;
-    e.style.color = c;
     e.style.fontSize = '28px';
-    e.style.fontWeight = '900';
-  });
-  clone.querySelectorAll('*').forEach(e => {
-    const cs = window.getComputedStyle(e);
-    if (cs.webkitTextFillColor === 'transparent' || cs.color === 'rgba(0, 0, 0, 0)') {
-      e.style.webkitTextFillColor = '#111111';
-      e.style.color = '#111111';
-      e.style.background = 'none';
-    }
-  });
-  clone.querySelectorAll('[style*="var(--surface-2)"]').forEach(row => {
-    row.style.background = '#1c2250';
-    row.querySelectorAll('*').forEach(el => {
-      el.style.color = '#ffffff';
-      el.style.webkitTextFillColor = '#ffffff';
-    });
-  });
-  clone.querySelectorAll('.k, .result-sub, .result-title, .card-title').forEach(e => {
-    if (e.closest('[style*="var(--surface-2)"]')) return;
-    e.style.color = '#555555';
-  });
-  clone.querySelectorAll('.v').forEach(e => {
-    if (e.closest('[style*="var(--surface-2)"]')) return;
-    e.style.color = '#111111';
   });
 
   const header = `<div style="display:flex;justify-content:space-between;padding-bottom:10px;border-bottom:2px solid #6366f1;margin-bottom:14px;font-family:Arial,sans-serif"><div style="font-size:18px;font-weight:900;color:#6366f1">⚡ Qunverio</div><div style="font-size:11px;color:#888">${new Date().toLocaleString('en-IN')}</div></div>${title ? `<div style="font-size:16px;font-weight:700;color:#111;margin-bottom:12px;font-family:Arial,sans-serif">${title}</div>` : ''}`;
