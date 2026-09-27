@@ -1,14 +1,9 @@
 /* ============================================================
-   QUNVERIO — BACKGROUND REMOVER (tools/digital-studio/background-remover.js)
-   Remove image background using AI (browser-side, no API)
-   Library: @imgly/background-removal (WASM, ~40MB first download)
+   QUNVERIO — BACKGROUND REMOVER (v2 — multi-CDN fallback)
    ============================================================ */
 
 console.log('%cBackground Remover loading...', 'color:#ec4899;font-weight:bold');
 
-/* ============================================================
-   STATE
-   ============================================================ */
 let bgOriginalFile = null;
 let bgOriginalUrl = null;
 let bgProcessedBlob = null;
@@ -17,11 +12,11 @@ let bgLibraryLoaded = false;
 let bgBusy = false;
 
 let bgSettings = {
-  bgType: 'transparent',   // transparent | color
+  bgType: 'transparent',
   bgColor: '#ffffff',
-  outputFormat: 'png',     // png | jpg
+  outputFormat: 'png',
   quality: 92,
-  maxDim: 1500             // resize for speed
+  maxDim: 1500
 };
 
 /* ============================================================
@@ -52,88 +47,130 @@ function bgSetProgress(pct, text) {
 
 function bgHideProgress() {
   const wrap = document.getElementById('bgProgressWrap');
-  if (wrap) setTimeout(() => wrap.style.display = 'none', 2000);
+  if (wrap) setTimeout(() => wrap.style.display = 'none', 2500);
 }
 
 /* ============================================================
-   LOAD AI LIBRARY (dynamic import — only when needed)
+   LOAD AI LIBRARY — MULTI-CDN FALLBACK (v2)
    ============================================================ */
 async function bgLoadLibrary() {
   if (bgLibraryLoaded) return true;
-  bgSetProgress(5, '⏳ AI library load ho rahi hai...');
-  try {
-    // Dynamic import from CDN
-    const module = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm');
-    window.__bgRemoveFn = module.removeBackground;
-    bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready');
-    return true;
-  } catch (e) {
-    console.error('Library load fail:', e);
-    bgToast('❌ AI library load nahi hui — internet check karo', 'error');
-    return false;
+
+  bgSetProgress(3, '🔍 AI library check ho rahi hai...');
+
+  // ---- Method 1: Global object check (script tag) ----
+  const globals = [
+    'removeBackground',
+    'imglyRemoveBackground',
+  ];
+  for (const g of globals) {
+    if (typeof window[g] === 'function') {
+      window.__bgRemoveFn = window[g];
+      bgLibraryLoaded = true;
+      bgSetProgress(15, `✅ AI ready (global: ${g})`);
+      console.log('%c✅ Found global:', 'color:#10b981', g);
+      return true;
+    }
   }
+
+  // ---- Method 2: Namespace objects (UMD) ----
+  if (window.ImglyBackgroundRemoval && typeof window.ImglyBackgroundRemoval.removeBackground === 'function') {
+    window.__bgRemoveFn = window.ImglyBackgroundRemoval.removeBackground;
+    bgLibraryLoaded = true;
+    bgSetProgress(15, '✅ AI ready (ImglyBackgroundRemoval)');
+    return true;
+  }
+
+  if (window.imgly && window.imgly.removeBackground) {
+    window.__bgRemoveFn = window.imgly.removeBackground;
+    bgLibraryLoaded = true;
+    bgSetProgress(15, '✅ AI ready (imgly)');
+    return true;
+  }
+
+  // ---- Method 3: Dynamic ESM import (multiple CDNs) ----
+  const cdns = [
+    'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm',
+    'https://esm.sh/@imgly/background-removal@1.4.5',
+    'https://esm.run/@imgly/background-removal@1.4.5',
+    'https://unpkg.com/@imgly/background-removal@1.4.5/+esm'
+  ];
+
+  for (let i = 0; i < cdns.length; i++) {
+    try {
+      bgSetProgress(5 + i * 3, `⏳ CDN try ${i + 1}/${cdns.length}...`);
+      console.log(`%cTrying CDN ${i + 1}: ${cdns[i]}`, 'color:#f59e0b');
+      const module = await import(cdns[i]);
+      if (module && typeof module.removeBackground === 'function') {
+        window.__bgRemoveFn = module.removeBackground;
+        bgLibraryLoaded = true;
+        bgSetProgress(15, `✅ AI ready (CDN ${i + 1})`);
+        console.log('%c✅ CDN success:', 'color:#10b981', cdns[i]);
+        return true;
+      }
+    } catch (e) {
+      console.warn(`CDN ${i + 1} failed:`, e.message);
+    }
+  }
+
+  // ---- All failed ----
+  console.error('%c❌ All AI load methods failed', 'color:#ef4444;font-weight:bold');
+  bgSetProgress(0, '❌ Library load failed');
+  bgToast('❌ AI library load nahi hui — internet check karo', 'error');
+  bgHideProgress();
+  return false;
 }
 
 /* ============================================================
-   PROCESS IMAGE — REMOVE BACKGROUND
+   PROCESS IMAGE
    ============================================================ */
 async function bgProcessImage(file) {
   if (bgBusy) return;
   bgBusy = true;
 
   try {
-    bgSetProgress(20, '⏳ Image prepare ho rahi hai...');
-
-    // First: resize image if too big (for speed)
+    bgSetProgress(18, '⏳ Image prepare ho rahi hai...');
     const resizedFile = await bgResizeIfNeeded(file);
-    bgSetProgress(30, '🎨 Background remove ho raha hai... (30-60 sec first time)');
 
-    // Check library
-    if (!bgLibraryLoaded) {
-      const ok = await bgLoadLibrary();
-      if (!ok) {
-        bgBusy = false;
-        return;
-      }
+    bgSetProgress(22, '📥 AI model load ho raha hai...');
+    const ok = await bgLoadLibrary();
+    if (!ok) {
+      bgBusy = false;
+      return;
     }
 
-    // Config for the AI
+    bgSetProgress(30, '🎨 Background remove ho raha hai... (30-60 sec first time)');
+
     const config = {
       output: {
         format: 'image/png',
         quality: 1
       },
       progress: (key, current, total) => {
-        // Progress from model download
         const pct = 30 + Math.round((current / total) * 40);
         const mb = (current / (1024 * 1024)).toFixed(1);
         const totalMb = (total / (1024 * 1024)).toFixed(1);
-        if (key.includes('fetch')) {
-          bgSetProgress(pct, `📥 AI model download: ${mb}MB / ${totalMb}MB`);
+        if (typeof key === 'string' && key.includes('fetch')) {
+          bgSetProgress(pct, `📥 Model: ${mb}MB / ${totalMb}MB`);
         }
       }
     };
 
-    // Run background removal (browser me hi)
     const resultBlob = await window.__bgRemoveFn(resizedFile, config);
 
-    bgSetProgress(80, '🖼️ Applying background color...');
+    bgSetProgress(80, '🖼️ Applying background...');
     bgProcessedBlob = resultBlob;
 
-    // If user wants a color background, composite it
     if (bgSettings.bgType === 'color') {
       bgProcessedBlob = await bgApplyBgColor(resultBlob, bgSettings.bgColor);
     }
 
-    // Convert to output format if needed
     if (bgSettings.outputFormat === 'jpg') {
       bgProcessedBlob = await bgConvertToJpg(bgProcessedBlob);
     }
 
     bgSetProgress(95, '✅ Ready!');
 
-    // Create preview URL
     if (bgProcessedUrl) URL.revokeObjectURL(bgProcessedUrl);
     bgProcessedUrl = URL.createObjectURL(bgProcessedBlob);
 
@@ -151,7 +188,7 @@ async function bgProcessImage(file) {
 }
 
 /* ============================================================
-   RESIZE IMAGE (for speed) — max 1500px
+   RESIZE IF NEEDED
    ============================================================ */
 function bgResizeIfNeeded(file) {
   return new Promise(resolve => {
@@ -164,7 +201,6 @@ function bgResizeIfNeeded(file) {
         resolve(file);
         return;
       }
-      // Resize
       let w = img.width, h = img.height;
       if (w > h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
       else { w = Math.round(w * (maxDim / h)); h = maxDim; }
@@ -188,7 +224,7 @@ function bgResizeIfNeeded(file) {
 }
 
 /* ============================================================
-   APPLY BACKGROUND COLOR (composite)
+   APPLY BG COLOR
    ============================================================ */
 function bgApplyBgColor(blob, color) {
   return new Promise(resolve => {
@@ -211,7 +247,7 @@ function bgApplyBgColor(blob, color) {
 }
 
 /* ============================================================
-   CONVERT TO JPG (flatten transparency to white bg)
+   CONVERT TO JPG
    ============================================================ */
 function bgConvertToJpg(blob) {
   return new Promise(resolve => {
@@ -222,7 +258,6 @@ function bgConvertToJpg(blob) {
       canvas.width = img.width;
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
-      // white bg for jpg
       ctx.fillStyle = bgSettings.bgType === 'color' ? bgSettings.bgColor : '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
@@ -235,7 +270,7 @@ function bgConvertToJpg(blob) {
 }
 
 /* ============================================================
-   RENDER — DROP ZONE
+   RENDER FUNCTIONS
    ============================================================ */
 function bgRenderDrop() {
   const drop = document.getElementById('bgDrop');
@@ -244,16 +279,12 @@ function bgRenderDrop() {
   if (panel) panel.style.display = 'none';
 }
 
-/* ============================================================
-   RENDER — PANEL (after upload)
-   ============================================================ */
 function bgRenderPanel() {
   const drop = document.getElementById('bgDrop');
   const panel = document.getElementById('bgPanel');
   if (drop) drop.style.display = 'none';
   if (panel) panel.style.display = 'block';
 
-  // Original preview
   const orig = document.getElementById('bgOriginalPreview');
   if (orig && bgOriginalUrl) {
     orig.innerHTML = `<img src="${bgOriginalUrl}" alt="Original" style="max-width:100%;max-height:180px;border-radius:10px;display:block;margin:0 auto">`;
@@ -262,9 +293,6 @@ function bgRenderPanel() {
   bgRenderResult();
 }
 
-/* ============================================================
-   RENDER — RESULT
-   ============================================================ */
 function bgRenderResult() {
   const result = document.getElementById('bgResultPreview');
   if (!result) return;
@@ -313,7 +341,6 @@ window.bgSetSetting = (key, val) => {
   if (key === 'maxDim') {
     bgSettings.maxDim = parseInt(val, 10) || 1500;
   }
-  // Re-render result if changes affect appearance
   if (bgProcessedBlob && (key === 'bgType' || key === 'bgColor' || key === 'outputFormat')) {
     bgReprocess();
   }
@@ -332,23 +359,14 @@ window.bgSetBgPreset = (val) => {
 };
 
 async function bgReprocess() {
-  // Quick re-render using cached processed blob
   if (!bgProcessedBlob) return;
-  try {
-    let blob = bgProcessedBlob;
-    // Re-composite with new bg color
-    // Note: bgProcessedBlob already contains the removed-bg image (or color-composited)
-    // For simplicity, we just re-render preview from existing blob
-    if (bgProcessedUrl) URL.revokeObjectURL(bgProcessedUrl);
-    bgProcessedUrl = URL.createObjectURL(blob);
-    bgRenderResult();
-  } catch (e) {
-    console.error(e);
-  }
+  if (bgProcessedUrl) URL.revokeObjectURL(bgProcessedUrl);
+  bgProcessedUrl = URL.createObjectURL(bgProcessedBlob);
+  bgRenderResult();
 }
 
 /* ============================================================
-   LOAD FILE (drop or select)
+   LOAD FILE
    ============================================================ */
 window.bgLoadFile = (file) => {
   if (!file) return;
@@ -395,9 +413,6 @@ window.bgDownload = () => {
   bgToast('✅ Downloaded!', 'success');
 };
 
-/* ============================================================
-   RESET
-   ============================================================ */
 window.bgReset = () => {
   if (!confirm('Reset kar dein?')) return;
   if (bgOriginalUrl) URL.revokeObjectURL(bgOriginalUrl);
@@ -411,7 +426,7 @@ window.bgReset = () => {
 };
 
 /* ============================================================
-   RENDER (main HTML)
+   RENDER (main HTML) — same as before
    ============================================================ */
 window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
 <div class="bg-wrap">
@@ -428,7 +443,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
 
   <div id="bgPanel" style="display:none;margin-top:14px">
 
-    <!-- ORIGINAL PREVIEW -->
     <div class="card" style="text-align:center">
       <div class="card-title">📸 Original</div>
       <div id="bgOriginalPreview"></div>
@@ -437,7 +451,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
       </button>
     </div>
 
-    <!-- PROGRESS -->
     <div id="bgProgressWrap" style="display:none;margin-top:14px;padding:14px;background:var(--surface);border-radius:14px;border:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);margin-bottom:8px">
         <span id="bgProgressText">Processing...</span>
@@ -451,13 +464,11 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
       </div>
     </div>
 
-    <!-- RESULT -->
     <div class="card" style="margin-top:14px;text-align:center">
       <div class="card-title">🎨 Result</div>
       <div id="bgResultPreview"></div>
     </div>
 
-    <!-- BACKGROUND TYPE -->
     <div class="bg-settings">
       <div class="card-title" style="margin-bottom:10px">🎨 New Background</div>
 
@@ -489,7 +500,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
       </div>
     </div>
 
-    <!-- OUTPUT SETTINGS -->
     <div class="bg-settings">
       <div class="card-title" style="margin-bottom:10px">📤 Output</div>
 
@@ -521,7 +531,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
       </div>
     </div>
 
-    <!-- ACTIONS -->
     <div class="btn-group" style="margin-top:14px">
       <button class="btn btn-secondary" onclick="bgReset()">🔄 Reset</button>
       <button class="btn btn-primary" onclick="bgDownload()">⬇ Download</button>
@@ -602,4 +611,4 @@ window.EXTRA_TOOL_INITS['background-remover'] = () => {
   });
 };
 
-console.log('%c✅ Background Remover loaded', 'color:#ec4899;font-weight:bold');
+console.log('%c✅ Background Remover loaded (v2)', 'color:#ec4899;font-weight:bold');
