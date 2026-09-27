@@ -359,7 +359,7 @@ const EXTRA_TOOLS = [
     howto: 'PDF upload karo. Quality aur format choose karo. Pages select karo. Convert click karo.',
     kw: ['pdf', 'to jpg', 'to png', 'pdf to jpg', 'pdf to image', 'pdf to png', 'convert', 'extract images']
   },
-  {
+    {
     id: 'image-resizer',
     name: 'Image Resizer',
     cat: 'digital-studio',
@@ -367,6 +367,15 @@ const EXTRA_TOOLS = [
     desc: 'Resize images by pixels, percentage, or preset sizes — bulk support',
     howto: 'Images drag ya select karo. Resize mode choose karo (pixels/percent/preset). Dimensions set karo. Resize All click karo.',
     kw: ['image', 'resize', 'resizer', 'scale', 'dimensions', 'compress', 'bulk resize', 'photo resize']
+  },
+  {
+    id: 'image-compressor',
+    name: 'Image Compressor',
+    cat: 'digital-studio',
+    icon: '🗜️',
+    desc: 'Compress images by quality or target size (KB) — perfect for government forms',
+    howto: 'Images add karo. Quality mode ya Target Size mode choose karo. Compress All click karo. Download as ZIP.',
+    kw: ['image', 'compress', 'compressor', 'reduce size', '20kb', '50kb', '100kb', 'photo compressor', 'govt form', 'aadhaar', 'pan', 'ssc']
   }
 ];
 
