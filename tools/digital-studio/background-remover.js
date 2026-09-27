@@ -1,14 +1,10 @@
 /* ============================================================
-   QUNVERIO — BACKGROUND REMOVER (v6 — AUTO-FALLBACK)
-   Tries 3 AI models in order: isnet → isnet_fp16 → isnet_quint8
-   Best quality first, small models if device can't handle
+   QUNVERIO — BACKGROUND REMOVER (v7 — FINAL)
+   Auto-fallback: medium → small
    ============================================================ */
 
-console.log('%cBackground Remover v6 loading...', 'color:#ec4899;font-weight:bold');
+console.log('%cBackground Remover v7 loading...', 'color:#ec4899;font-weight:bold');
 
-/* ============================================================
-   STATE
-   ============================================================ */
 let bgOriginalFile = null;
 let bgOriginalUrl = null;
 let bgProcessedBlob = null;
@@ -63,32 +59,27 @@ async function bgLoadLibrary() {
 
   bgSetProgress(3, '🔍 AI library check...');
 
-  // Method 1: Global function (script tag UMD)
   if (typeof window.removeBackground === 'function') {
     window.__bgRemoveFn = window.removeBackground;
     bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready (global)');
-    console.log('%c✅ Found: window.removeBackground', 'color:#10b981');
+    bgSetProgress(15, '✅ AI ready');
     return true;
   }
 
-  // Method 2: Namespace object
   if (window.ImglyBackgroundRemoval && typeof window.ImglyBackgroundRemoval.removeBackground === 'function') {
     window.__bgRemoveFn = window.ImglyBackgroundRemoval.removeBackground;
     bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready (namespace)');
+    bgSetProgress(15, '✅ AI ready');
     return true;
   }
 
-  // Method 3: Scoped
   if (window['@imgly/background-removal'] && typeof window['@imgly/background-removal'].removeBackground === 'function') {
     window.__bgRemoveFn = window['@imgly/background-removal'].removeBackground;
     bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready (scoped)');
+    bgSetProgress(15, '✅ AI ready');
     return true;
   }
 
-  // Method 4: Dynamic import fallback
   console.log('%c⚠️ Script tag failed — trying dynamic import', 'color:#f59e0b');
   const cdns = [
     'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm',
@@ -117,7 +108,7 @@ async function bgLoadLibrary() {
 }
 
 /* ============================================================
-   PROCESS WITH AUTO-FALLBACK (3 models)
+   PROCESS WITH FALLBACK — medium → small
    ============================================================ */
 async function bgProcessWithFallback(file) {
   bgSetProgress(25, '⏳ Image prepare...');
@@ -127,11 +118,10 @@ async function bgProcessWithFallback(file) {
   const ok = await bgLoadLibrary();
   if (!ok) throw new Error('Library load nahi hui');
 
-  // 3 models — pehle best, phir fast, phir ultra-fast
+  // ⭐ Correct model names for @imgly/background-removal@1.4.5
   const modelTiers = [
-    { name: 'isnet', label: '🎨 Best quality (84MB)', startPct: 30 },
-    { name: 'isnet_fp16', label: '⚡ Fast (40MB, 95%)', startPct: 45 },
-    { name: 'isnet_quint8', label: '🚀 Ultra-fast (20MB, 85%)', startPct: 60 }
+    { name: 'medium', label: '🎨 Best quality', startPct: 30 },
+    { name: 'small', label: '⚡ Fast mode', startPct: 50 }
   ];
 
   let resultBlob = null;
@@ -150,7 +140,7 @@ async function bgProcessWithFallback(file) {
         },
         model: t.name,
         progress: (key, current, total) => {
-          const pct = t.startPct + Math.round((current / total) * 10);
+          const pct = t.startPct + Math.round((current / total) * 15);
           const mb = (current / (1024 * 1024)).toFixed(1);
           const totalMb = (total / (1024 * 1024)).toFixed(1);
           if (typeof key === 'string' && (key.includes('fetch') || key.includes('model'))) {
@@ -163,12 +153,11 @@ async function bgProcessWithFallback(file) {
 
       resultBlob = await window.__bgRemoveFn(resizedFile, config);
       console.log(`%c✅ Success with: ${t.name}`, 'color:#10b981;font-weight:bold');
-      bgToast(`✅ Done with ${t.name}`, 'success');
+      bgToast(`✅ Done (${t.name})`, 'success');
       break;
     } catch (e) {
       console.warn(`%c❌ Model ${t.name} failed: ${e.message}`, 'color:#ef4444');
       lastError = e;
-      // Continue to next model
     }
   }
 
@@ -176,7 +165,7 @@ async function bgProcessWithFallback(file) {
     throw lastError || new Error('Saare models fail ho gaye');
   }
 
-  bgSetProgress(80, '🖼️ Background apply...');
+  bgSetProgress(85, '🖼️ Background apply...');
   let finalBlob = resultBlob;
 
   if (bgSettings.bgType === 'color') {
@@ -301,7 +290,7 @@ function bgConvertToJpg(blob) {
 }
 
 /* ============================================================
-   RENDER FUNCTIONS
+   RENDER
    ============================================================ */
 function bgRenderDrop() {
   const drop = document.getElementById('bgDrop');
@@ -482,8 +471,7 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
         <div id="bgProgressFill" style="height:100%;width:0%;background:var(--gradient);transition:width .3s"></div>
       </div>
       <div class="hint" style="margin-top:8px;font-size:11px">
-        ⚡ Auto-fallback: isnet → fp16 → quint8<br>
-        🎨 Best quality pehle try hoga, agar device support nahi kare toh chhota model
+        ⚡ Auto-fallback: medium → small (best quality pehle)
       </div>
     </div>
 
@@ -616,4 +604,4 @@ window.EXTRA_TOOL_INITS['background-remover'] = () => {
   });
 };
 
-console.log('%c✅ Background Remover v6 loaded', 'color:#ec4899;font-weight:bold');
+console.log('%c✅ Background Remover v7 loaded', 'color:#ec4899;font-weight:bold');
