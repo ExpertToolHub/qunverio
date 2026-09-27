@@ -1,9 +1,9 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v12)
+   RESUME BUILDER — Qunverio (FINAL v13)
    - Ultra HD Photo (1100×1300 — 10x)
    - Photo limit 20 MB
-   - PDF 8x capture + 4000px scale (480 DPI)
-   - FAST compression — no crash
+   - PDF 6x pixelRatio (576 DPI — safe + crisp)
+   - Memory-safe scaling
    - 7 Templates perfect
    - A4 multi-page smart logic
    ============================================================ */
@@ -954,12 +954,12 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF ULTRA HD (8x + 4000px scale + FAST) ======
+// ====== PDF ULTRA HD (6x + safe canvas) ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
   if (!el) return;
-  rbToast('⏳ Ultra HD PDF ban raha hai (8x quality)...');
+  rbToast('⏳ Ultra HD PDF ban raha hai...');
   try {
     if (typeof htmlToImage === 'undefined' || typeof jspdf === 'undefined') {
       rbToast('❌ Libraries load nahi hui'); return;
@@ -977,9 +977,9 @@ window.rbDownloadPDF = async () => {
 
     await new Promise(r => setTimeout(r, 200));
 
-    // 8x ULTRA HD capture
+    // 6x Ultra HD capture (safe for mobile memory)
     const canvas = await htmlToImage.toCanvas(el, {
-      pixelRatio: 8,
+      pixelRatio: 6,
       backgroundColor: '#ffffff',
       cacheBust: true,
       width: 794,
@@ -991,8 +991,14 @@ window.rbDownloadPDF = async () => {
     el.style.height = oldHeight;
     el.style.marginBottom = oldMarginBottom;
 
-    // ✨ 8x canvas ko 4000px me scale karo (quality same, jsPDF safe)
-    const MAX_PX = 4000;
+    // Safety check
+    if (!canvas || !canvas.width || !canvas.height) {
+      rbToast('❌ Canvas empty — retry');
+      return;
+    }
+
+    // Scale canvas to max 3500px (jsPDF safe)
+    const MAX_PX = 3500;
     let finalCanvas = canvas;
     if (canvas.width > MAX_PX || canvas.height > MAX_PX) {
       const scale = Math.min(MAX_PX / canvas.width, MAX_PX / canvas.height);
@@ -1003,7 +1009,6 @@ window.rbDownloadPDF = async () => {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(canvas, 0, 0, finalCanvas.width, finalCanvas.height);
-      console.log('Canvas scaled:', canvas.width, '×', canvas.height, '→', finalCanvas.width, '×', finalCanvas.height);
     }
 
     const imgData = finalCanvas.toDataURL('image/jpeg', 1.0);
@@ -1045,7 +1050,7 @@ window.rbDownloadPDF = async () => {
 
     const fileName = (rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume.pdf';
     pdf.save(fileName);
-    rbToast('✅ Ultra HD PDF downloaded (8x)!');
+    rbToast('✅ Ultra HD PDF downloaded!');
   } catch(e) {
     console.error(e);
     rbToast('❌ PDF error: ' + e.message);
@@ -1076,4 +1081,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v12 - Ultra HD 8x + 4000px scale + FAST)');
+console.log('✅ Resume Builder loaded (v13 - 6x safe + 3500px scale + FAST)');
