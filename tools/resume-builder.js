@@ -1,7 +1,8 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v15)
+   RESUME BUILDER — Qunverio (FINAL v16)
    - Auto-switch to Preview before PDF (no empty canvas)
-   - 8K pixelRatio with smart fallback (6x → 4x → 3x)
+   - Auto-switch to Preview before Print (no white screen)
+   - 8K pixelRatio with smart fallback (8x → 6x → 4x → 3x)
    - Photo 1100×1300 (10x)
    - Photo limit 20 MB
    - 7 Templates
@@ -146,12 +147,45 @@
 
     @media print {
       @page { size: A4; margin: 0; }
-      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; width: 210mm !important; height: auto !important; overflow: visible !important; }
+      html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        width: 210mm !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
       body * { visibility: hidden !important; }
       .rb-preview, .rb-preview * { visibility: visible !important; }
-      .rb-preview { position: absolute !important; left: 0 !important; top: 0 !important; width: 210mm !important; max-width: 210mm !important; min-height: auto !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; transform: none !important; background: #fff !important; display: block !important; visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-      .rb-preview * { visibility: visible !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-      .rb-preview img { image-rendering: -webkit-optimize-contrast !important; image-rendering: crisp-edges !important; max-width: 100% !important; }
+      .rb-preview {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 210mm !important;
+        max-width: 210mm !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        transform: none !important;
+        background: #fff !important;
+        display: block !important;
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      .rb-preview * {
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+      }
+      .rb-preview img {
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: crisp-edges !important;
+        max-width: 100% !important;
+      }
     }
 
     @media (max-width: 768px) {
@@ -912,7 +946,6 @@ function rbRenderSection(sec, tpl) {
 
 // ====== PDF ULTRA 8K — AUTO-PREVIEW + SMART FALLBACK ======
 window.rbDownloadPDF = async () => {
-  // ⚡ AUTO-PREVIEW: Pehle Preview tab kholo taaki canvas render ho
   document.querySelectorAll('.rb-tab').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.rb-panel').forEach(x => x.classList.remove('active'));
   const previewTab = document.querySelector('.rb-tab[data-tab="preview"]');
@@ -929,139 +962,156 @@ window.rbDownloadPDF = async () => {
   rbToast('⏳ Ultra 8K PDF ban raha hai...');
   try {
     if (typeof htmlToImage === 'undefined' || typeof jspdf === 'undefined') {
-      rbToast('❌ Libraries load nahi hui'); return;
+      rbToast('❌ Libraries load nahi hui');
+      return;
     }
 
     const oldTransform = el.style.transform;
     const oldWidth = el.style.width;
     const oldHeight = el.style.height;
-    const oldMarginBottom = el.style.marginBottom;
 
     el.style.transform = 'none';
     el.style.width = '794px';
     el.style.height = 'auto';
-    el.style.marginBottom = '0';
 
     await new Promise(r => setTimeout(r, 200));
 
-    // 🎯 SMART FALLBACK: 8x → 6x → 4x → 3x
-    const ratios = [8, 6, 4, 3];
-    let canvas = null;
-    let usedRatio = 3;
+    const baseW = el.offsetWidth;
+    const baseH = el.offsetHeight;
 
-    for (const ratio of ratios) {
+    const attempts = [
+      { ratio: 8, label: '8K Ultra HD' },
+      { ratio: 6, label: '6K Ultra HD' },
+      { ratio: 4, label: '4K HD' },
+      { ratio: 3, label: '3K HD' }
+    ];
+
+    let dataUrl = null;
+    let usedLabel = '3K HD';
+
+    for (const a of attempts) {
       try {
-        console.log('Trying pixelRatio:', ratio);
-        const c = await htmlToImage.toCanvas(el, {
-          pixelRatio: ratio,
+        dataUrl = await htmlToImage.toJpeg(el, {
+          quality: 1.0,
+          pixelRatio: a.ratio,
           backgroundColor: '#ffffff',
           cacheBust: true,
-          width: 794,
-          height: el.scrollHeight
+          width: baseW,
+          height: baseH
         });
-        if (c && c.width > 0 && c.height > 0) {
-          canvas = c;
-          usedRatio = ratio;
-          console.log('✅ Success at', ratio + 'x — canvas:', c.width, '×', c.height);
-          break;
-        }
+        usedLabel = a.label;
+        break;
       } catch (err) {
-        console.warn('Failed at', ratio + 'x:', err.message);
+        console.warn('PDF attempt failed at', a.ratio + 'x:', err);
+        dataUrl = null;
       }
     }
 
     el.style.transform = oldTransform;
     el.style.width = oldWidth;
     el.style.height = oldHeight;
-    el.style.marginBottom = oldMarginBottom;
 
-    if (!canvas) {
-      rbToast('❌ PDF nahi ban paya — retry karein');
+    if (!dataUrl) {
+      rbToast('❌ PDF generate nahi hua — memory issue');
       return;
     }
 
-    // Safe scale — max 3500px
-    const MAX_PX = 3500;
-    let finalCanvas = canvas;
-    if (canvas.width > MAX_PX || canvas.height > MAX_PX) {
-      const scale = Math.min(MAX_PX / canvas.width, MAX_PX / canvas.height);
-      finalCanvas = document.createElement('canvas');
-      finalCanvas.width = Math.floor(canvas.width * scale);
-      finalCanvas.height = Math.floor(canvas.height * scale);
-      const ctx = finalCanvas.getContext('2d');
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(canvas, 0, 0, finalCanvas.width, finalCanvas.height);
-    }
+    const { jsPDF } = jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
 
-    const imgData = finalCanvas.toDataURL('image/jpeg', 1.0);
-    const { jsPDF } = window.jspdf;
+    const imgW = pageW;
+    const imgH = (baseH * imgW) / baseW;
 
-    const pdf = new jsPDF({
-      orientation: 'p',
-      unit: 'mm',
-      format: 'a4',
-      compress: false
-    });
-
-    pdf.setProperties({
-      title: (rbData.personal.name || 'Resume') + ' - Resume',
-      subject: 'Resume',
-      author: rbData.personal.name || 'Qunverio User',
-      creator: 'Qunverio Resume Builder'
-    });
-
-    const pw = pdf.internal.pageSize.getWidth();
-    const ph = pdf.internal.pageSize.getHeight();
-    const imgW = pw;
-    const imgH = (finalCanvas.height * imgW) / finalCanvas.width;
-
-    if (imgH <= ph + 5) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
+    if (imgH <= pageH) {
+      pdf.addImage(dataUrl, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
     } else {
-      let heightLeft = imgH;
+      let remaining = imgH;
       let position = 0;
-      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
-      heightLeft -= ph;
-      while (heightLeft > 5) {
-        position = heightLeft - imgH;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
-        heightLeft -= ph;
+      while (remaining > 0) {
+        pdf.addImage(dataUrl, 'JPEG', 0, -position, imgW, imgH, undefined, 'FAST');
+        remaining -= pageH;
+        position += pageH;
+        if (remaining > 0) pdf.addPage();
       }
     }
 
-    const fileName = (rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume.pdf';
+    const fileName = (rbData.personal.name || 'Resume').replace(/\s+/g, '_') + '_Resume.pdf';
     pdf.save(fileName);
-    rbToast(`✅ PDF downloaded (${usedRatio}x quality)!`);
-  } catch(e) {
-    console.error(e);
-    rbToast('❌ PDF error: ' + e.message);
+
+    rbToast(`✅ ${usedLabel} PDF download ho gaya!`);
+  } catch (e) {
+    console.error('PDF error:', e);
+    rbToast('❌ PDF fail: ' + (e.message || 'unknown error'));
   }
 };
 
-// ====== PRINT ======
+// ====== PRINT (AUTO-PREVIEW + FIX) ======
 window.rbPrint = () => {
+  document.querySelectorAll('.rb-tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.rb-panel').forEach(x => x.classList.remove('active'));
+  const previewTab = document.querySelector('.rb-tab[data-tab="preview"]');
+  const previewPanel = document.querySelector('.rb-panel[data-panel="preview"]');
+  if (previewTab) previewTab.classList.add('active');
+  if (previewPanel) previewPanel.classList.add('active');
   rbPreviewRefresh();
+
   setTimeout(() => {
-    window.print();
-  }, 500);
+    const el = document.getElementById('rbPreview');
+    if (!el) { rbToast('❌ Preview not ready'); return; }
+    el.style.display = 'block';
+    rbToast('🖨️ Print dialog khul raha hai...');
+    setTimeout(() => { window.print(); }, 400);
+  }, 350);
 };
 
-// ====== DUPLICATE / RESET ======
+// ====== DUPLICATE ======
 window.rbDuplicate = () => {
-  const copy = JSON.parse(JSON.stringify(rbData));
-  copy.personal.name = (copy.personal.name || 'Resume') + ' (Copy)';
-  localStorage.setItem('qunverio_resume_data', JSON.stringify(copy));
-  rbData = copy;
-  rbFillForm(); rbPreviewRefresh();
-  rbToast('📋 Duplicated!');
+  if (!confirm('Current resume ki copy banani hai? (existing data replace hoga)')) return;
+  try {
+    const clone = JSON.parse(JSON.stringify(rbData));
+    localStorage.setItem('qunverio_resume_data_backup', JSON.stringify(rbData));
+    rbData = clone;
+    localStorage.setItem('qunverio_resume_data', JSON.stringify(clone));
+    rbFillForm();
+    rbPreviewRefresh();
+    rbToast('📋 Resume duplicate ho gaya!');
+  } catch (e) {
+    rbToast('❌ Duplicate fail');
+  }
 };
 
+// ====== RESET ======
 window.rbReset = () => {
-  if (!confirm('Sab data delete ho jayega. Sure?')) return;
-  localStorage.removeItem('qunverio_resume_data');
-  location.reload();
+  if (!confirm('⚠️ Sab data delete ho jayega. Sure?')) return;
+  try {
+    localStorage.removeItem('qunverio_resume_data');
+    localStorage.removeItem('qunverio_resume_data_backup');
+  } catch (e) {}
+
+  rbData = {
+    personal: { name:'', title:'', photo:'', phone:'', email:'', address:'', city:'', state:'', country:'', linkedin:'', portfolio:'', github:'', other:'' },
+    summary: '',
+    education: [],
+    experience: [],
+    skills: { technical: [], soft: [], languages: [] },
+    projects: [],
+    certifications: [],
+    languages: [],
+    template: 'modern',
+    themeColor: '#00d4ff',
+    fontFamily: "'Segoe UI', Arial, sans-serif",
+    fontSize: 12,
+    sectionOrder: ['summary','experience','education','skills','projects','certifications','languages']
+  };
+
+  rbFillForm();
+  rbRenderPhotoPreview();
+  rbUpdateProgress();
+  rbRenderOrder();
+  rbPreviewRefresh();
+  rbToast('🔄 Resume reset ho gaya');
 };
 
-console.log('✅ Resume Builder loaded (v15 - 8K auto-preview)');
+// ====== END OF FILE v16 ======
