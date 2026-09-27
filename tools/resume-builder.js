@@ -1,8 +1,9 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v11)
+   RESUME BUILDER — Qunverio (FINAL v12)
    - Ultra HD Photo (1100×1300 — 10x)
    - Photo limit 20 MB
-   - PDF pixel ratio 8x (max quality)
+   - PDF 8x capture + 4000px scale (480 DPI)
+   - FAST compression — no crash
    - 7 Templates perfect
    - A4 multi-page smart logic
    ============================================================ */
@@ -595,7 +596,6 @@ window.rbCropCancel = () => { rbCloseCropModal(); rbToast('Photo cancel kiya'); 
 window.rbCropApply = () => {
   if (!rbCropper) return;
   try {
-    // ULTRA HD: 1100×1300 (10x of display 110×130)
     const canvas = rbCropper.getCroppedCanvas({ width: 1100, height: 1300, imageSmoothingQuality: 'high' });
     rbData.personal.photo = canvas.toDataURL('image/jpeg', 1.0);
     rbAutoSave();
@@ -954,7 +954,7 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF ULTRA HD (8x) ======
+// ====== PDF ULTRA HD (8x + 4000px scale + FAST) ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
@@ -977,7 +977,7 @@ window.rbDownloadPDF = async () => {
 
     await new Promise(r => setTimeout(r, 200));
 
-    // 8x ULTRA HD
+    // 8x ULTRA HD capture
     const canvas = await htmlToImage.toCanvas(el, {
       pixelRatio: 8,
       backgroundColor: '#ffffff',
@@ -991,7 +991,22 @@ window.rbDownloadPDF = async () => {
     el.style.height = oldHeight;
     el.style.marginBottom = oldMarginBottom;
 
-    const imgData = canvas.toDataURL('image/jpeg', 1.0);
+    // ✨ 8x canvas ko 4000px me scale karo (quality same, jsPDF safe)
+    const MAX_PX = 4000;
+    let finalCanvas = canvas;
+    if (canvas.width > MAX_PX || canvas.height > MAX_PX) {
+      const scale = Math.min(MAX_PX / canvas.width, MAX_PX / canvas.height);
+      finalCanvas = document.createElement('canvas');
+      finalCanvas.width = Math.floor(canvas.width * scale);
+      finalCanvas.height = Math.floor(canvas.height * scale);
+      const ctx = finalCanvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(canvas, 0, 0, finalCanvas.width, finalCanvas.height);
+      console.log('Canvas scaled:', canvas.width, '×', canvas.height, '→', finalCanvas.width, '×', finalCanvas.height);
+    }
+
+    const imgData = finalCanvas.toDataURL('image/jpeg', 1.0);
     const { jsPDF } = window.jspdf;
 
     const pdf = new jsPDF({
@@ -1011,19 +1026,19 @@ window.rbDownloadPDF = async () => {
     const pw = pdf.internal.pageSize.getWidth();
     const ph = pdf.internal.pageSize.getHeight();
     const imgW = pw;
-    const imgH = (canvas.height * imgW) / canvas.width;
+    const imgH = (finalCanvas.height * imgW) / finalCanvas.width;
 
     if (imgH <= ph + 5) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH);
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
     } else {
       let heightLeft = imgH;
       let position = 0;
-      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
       heightLeft -= ph;
       while (heightLeft > 5) {
         position = heightLeft - imgH;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
         heightLeft -= ph;
       }
     }
@@ -1061,4 +1076,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v11 - Ultra HD 8x, photo 1100×1300)');
+console.log('✅ Resume Builder loaded (v12 - Ultra HD 8x + 4000px scale + FAST)');
