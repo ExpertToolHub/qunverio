@@ -51,8 +51,265 @@ const CATEGORIES = [
     icon: '🛠️',
     desc: 'Word Counter, Image Tools & more',
     gradient: 'linear-gradient(135deg,#14b8a6,#06b6d4)'
+  },
+const EXTRA_TOOLS = [
+  /* ===== EXISTING TOOLS ===== */
+  {
+    id: 'qr-generator',
+    name: 'QR Code Generator',
+    cat: 'generators',
+    icon: '📱',
+    desc: 'Generate QR codes for URLs and text instantly',
+    howto: 'Paste any URL or text. Click Generate QR. Download as PNG or SVG, or Print.',
+    kw: ['qr', 'qr code', 'generator', 'url', 'link', 'scan']
+  },
+  {
+    id: 'ctc-salary',
+    name: 'CTC → In-Hand Salary',
+    cat: 'calculators',
+    icon: '💼',
+    desc: 'Calculate your take-home salary from CTC',
+    howto: 'Enter annual CTC, basic %, HRA %, PF, tax. Click Calculate to see monthly in-hand salary.',
+    kw: ['ctc', 'salary', 'in-hand', 'take home', 'monthly salary', 'income', 'pf', 'tax']
+  },
+  {
+    id: 'barcode-generator',
+    name: 'Barcode Generator',
+    cat: 'generators',
+    icon: '🎫',
+    desc: 'Generate barcodes for products',
+    howto: 'Enter barcode text/number. Choose format. Click Generate. Download or Print.',
+    kw: ['barcode', 'bar code', 'product', 'scan']
+  },
+  {
+    id: 'resume-builder',
+    name: 'Resume Builder',
+    cat: 'students',
+    icon: '📄',
+    desc: 'Create professional ATS-friendly resume with PDF download',
+    howto: 'Fill personal info, education, experience, skills. Choose template. Preview and download PDF.',
+    kw: ['resume', 'cv', 'bio data', 'resume maker', 'cv builder', 'job', 'career']
+  },
+
+  /* ===== CALCULATORS (24) ===== */
+  {
+    id: 'gst-calculator',
+    name: 'GST Calculator',
+    cat: 'calculators',
+    icon: '💰',
+    desc: 'Calculate GST for any amount — inclusive or exclusive',
+    howto: 'Enter amount and GST rate. Choose add or remove GST. Click Calculate.',
+    kw: ['gst', 'tax', 'goods', 'services', 'gst calculator', 'cgst', 'sgst']
+  },
+  {
+    id: 'age-calculator',
+    name: 'Age Calculator',
+    cat: 'calculators',
+    icon: '🎂',
+    desc: 'Calculate exact age in years, months, days',
+    howto: 'Enter date of birth and current date. Click Calculate Age.',
+    kw: ['age', 'age calculator', 'birthday', 'dob', 'date of birth']
+  },
+  {
+    id: 'percentage-calculator',
+    name: 'Percentage Calculator',
+    cat: 'calculators',
+    icon: '📊',
+    desc: 'Calculate percentages, increase, decrease easily',
+    howto: 'Enter values. Choose calculation type. Click Calculate.',
+    kw: ['percentage', 'percent', 'increase', 'decrease', 'discount percent']
+  },
+  {
+    id: 'discount-calculator',
+    name: 'Discount Calculator',
+    cat: 'calculators',
+    icon: '🏷️',
+    desc: 'Calculate discount and final price after discount',
+    howto: 'Enter original price and discount %. Click Calculate.',
+    kw: ['discount', 'sale', 'off', 'price', 'discount calculator']
+  },
+  {
+    id: 'bmi-calculator',
+    name: 'BMI Calculator',
+    cat: 'calculators',
+    icon: '⚖️',
+    desc: 'Calculate your Body Mass Index and health category',
+    howto: 'Enter weight (kg) and height (cm). Click Calculate BMI.',
+    kw: ['bmi', 'body mass', 'health', 'weight', 'fitness']
+  },
+  {
+    id: 'sip-calculator',
+    name: 'SIP Calculator',
+    cat: 'calculators',
+    icon: '📈',
+    desc: 'Calculate mutual fund SIP returns and maturity',
+    howto: 'Enter monthly amount, rate, years. Click Calculate SIP.',
+    kw: ['sip', 'mutual fund', 'investment', 'returns', 'sip calculator']
+  },
+  {
+    id: 'emi-calculator',
+    name: 'EMI / Loan Calculator',
+    cat: 'calculators',
+    icon: '🏦',
+    desc: 'Calculate monthly EMI for home, car, personal loan',
+    howto: 'Enter loan amount, interest rate, tenure. Click Calculate EMI.',
+    kw: ['emi', 'loan', 'home loan', 'car loan', 'emi calculator']
+  },
+  {
+    id: 'fd-calculator',
+    name: 'FD Calculator',
+    cat: 'calculators',
+    icon: '💵',
+    desc: 'Calculate Fixed Deposit maturity and interest',
+    howto: 'Enter principal, rate, tenure, compounding. Click Calculate.',
+    kw: ['fd', 'fixed deposit', 'bank', 'interest', 'fd calculator']
+  },
+  {
+    id: 'simple-interest-calculator',
+    name: 'Simple Interest Calculator',
+    cat: 'calculators',
+    icon: '📉',
+    desc: 'Calculate simple interest on principal amount',
+    howto: 'Enter principal, rate, time. Click Calculate.',
+    kw: ['simple interest', 'si', 'interest', 'loan interest']
+  },
+  {
+    id: 'compound-interest-calculator',
+    name: 'Compound Interest Calculator',
+    cat: 'calculators',
+    icon: '📈',
+    desc: 'Calculate compound interest with compounding frequency',
+    howto: 'Enter principal, rate, time, frequency. Click Calculate.',
+    kw: ['compound interest', 'ci', 'interest', 'compounding']
+  },
+  {
+    id: 'income-tax-calculator',
+    name: 'Income Tax Calculator',
+    cat: 'calculators',
+    icon: '📋',
+    desc: 'Compare Old vs New Regime tax liability',
+    howto: 'Enter annual income and deductions. Click Calculate Tax.',
+    kw: ['income tax', 'tax', 'old regime', 'new regime', 'itr']
+  },
+  {
+    id: 'hra-calculator',
+    name: 'HRA Exemption Calculator',
+    cat: 'calculators',
+    icon: '🏠',
+    desc: 'Calculate HRA exemption for tax saving',
+    howto: 'Enter basic salary, HRA received, rent paid. Click Calculate.',
+    kw: ['hra', 'house rent allowance', 'tax exemption', 'rent']
+  },
+  {
+    id: 'gratuity-calculator',
+    name: 'Gratuity Calculator',
+    cat: 'calculators',
+    icon: '💼',
+    desc: 'Calculate gratuity amount on retirement/resignation',
+    howto: 'Enter last salary and years of service. Click Calculate Gratuity.',
+    kw: ['gratuity', 'retirement', 'service', 'employee benefits']
+  },
+  {
+    id: 'tds-calculator',
+    name: 'TDS Calculator',
+    cat: 'calculators',
+    icon: '📋',
+    desc: 'Calculate TDS deducted on payments',
+    howto: 'Enter amount and TDS rate. Click Calculate TDS.',
+    kw: ['tds', 'tax deducted', 'source', '194c', '194j']
+  },
+  {
+    id: 'ppf-calculator',
+    name: 'PPF Calculator',
+    cat: 'calculators',
+    icon: '🏦',
+    desc: 'Calculate Public Provident Fund maturity',
+    howto: 'Enter yearly investment, rate, tenure. Click Calculate PPF.',
+    kw: ['ppf', 'public provident fund', 'tax saving', 'investment']
+  },
+  {
+    id: 'nps-calculator',
+    name: 'NPS Calculator',
+    cat: 'calculators',
+    icon: '💰',
+    desc: 'Calculate National Pension Scheme corpus & pension',
+    howto: 'Enter monthly contribution, age, retirement age. Click Calculate.',
+    kw: ['nps', 'pension', 'retirement', 'national pension']
+  },
+  {
+    id: 'cagr-calculator',
+    name: 'CAGR Calculator',
+    cat: 'calculators',
+    icon: '📈',
+    desc: 'Calculate Compound Annual Growth Rate of investment',
+    howto: 'Enter initial value, final value, years. Click Calculate CAGR.',
+    kw: ['cagr', 'growth rate', 'annual return', 'investment growth']
+  },
+  {
+    id: 'inflation-calculator',
+    name: 'Inflation Calculator',
+    cat: 'calculators',
+    icon: '📉',
+    desc: 'Calculate impact of inflation on money value',
+    howto: 'Enter amount, inflation rate, years. Click Calculate.',
+    kw: ['inflation', 'price rise', 'value of money', 'purchasing power']
+  },
+  {
+    id: 'retirement-calculator',
+    name: 'Retirement Calculator',
+    cat: 'calculators',
+    icon: '🏖️',
+    desc: 'Calculate retirement corpus needed for comfortable life',
+    howto: 'Enter age, expenses, inflation. Click Calculate Corpus.',
+    kw: ['retirement', 'corpus', 'pension', 'planning']
+  },
+  {
+    id: 'break-even-calculator',
+    name: 'Break-even Calculator',
+    cat: 'calculators',
+    icon: '📊',
+    desc: 'Calculate break-even point for business',
+    howto: 'Enter fixed cost, selling price, variable cost. Click Calculate.',
+    kw: ['break even', 'business', 'profit', 'cost', 'bep']
+  },
+  {
+    id: 'profit-margin-calculator',
+    name: 'Profit Margin Calculator',
+    cat: 'calculators',
+    icon: '💹',
+    desc: 'Calculate profit margin and markup percentage',
+    howto: 'Enter cost and selling price. Click Calculate.',
+    kw: ['profit margin', 'markup', 'business', 'profit', 'margin']
+  },
+  {
+    id: 'rent-vs-buy-calculator',
+    name: 'Rent vs Buy Calculator',
+    cat: 'calculators',
+    icon: '🏘️',
+    desc: 'Compare cost of renting vs buying a property',
+    howto: 'Enter property price, rent, tenure. Click Compare.',
+    kw: ['rent vs buy', 'property', 'home loan', 'renting', 'buying']
+  },
+  {
+    id: 'marriage-planner-calculator',
+    name: 'Marriage / Baby Planner',
+    cat: 'calculators',
+    icon: '💍',
+    desc: 'Calculate time to reach financial goals like marriage',
+    howto: 'Enter savings, monthly amount, target. Click Calculate Timeline.',
+    kw: ['marriage', 'baby', 'planning', 'savings', 'goal']
+  },
+  {
+    id: 'yield-calculator',
+    name: 'Yield Calculator',
+    cat: 'calculators',
+    icon: '📈',
+    desc: 'Calculate annual yield and CAGR on investments',
+    howto: 'Enter investment, current value, years. Click Calculate Yield.',
+    kw: ['yield', 'return', 'investment', 'cagr', 'annual yield']
   }
 ];
+
 
 window.CATEGORIES = CATEGORIES;
 
