@@ -377,7 +377,7 @@ const EXTRA_TOOLS = [
     howto: 'Images add karo. Quality mode ya Target Size mode choose karo. Compress All click karo. Download as ZIP.',
     kw: ['image', 'compress', 'compressor', 'reduce size', '20kb', '50kb', '100kb', 'photo compressor', 'govt form', 'aadhaar', 'pan', 'ssc']
   },
-  {
+    {
     id: 'passport-photo',
     name: 'Passport Photo Maker',
     cat: 'digital-studio',
@@ -385,6 +385,15 @@ const EXTRA_TOOLS = [
     desc: 'Create passport size photos + A4 print sheet — with background color and crop',
     howto: 'Photo upload karo. Face crop karo. Size choose karo (Passport/Stamp/Visa). Background color set karo. A4 sheet automatically generate hoga. Download JPG/PDF ya Print.',
     kw: ['passport photo', 'passport size photo', 'id photo', 'photo maker', 'a4 sheet', 'stamp size', 'visa photo', '35x45mm', 'passport photo online']
+  },
+  {
+    id: 'format-converter',
+    name: 'Image Format Converter',
+    cat: 'digital-studio',
+    icon: '🔄',
+    desc: 'Convert images between JPG, PNG, WebP — bulk conversion with quality control',
+    howto: 'Images add karo. Target format choose karo (JPG/PNG/WebP). Quality set karo. Convert All click karo. Download as ZIP.',
+    kw: ['jpg to png', 'png to jpg', 'webp converter', 'image format', 'convert image', 'jpg to webp', 'png to webp', 'image converter']
   }
 ];
 
