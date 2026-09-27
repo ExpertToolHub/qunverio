@@ -1,7 +1,6 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL)
-   Self-contained: form + CSS + logic + templates + PDF
-   Fixed theme (always dark) — works in all 3 modes
+   RESUME BUILDER — Qunverio (FINAL v2)
+   Photo: right top corner in all 3 templates
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -48,26 +47,39 @@
     .rb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 20px; font-size: 12px; color: #e0e0e0; margin: 4px 4px 0 0; }
     .rb-chip button { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
 
-    /* ===== PREVIEW ===== */
+    /* ===== PREVIEW COMMON ===== */
     .rb-preview-wrap { background: #333; padding: 14px; border-radius: 12px; overflow: auto; max-height: 85vh; }
     .rb-preview { width: 794px; min-height: 1123px; margin: 0 auto; background: #fff; color: #222; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
-    .rb-preview.tpl-modern .rb-h { background: linear-gradient(135deg, var(--rc, #00d4ff), #7b2ff7); color: #fff; padding: 32px 40px; display: flex; gap: 24px; align-items: center; }
-    .rb-preview.tpl-modern .rb-h img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,.4); }
-    .rb-preview.tpl-modern .rb-h-info h1 { margin: 0 0 4px; font-size: 30px; font-weight: 700; }
-    .rb-preview.tpl-modern .rb-h-info .rb-title { font-size: 15px; opacity: .9; margin-bottom: 8px; }
+    .rb-preview .rb-h-photo { flex-shrink: 0; }
+
+    /* ===== MODERN ===== */
+    .rb-preview.tpl-modern .rb-h { background: linear-gradient(135deg, var(--rc, #00d4ff), #7b2ff7); color: #fff; padding: 32px 40px; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
+    .rb-preview.tpl-modern .rb-h-info { flex: 1; }
+    .rb-preview.tpl-modern .rb-h-photo { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,.5); }
+    .rb-preview.tpl-modern .rb-h-info h1 { margin: 0 0 6px; font-size: 30px; font-weight: 700; }
+    .rb-preview.tpl-modern .rb-h-info .rb-title { font-size: 15px; opacity: .9; margin-bottom: 10px; }
     .rb-preview.tpl-modern .rb-h-info .rb-contacts { font-size: 12px; opacity: .95; line-height: 1.7; }
     .rb-preview.tpl-modern .rb-body { padding: 30px 40px; }
-    .rb-preview.tpl-professional .rb-h { text-align: center; padding: 30px 40px 20px; border-bottom: 2px solid #222; }
-    .rb-preview.tpl-professional .rb-h h1 { margin: 0 0 6px; font-size: 32px; letter-spacing: 2px; text-transform: uppercase; }
-    .rb-preview.tpl-professional .rb-h .rb-title { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #666; margin-bottom: 12px; }
-    .rb-preview.tpl-professional .rb-h .rb-contacts { font-size: 12px; color: #444; }
+
+    /* ===== PROFESSIONAL ===== */
+    .rb-preview.tpl-professional .rb-h { padding: 30px 40px 20px; border-bottom: 2px solid #222; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
+    .rb-preview.tpl-professional .rb-h-info { flex: 1; }
+    .rb-preview.tpl-professional .rb-h-photo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 2px solid #222; }
+    .rb-preview.tpl-professional .rb-h-info h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: 2px; text-transform: uppercase; }
+    .rb-preview.tpl-professional .rb-h-info .rb-title { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #666; margin-bottom: 12px; }
+    .rb-preview.tpl-professional .rb-h-info .rb-contacts { font-size: 12px; color: #444; line-height: 1.7; }
     .rb-preview.tpl-professional .rb-body { padding: 24px 40px; }
-    .rb-preview.tpl-minimal .rb-h { padding: 30px 40px 16px; }
-    .rb-preview.tpl-minimal .rb-h h1 { margin: 0 0 4px; font-size: 30px; font-weight: 300; letter-spacing: 1px; }
-    .rb-preview.tpl-minimal .rb-h .rb-title { font-size: 14px; color: #888; margin-bottom: 10px; }
-    .rb-preview.tpl-minimal .rb-h .rb-contacts { font-size: 12px; color: #666; line-height: 1.7; }
+
+    /* ===== MINIMAL ===== */
+    .rb-preview.tpl-minimal .rb-h { padding: 30px 40px 16px; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
+    .rb-preview.tpl-minimal .rb-h-info { flex: 1; }
+    .rb-preview.tpl-minimal .rb-h-photo { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; }
+    .rb-preview.tpl-minimal .rb-h-info h1 { margin: 0 0 4px; font-size: 30px; font-weight: 300; letter-spacing: 1px; }
+    .rb-preview.tpl-minimal .rb-h-info .rb-title { font-size: 14px; color: #888; margin-bottom: 10px; }
+    .rb-preview.tpl-minimal .rb-h-info .rb-contacts { font-size: 12px; color: #666; line-height: 1.7; }
     .rb-preview.tpl-minimal .rb-body { padding: 16px 40px 30px; }
 
+    /* ===== SECTIONS ===== */
     .rb-sec { margin-bottom: 18px; }
     .rb-sec-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--rc,#00d4ff); border-bottom: 1.5px solid var(--rc,#00d4ff); padding-bottom: 4px; margin-bottom: 10px; }
     .rb-sec p { margin: 0 0 6px; font-size: 12.5px; line-height: 1.55; color: #333; }
@@ -162,7 +174,7 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
       </div>
       <div class="rb-field" style="margin-top:10px">
         <label>Profile Photo (optional)</label>
-        <input type="file" accept="image/*" id="rbPhoto" onchange="rbPhotoUpload(event)">
+        <input type="file" accept="image/*" id="rbPhoto">
       </div>
     </div>
   </div>
@@ -303,6 +315,13 @@ window.EXTRA_TOOL_INITS['resume-builder'] = () => {
       if (t.dataset.tab === 'preview') rbPreviewRefresh();
     });
   });
+
+  // Photo upload listener
+  const photoInput = document.getElementById('rbPhoto');
+  if (photoInput) {
+    photoInput.addEventListener('change', window.rbHandlePhoto);
+  }
+
   rbLoad();
   rbUpdateProgress();
   rbRenderOrder();
@@ -366,10 +385,21 @@ window.rbToast = (msg) => {
 };
 
 // ====== PHOTO ======
-window.rbPhotoUpload = (e) => {
-  const f = e.target.files[0]; if (!f) return;
+window.rbHandlePhoto = (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  if (f.size > 5 * 1024 * 1024) {
+    rbToast('❌ Photo 5MB se choti honi chahiye');
+    return;
+  }
   const r = new FileReader();
-  r.onload = ev => { rbData.personal.photo = ev.target.result; rbAutoSave(); rbPreviewRefresh(); };
+  r.onload = ev => {
+    rbData.personal.photo = ev.target.result;
+    rbAutoSave();
+    rbPreviewRefresh();
+    rbToast('✅ Photo added! Preview tab me dekho');
+  };
+  r.onerror = () => rbToast('❌ Photo read nahi hui');
   r.readAsDataURL(f);
 };
 
@@ -606,20 +636,17 @@ window.rbPreviewRefresh = () => {
     p.other && `🔗 ${p.other}`
   ].filter(Boolean).join(' • ');
 
-  const header = tpl === 'modern' ? `
-    <div class="rb-h">
-      ${p.photo ? `<img src="${p.photo}">` : ''}
-      <div class="rb-h-info">
-        <h1>${p.name || 'Your Name'}</h1>
-        <div class="rb-title">${p.title || 'Professional Title'}</div>
-        <div class="rb-contacts">${contacts || 'Contact info'}</div>
-      </div>
-    </div>` : `
-    <div class="rb-h">
+  const photoHtml = p.photo ? `<img src="${p.photo}" class="rb-h-photo" alt="Profile">` : '';
+
+  // Text always first, photo second (photo goes right due to flex justify-between)
+  const infoHtml = `
+    <div class="rb-h-info">
       <h1>${p.name || 'Your Name'}</h1>
       <div class="rb-title">${p.title || 'Professional Title'}</div>
       <div class="rb-contacts">${contacts || 'Contact info'}</div>
     </div>`;
+
+  const header = `<div class="rb-h">${infoHtml}${photoHtml}</div>`;
 
   let body = '<div class="rb-body">';
   for (const sec of rbData.sectionOrder) {
@@ -739,4 +766,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded');
+console.log('✅ Resume Builder loaded (v2 - photo right top)');
