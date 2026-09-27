@@ -5,34 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 <meta name="theme-color" content="#0a0e27" />
 
-<!-- SEO -->
 <title>Qunverio — Free Online Tools for Daily Life</title>
-<meta name="description" content="Qunverio offers free online tools — CTC Calculator, QR Code Generator and more. Fast, free & no installation required." />
-<meta name="keywords" content="free online tools, CTC calculator, in-hand salary, QR code generator, qunverio" />
+<meta name="description" content="Qunverio offers 50+ free online tools — CTC Calculator, GST, QR Code Generator, Resume Builder and more. Fast, free & no installation required." />
+<meta name="keywords" content="free online tools, CTC calculator, GST calculator, in-hand salary, QR code generator, resume builder, qunverio" />
 <meta name="author" content="Qunverio" />
 <meta name="robots" content="index, follow" />
 <meta name="google-site-verification" content="G4R0n1J5lvgRupFcm8Kr2jbbRmq30OtB9B6GFSHTX5I" />
 <link rel="canonical" href="https://qunverio.vercel.app/" />
 
-<!-- Open Graph -->
 <meta property="og:type" content="website" />
-<meta property="og:title" content="Qunverio — Free Online Tools" />
-<meta property="og:description" content="Fast, Free & Easy to Use Tools – No Installation Required." />
+<meta property="og:title" content="Qunverio — 50+ Free Online Tools" />
+<meta property="og:description" content="Calculators, Converters, Generators & More. 100% Free — No Signup Required." />
 <meta property="og:url" content="https://qunverio.vercel.app/" />
 <meta property="og:site_name" content="Qunverio" />
 <meta property="og:image" content="https://qunverio.vercel.app/og-image.jpg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 
-<!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Qunverio — Free Online Tools" />
-<meta name="twitter:description" content="Fast, Free & Easy to Use Tools – No Installation Required." />
+<meta name="twitter:title" content="Qunverio — 50+ Free Online Tools" />
+<meta name="twitter:description" content="Calculators, Converters, Generators & More. 100% Free — No Signup Required." />
 <meta name="twitter:image" content="https://qunverio.vercel.app/og-image.jpg" />
 
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
 
-<!-- Structured Data -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -46,7 +42,6 @@
 }
 </script>
 
-<!-- Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
@@ -59,7 +54,6 @@
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
 
 <style>
-/* RESET */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; line-height: 1.55; font-size: 15px; transition: background 0.3s ease, color 0.3s ease; }
@@ -68,7 +62,6 @@ button { cursor: pointer; border: none; background: none; }
 img { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 
-/* THEMES */
 :root, [data-theme="dark"] {
   --bg: #0a0e27; --surface: #151a3d; --surface-2: #1c2250; --surface-hover: #232a5e;
   --border: rgba(255,255,255,0.08); --border-strong: rgba(255,255,255,0.14);
@@ -101,7 +94,6 @@ a { color: inherit; text-decoration: none; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 8px; }
 
-/* HEADER */
 .header { position: sticky; top: 0; z-index: 100; background: color-mix(in srgb, var(--bg) 85%, transparent); border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
 .header-inner { max-width: 1200px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .logo { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; cursor: pointer; user-select: none; padding: 6px 8px; border-radius: 10px; }
@@ -113,10 +105,8 @@ a { color: inherit; text-decoration: none; }
 .icon-btn:hover { background: var(--surface-hover); }
 .icon-btn:active { transform: scale(0.92); }
 
-/* CONTAINER */
 .container { max-width: 1200px; margin: 0 auto; padding: 20px 16px 120px; }
 
-/* HERO */
 .hero { padding: 32px 0 24px; text-align: center; position: relative; overflow: hidden; }
 .hero::before { content: ''; position: absolute; top: -50%; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%); pointer-events: none; z-index: -1; }
 .hero-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border-strong); font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 16px; }
@@ -126,9 +116,7 @@ a { color: inherit; text-decoration: none; }
 .hero h1 .grad { background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
 .hero p.sub { color: var(--text-2); font-size: clamp(13.5px, 3.6vw, 17px); max-width: 620px; margin: 0 auto 4px; }
 
-/* SEARCH */
 .search-wrap { position: relative; max-width: 680px; margin: 24px auto 8px; z-index: 90; }
-.search-wrap.sticky { position: fixed; top: 68px; left: 16px; right: 16px; max-width: 680px; margin: 0 auto; }
 .search-box { position: relative; display: flex; align-items: center; background: var(--surface); border: 1.5px solid var(--border-strong); border-radius: 16px; padding: 0 16px; box-shadow: var(--shadow-sm); transition: border-color 0.2s, box-shadow 0.2s; }
 .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99,102,241,0.15); }
 .search-box .s-icon { font-size: 18px; opacity: 0.6; flex-shrink: 0; }
@@ -148,18 +136,15 @@ a { color: inherit; text-decoration: none; }
 .no-results { padding: 28px 20px; text-align: center; color: var(--text-3); font-size: 14px; }
 .no-results .nr-emoji { font-size: 32px; margin-bottom: 8px; opacity: 0.6; }
 
-/* STATS */
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; max-width: 680px; margin: 24px auto 36px; }
 .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 10px; text-align: center; }
 .stat-num { font-size: clamp(22px, 5.5vw, 30px); font-weight: 900; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; line-height: 1.1; }
 .stat-label { font-size: 11.5px; color: var(--text-3); margin-top: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 
-/* SECTION TITLE */
 .section-title { display: flex; align-items: center; justify-content: space-between; margin: 24px 0 14px; gap: 12px; }
 .section-title h2 { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
 .section-title .see-all { font-size: 13px; color: var(--primary); font-weight: 700; cursor: pointer; padding: 6px 10px; border-radius: 8px; }
 
-/* TOOL CARDS */
 .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
 @media (min-width: 560px) { .tool-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 900px) { .tool-grid { grid-template-columns: repeat(4, 1fr); } }
@@ -174,30 +159,36 @@ a { color: inherit; text-decoration: none; }
 .tool-open-btn { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 9px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border-strong); font-size: 12.5px; font-weight: 700; color: var(--text); transition: background 0.2s, color 0.2s; margin-top: auto; }
 .tool-card:hover .tool-open-btn { background: var(--gradient); color: #fff; border-color: transparent; }
 
-/* FAV STAR */
+.category-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+@media (min-width: 700px) { .category-grid { grid-template-columns: repeat(3, 1fr); } }
+.category-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 20px 18px; cursor: pointer; position: relative; overflow: hidden; transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.22s, border-color 0.22s; display: flex; flex-direction: column; gap: 8px; min-height: 140px; }
+.category-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--border-strong); }
+.category-card:active { transform: scale(0.98); }
+.category-card .cat-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,0.2); }
+.category-card .cat-name { font-size: 16px; font-weight: 800; color: var(--text); }
+.category-card .cat-desc { font-size: 12px; color: var(--text-3); line-height: 1.4; }
+.category-card .cat-count { font-size: 11px; color: var(--primary); font-weight: 700; margin-top: 4px; }
+.category-card .cat-arrow { position: absolute; top: 18px; right: 18px; font-size: 18px; color: var(--text-3); transition: transform 0.2s, color 0.2s; }
+.category-card:hover .cat-arrow { transform: translateX(4px); color: var(--primary); }
+
 .fav-btn { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 15px; z-index: 5; color: var(--text-3); }
 .fav-btn.active { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(245,158,11,0.4); }
 
-/* WORKSPACE */
 .workspace { display: none; }
 .workspace.active { display: block; }
 
-/* TOOL HEADER */
 .tool-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-sm); }
 .back-btn { width: 40px; height: 40px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
 .tool-header-info { flex: 1; min-width: 0; }
 .tool-header-info h3 { font-size: 16px; font-weight: 800; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tool-header-info p { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* HOW TO USE */
 .how-to-use { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; font-size: 13px; color: var(--text-2); line-height: 1.65; border-left: 3px solid var(--primary); }
 .how-to-use strong { color: var(--text); font-weight: 700; }
 
-/* CARD */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: var(--shadow-sm); }
 .card-title { font-size: 13.5px; font-weight: 800; margin-bottom: 14px; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.06em; }
 
-/* FIELD */
 .field { margin-bottom: 14px; }
 .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-2); margin-bottom: 6px; }
 .field input, .field textarea, .field select { width: 100%; padding: 12px 14px; background: var(--surface-2); border: 1.5px solid var(--border-strong); border-radius: 12px; font-size: 14.5px; outline: none; color: var(--text); }
@@ -206,7 +197,6 @@ a { color: inherit; text-decoration: none; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 420px) { .field-row { grid-template-columns: 1fr; } }
 
-/* BUTTONS */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; border-radius: 12px; font-size: 14.5px; font-weight: 700; cursor: pointer; border: none; white-space: nowrap; transition: transform 0.15s, box-shadow 0.2s; }
 .btn:active { transform: scale(0.97); }
 .btn-primary { background: var(--gradient); color: #fff; box-shadow: 0 4px 14px rgba(99,102,241,0.35); }
@@ -216,7 +206,6 @@ a { color: inherit; text-decoration: none; }
 .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn-group .btn { flex: 1; min-width: 90px; }
 
-/* RESULT */
 .result-box { background: var(--surface); border: 1.5px solid var(--border-strong); border-radius: 16px; padding: 20px; margin-top: 16px; display: none; }
 .result-box.active { display: block; }
 .result-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px dashed var(--border-strong); }
@@ -230,18 +219,26 @@ a { color: inherit; text-decoration: none; }
 .export-btns .btn { padding: 11px 6px; font-size: 12.5px; flex-direction: column; gap: 3px; }
 .export-btns .btn i { font-style: normal; font-size: 16px; }
 
-/* QR */
 .qr-container { display: flex; align-items: center; justify-content: center; padding: 22px; background: #ffffff; border-radius: 12px; min-height: 120px; margin-top: 12px; }
 .qr-container img, .qr-container canvas { max-width: 100%; height: auto !important; width: 280px !important; aspect-ratio: 1/1; padding: 16px; background: #fff; border-radius: 10px; }
 
-/* EMPTY */
 .empty-state { text-align: center; padding: 28px 20px; background: var(--surface); border: 1px dashed var(--border-strong); border-radius: 16px; color: var(--text-3); font-size: 13.5px; margin-bottom: 24px; }
 .empty-state .es-emoji { font-size: 36px; margin-bottom: 8px; opacity: 0.6; }
 .empty-state .es-title { font-weight: 700; color: var(--text-2); margin-bottom: 4px; font-size: 14px; }
 .h-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 24px; scroll-snap-type: x mandatory; }
 .h-scroll .tool-card { flex: 0 0 160px; min-height: 165px; scroll-snap-align: start; }
 
-/* MODAL */
+.why-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+@media (min-width: 700px) { .why-grid { grid-template-columns: repeat(4, 1fr); } }
+.why-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 14px; text-align: center; }
+.why-icon { font-size: 30px; margin-bottom: 10px; }
+.why-title { font-size: 13.5px; font-weight: 800; margin-bottom: 4px; color: var(--text); }
+.why-desc { font-size: 11.5px; color: var(--text-3); line-height: 1.45; }
+
+.about-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px 20px; margin-bottom: 24px; text-align: center; }
+.about-section h3 { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
+.about-section p { font-size: 13.5px; color: var(--text-2); line-height: 1.7; max-width: 700px; margin: 0 auto; }
+
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
 .modal-overlay.active { display: flex; }
 .modal { background: var(--surface); border: 1px solid var(--border-strong); border-radius: 20px; padding: 24px; width: 100%; max-width: 440px; max-height: 88vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
@@ -249,8 +246,14 @@ a { color: inherit; text-decoration: none; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; }
 .modal-header h3 { font-size: 18px; font-weight: 800; }
 .modal-close { width: 34px; height: 34px; border-radius: 10px; background: var(--surface-2); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.legal-content { font-size: 13.5px; line-height: 1.75; color: var(--text-2); }
+.legal-content h4 { font-size: 14px; font-weight: 800; color: var(--text); margin: 16px 0 8px; }
+.legal-content h4:first-child { margin-top: 0; }
+.legal-content p { margin-bottom: 10px; }
+.legal-content ul { padding-left: 20px; margin-bottom: 10px; }
+.legal-content li { margin-bottom: 4px; }
+.legal-content strong { color: var(--text); }
 
-/* DRAWER */
 .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
 .drawer-overlay.active { opacity: 1; pointer-events: auto; }
 .drawer { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; max-width: 82vw; background: var(--surface); border-right: 1px solid var(--border-strong); z-index: 160; transform: translateX(-100%); transition: transform 0.35s; overflow-y: auto; padding: 20px 16px; }
@@ -265,31 +268,27 @@ a { color: inherit; text-decoration: none; }
 .drawer-item .di-icon { font-size: 18px; width: 22px; text-align: center; }
 .drawer-divider { height: 1px; background: var(--border); margin: 10px 0; }
 
-/* THEME OPTIONS */
 .theme-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .theme-opt { padding: 16px 8px; border-radius: 12px; background: var(--surface-2); border: 2px solid var(--border); text-align: center; cursor: pointer; font-size: 12.5px; font-weight: 600; }
 .theme-opt.active { border-color: var(--primary); }
 .theme-opt .to-icon { font-size: 24px; margin-bottom: 6px; display: block; }
 
-/* TOAST */
 .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(120px); background: var(--surface); border: 1px solid var(--border-strong); color: var(--text); padding: 12px 20px; border-radius: 12px; font-size: 13.5px; font-weight: 600; z-index: 500; transition: transform 0.35s; max-width: 90vw; text-align: center; box-shadow: var(--shadow-lg); pointer-events: none; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 .toast.success { border-color: var(--success); }
 .toast.error { border-color: var(--danger); }
 
-/* BACK TO TOP */
 .back-to-top { position: fixed; bottom: 90px; right: 18px; width: 46px; height: 46px; border-radius: 50%; background: var(--gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; z-index: 90; box-shadow: 0 6px 20px rgba(99,102,241,0.45); opacity: 0; pointer-events: none; transform: translateY(20px) scale(0.8); transition: opacity 0.3s, transform 0.3s; }
 .back-to-top.show { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
 
-/* BOTTOM NAV */
-.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: color-mix(in srgb, var(--surface) 95%, transparent); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 4px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 95; }
-.bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; border-radius: 12px; font-size: 10.5px; font-weight: 600; color: var(--text-3); cursor: pointer; min-width: 0; }
+/* BOTTOM NAV — 5 tabs */
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: color-mix(in srgb, var(--surface) 95%, transparent); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 8px 2px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 95; }
+.bn-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 2px; border-radius: 12px; font-size: 10px; font-weight: 600; color: var(--text-3); cursor: pointer; min-width: 0; }
 .bn-item .bn-icon { font-size: 19px; line-height: 1; }
 .bn-item.active { color: var(--primary); }
 .bn-item .bn-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 @media (min-width: 900px) { .bottom-nav { display: none; } .container { padding-bottom: 80px; } .back-to-top { bottom: 24px; } .toast { bottom: 24px; } }
 
-/* FOOTER */
 .footer { background: var(--surface); border-top: 1px solid var(--border); margin-top: 40px; padding: 36px 16px 24px; }
 .footer-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 28px; }
 @media (min-width: 700px) { .footer-inner { grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; } }
@@ -303,7 +302,6 @@ a { color: inherit; text-decoration: none; }
 .footer-bottom { max-width: 1200px; margin: 28px auto 0; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; font-size: 12.5px; color: var(--text-3); }
 .footer-bottom strong { color: var(--text-2); }
 
-/* UTILITY */
 .hidden { display: none !important; }
 .mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; } .mt-16 { margin-top: 16px; }
 .mb-8 { margin-bottom: 8px; } .mb-12 { margin-bottom: 12px; } .mb-16 { margin-bottom: 16px; }
@@ -315,7 +313,6 @@ a { color: inherit; text-decoration: none; }
 .chip.active { background: var(--gradient); color: #fff; border-color: transparent; }
 .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 
-/* PRINT */
 @media print {
   body * { visibility: hidden !important; }
   #printArea, #printArea * { visibility: visible !important; }
@@ -326,7 +323,6 @@ a { color: inherit; text-decoration: none; }
 </head>
 <body data-theme="dark">
 
-<!-- HEADER -->
 <header class="header">
   <div class="header-inner">
     <div class="logo" id="logo" title="Qunverio">
@@ -341,7 +337,6 @@ a { color: inherit; text-decoration: none; }
   </div>
 </header>
 
-<!-- DRAWER -->
 <div class="drawer-overlay" id="drawerOverlay"></div>
 <aside class="drawer" id="drawer">
   <div class="drawer-profile" id="drawerProfile">
@@ -353,20 +348,18 @@ a { color: inherit; text-decoration: none; }
   </div>
   <div class="drawer-item" data-menu="profile"><span class="di-icon">👤</span> Profile</div>
   <div class="drawer-item" data-menu="home"><span class="di-icon">🏠</span> Home</div>
+  <div class="drawer-item" data-menu="tools"><span class="di-icon">🧰</span> All Tools</div>
   <div class="drawer-item" data-menu="favorites"><span class="di-icon">⭐</span> Favorites</div>
   <div class="drawer-item" data-menu="recent"><span class="di-icon">🕒</span> Recently Used</div>
   <div class="drawer-item" data-menu="setting"><span class="di-icon">⚙️</span> Setting</div>
   <div class="drawer-divider"></div>
   <div class="drawer-item" data-menu="feedback"><span class="di-icon">💬</span> Send Feedback</div>
-  
 </aside>
 
-<!-- MAIN -->
 <main class="container">
 
   <!-- HOME VIEW -->
   <section id="homeView" class="workspace active">
-
     <div class="hero">
       <div class="hero-badge">
         <span class="dot"></span>
@@ -379,7 +372,7 @@ a { color: inherit; text-decoration: none; }
     <div class="search-wrap" id="searchWrap">
       <div class="search-box">
         <span class="s-icon">🔍</span>
-        <input type="text" id="searchInput" placeholder="Search tools... (qr, ctc, salary)" autocomplete="off" />
+        <input type="text" id="searchInput" placeholder="Search tools... (qr, ctc, resume)" autocomplete="off" />
         <button class="search-clear" id="searchClear" aria-label="Clear">✕</button>
       </div>
       <div class="search-results" id="searchResults"></div>
@@ -387,11 +380,11 @@ a { color: inherit; text-decoration: none; }
 
     <div class="stats">
       <div class="stat-card">
-        <div class="stat-num" id="statTools" data-count="2">0</div>
+        <div class="stat-num" id="statTools" data-count="4">0</div>
         <div class="stat-label">Tools</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" id="statCats" data-count="2">0</div>
+        <div class="stat-num" id="statCats" data-count="6">0</div>
         <div class="stat-label">Categories</div>
       </div>
       <div class="stat-card">
@@ -412,10 +405,59 @@ a { color: inherit; text-decoration: none; }
     <div class="tool-grid" id="favList" style="display:none"></div>
 
     <div class="section-title">
-      <h2>🧰 All Tools</h2>
+      <h2>✨ Why Qunverio?</h2>
     </div>
-    <div class="tool-grid" id="allTools"></div>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon">💯</div>
+        <div class="why-title">100% Free</div>
+        <div class="why-desc">No hidden charges, no premium plans</div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">⚡</div>
+        <div class="why-title">Fast & Easy</div>
+        <div class="why-desc">Instant results, zero loading time</div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">📱</div>
+        <div class="why-title">Mobile-Friendly</div>
+        <div class="why-desc">Works perfectly on any device</div>
+      </div>
+      <div class="why-card">
+        <div class="why-icon">🔒</div>
+        <div class="why-title">Privacy First</div>
+        <div class="why-desc">All data stays on your device</div>
+      </div>
+    </div>
 
+    <div class="about-section">
+      <h3>📖 About Qunverio</h3>
+      <p>
+        Qunverio ek free online tools platform hai jo daily life aur work ke liye 50+ handy tools provide karta hai.
+        Chahe aapko QR code banana ho, salary calculate karni ho, ya resume banani ho — sab kuch ek jagah.
+        <strong>No signup, no installation, no hidden charges.</strong> Sirf kholo, use karo, aur kaam karwao.
+      </p>
+    </div>
+  </section>
+
+  <!-- TOOLS VIEW -->
+  <section id="toolsView" class="workspace">
+    <div class="section-title" style="margin-top:0">
+      <h2>🧰 Browse by Category</h2>
+    </div>
+    <div class="category-grid" id="categoryGrid"></div>
+  </section>
+
+  <!-- CATEGORY VIEW -->
+  <section id="categoryView" class="workspace">
+    <div class="tool-header">
+      <button class="back-btn" onclick="openToolsView()">←</button>
+      <div class="tool-header-info">
+        <h3 id="catViewTitle">Category</h3>
+        <p id="catViewSub">Tools</p>
+      </div>
+    </div>
+    <div class="tool-grid" id="catViewList"></div>
   </section>
 
   <!-- FAV VIEW -->
@@ -438,6 +480,7 @@ a { color: inherit; text-decoration: none; }
         <h3>🕒 Recently Used</h3>
         <p id="recentSub">Last used tools</p>
       </div>
+      <button class="btn btn-sm btn-secondary" onclick="clearRecent()" style="flex:0 0 auto">Clear</button>
     </div>
     <div class="tool-grid" id="recentViewList"></div>
   </section>
@@ -458,7 +501,6 @@ a { color: inherit; text-decoration: none; }
 
 </main>
 
-<!-- FOOTER -->
 <footer class="footer no-print">
   <div class="footer-inner">
     <div class="footer-brand">
@@ -466,12 +508,13 @@ a { color: inherit; text-decoration: none; }
         <div class="logo-icon">⚡</div>
         <span class="logo-text">Qunverio</span>
       </div>
-      <p>Free Online Tools for Daily Life &amp; Work.</p>
+      <p>50+ Free Online Tools for Daily Life &amp; Work. 100% Free — No Signup Required.</p>
     </div>
     <div class="footer-col">
       <h4>Quick Links</h4>
       <ul>
         <li onclick="goHome()">Home</li>
+        <li onclick="openToolsView()">All Tools</li>
         <li onclick="openFavoritesView()">Favorites</li>
         <li onclick="openRecentView()">Recently Used</li>
         <li onclick="openFeedback()">Send Feedback</li>
@@ -493,23 +536,21 @@ a { color: inherit; text-decoration: none; }
   </div>
 </footer>
 
-<!-- BOTTOM NAV -->
+<!-- BOTTOM NAV — 5 TABS -->
 <nav class="bottom-nav" id="bottomNav">
   <div class="bn-item active" data-bn="home"><span class="bn-icon">🏠</span><span class="bn-label">Home</span></div>
-  <div class="bn-item" data-bn="favorites"><span class="bn-icon">⭐</span><span class="bn-label">Favorites</span></div>
+  <div class="bn-item" data-bn="tools"><span class="bn-icon">🧰</span><span class="bn-label">Tools</span></div>
+  <div class="bn-item" data-bn="favorites"><span class="bn-icon">⭐</span><span class="bn-label">Favs</span></div>
   <div class="bn-item" data-bn="recent"><span class="bn-icon">🕒</span><span class="bn-label">Recent</span></div>
   <div class="bn-item" data-bn="menu"><span class="bn-icon">☰</span><span class="bn-label">Menu</span></div>
 </nav>
 
-<!-- BACK TO TOP -->
 <button class="back-to-top" id="backToTop" title="Back to top">↑</button>
 
-<!-- MODAL/TOAST/PRINT -->
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalContent"></div></div>
 <div class="toast" id="toast"></div>
 <div id="printArea" style="display:none"></div>
 
-<!-- MAIN SCRIPT -->
 <script>
 /* Firebase */
 const firebaseConfig = {
@@ -524,13 +565,11 @@ const firebaseConfig = {
 let fbDB = null;
 try { firebase.initializeApp(firebaseConfig); fbDB = firebase.database(); console.log('%cFirebase ✅', 'color:#10b981'); } catch(e) { console.warn('Firebase failed:', e); }
 
-/* Storage */
 const DB = {
   get(k, def) { try { const v = localStorage.getItem('qunverio_'+k); return v ? JSON.parse(v) : def; } catch(e) { return def; } },
   set(k, v) { try { localStorage.setItem('qunverio_'+k, JSON.stringify(v)); return true; } catch(e) { return false; } }
 };
 
-/* Toast */
 let toastTimer;
 function toast(msg, type='') {
   const el = document.getElementById('toast');
@@ -541,12 +580,10 @@ function toast(msg, type='') {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
-/* Helpers */
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function fmtMoney(n) { return '₹' + (Number(n)||0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function fmtNum(n, d=2) { return (Number(n)||0).toLocaleString('en-IN', { maximumFractionDigits: d }); }
 
-/* Theme */
 function applyTheme(theme) {
   document.body.setAttribute('data-theme', theme);
   DB.set('theme', theme);
@@ -561,7 +598,6 @@ function cycleTheme() {
   toast({dark: '🌙 Dark', light: '☀️ Light', reading: '📖 Reading'}[next] + ' mode');
 }
 
-/* Navigation */
 function switchView(id) {
   document.querySelectorAll('.workspace').forEach(v => v.classList.remove('active'));
   const el = document.getElementById(id);
@@ -574,7 +610,6 @@ function updateBottomNav(name) {
   document.querySelectorAll('.bn-item').forEach(item => item.classList.toggle('active', item.dataset.bn === name));
 }
 
-/* Favorites */
 function getFavorites() { return DB.get('favorites', []); }
 function isFavorite(id) { return getFavorites().includes(id); }
 function toggleFavorite(id, ev) {
@@ -584,7 +619,7 @@ function toggleFavorite(id, ev) {
   else { favs.push(id); toast('Added to favorites ⭐', 'success'); }
   DB.set('favorites', favs);
   if (typeof renderFavorites === 'function') renderFavorites();
-  if (typeof renderAllTools === 'function') renderAllTools();
+  if (typeof renderCategoryTools === 'function') renderCategoryTools();
   const toolFav = document.getElementById('toolFavBtn');
   if (toolFav && toolFav.dataset.tool === id) {
     toolFav.textContent = isFavorite(id) ? '★' : '☆';
@@ -601,7 +636,6 @@ function renderFavorites() {
   wrap.innerHTML = favs.map(id => { const t = (window.EXTRA_TOOLS || []).find(x => x.id === id); return t && window.extraToolCardHTML ? window.extraToolCardHTML(t) : ''; }).join('');
 }
 
-/* Recent */
 function addRecent(id) {
   let recent = DB.get('recent', []);
   recent = recent.filter(x => x !== id);
@@ -610,7 +644,7 @@ function addRecent(id) {
   DB.set('recent', recent);
   if (typeof renderRecent === 'function') renderRecent();
 }
-function clearRecent() { DB.set('recent', []); if (typeof renderRecent === 'function') renderRecent(); toast('Recent cleared'); }
+function clearRecent() { DB.set('recent', []); if (typeof renderRecent === 'function') renderRecent(); toast('Recent cleared', 'success'); }
 function renderRecent() {
   const wrap = document.getElementById('recentList');
   const title = document.getElementById('recentTitle');
@@ -621,7 +655,6 @@ function renderRecent() {
   wrap.innerHTML = recent.map(id => { const t = (window.EXTRA_TOOLS || []).find(x => x.id === id); return t && window.extraToolCardHTML ? window.extraToolCardHTML(t) : ''; }).join('');
 }
 
-/* Search */
 function handleSearch() {
   const input = document.getElementById('searchInput');
   const resultsEl = document.getElementById('searchResults');
@@ -630,15 +663,14 @@ function handleSearch() {
   const tools = window.EXTRA_TOOLS || [];
   const matches = tools.filter(t =>
     t.name.toLowerCase().includes(q) ||
-    t.desc.toLowerCase().includes(q) ||
+    (t.desc || '').toLowerCase().includes(q) ||
     (t.kw || []).some(k => k.toLowerCase().includes(q))
   );
   if (matches.length === 0) {
     resultsEl.innerHTML = '<div class="no-results"><div class="nr-emoji">🔍</div><div><strong>No Tools Found</strong></div></div>';
   } else {
     resultsEl.innerHTML = matches.slice(0, 10).map(t => {
-      const catMap = { finance: 'linear-gradient(135deg,#22c55e,#10b981)', utility: 'linear-gradient(135deg,#6366f1,#8b5cf6)', pdf: 'linear-gradient(135deg,#ef4444,#f97316)', photo: 'linear-gradient(135deg,#ec4899,#8b5cf6)', student: 'linear-gradient(135deg,#8b5cf6,#6366f1)' };
-      const grad = catMap[t.cat] || 'var(--gradient)';
+      const grad = (window.CATEGORIES || []).find(c => c.id === t.cat)?.gradient || 'var(--gradient)';
       return `<div class="search-result-item" onclick="openExtraTool('${t.id}')">
         <div class="sr-icon" style="background:${grad}">${t.icon}</div>
         <div class="sr-info"><div class="sr-name">${esc(t.name)}</div><div class="sr-cat">${esc(t.cat)}</div></div>
@@ -648,7 +680,6 @@ function handleSearch() {
   resultsEl.classList.add('active');
 }
 
-/* Views */
 function openFavoritesView() {
   const favs = getFavorites();
   const list = document.getElementById('favViewList');
@@ -665,8 +696,49 @@ function openRecentView() {
   else { list.innerHTML = recent.map(id => { const t = (window.EXTRA_TOOLS || []).find(x => x.id === id); return t ? window.extraToolCardHTML(t) : ''; }).join(''); sub.textContent = recent.length + ' recently used'; }
   switchView('recentView'); updateBottomNav('recent');
 }
+function openToolsView() {
+  renderCategories();
+  switchView('toolsView'); updateBottomNav('tools');
+}
+function renderCategories() {
+  const grid = document.getElementById('categoryGrid');
+  if (!grid) return;
+  const cats = window.CATEGORIES || [];
+  const tools = window.EXTRA_TOOLS || [];
+  grid.innerHTML = cats.map(c => {
+    const count = tools.filter(t => t.cat === c.id).length;
+    return `<div class="category-card" onclick="openCategoryView('${c.id}')">
+      <div class="cat-icon" style="background:${c.gradient}">${c.icon}</div>
+      <div class="cat-name">${c.name}</div>
+      <div class="cat-desc">${c.desc}</div>
+      <div class="cat-count">${count} tool${count !== 1 ? 's' : ''}</div>
+      <div class="cat-arrow">→</div>
+    </div>`;
+  }).join('');
+}
+function openCategoryView(catId) {
+  const cat = (window.CATEGORIES || []).find(c => c.id === catId);
+  if (!cat) return;
+  const tools = (window.EXTRA_TOOLS || []).filter(t => t.cat === catId);
+  document.getElementById('catViewTitle').textContent = cat.icon + ' ' + cat.name;
+  document.getElementById('catViewSub').textContent = tools.length + ' tools available';
+  const list = document.getElementById('catViewList');
+  if (tools.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="es-emoji">🚧</div><div class="es-title">Coming Soon</div>Tools are being added to this category</div>';
+  } else {
+    list.innerHTML = tools.map(t => window.extraToolCardHTML(t)).join('');
+  }
+  switchView('categoryView');
+}
+function renderCategoryTools() {
+  const active = document.querySelector('.workspace.active');
+  if (active && active.id === 'categoryView') {
+    const title = document.getElementById('catViewTitle').textContent;
+    const cat = (window.CATEGORIES || []).find(c => title.includes(c.name));
+    if (cat) openCategoryView(cat.id);
+  }
+}
 
-/* Modal */
 function openModal(html, opts={}) {
   const overlay = document.getElementById('modalOverlay');
   const content = document.getElementById('modalContent');
@@ -677,7 +749,6 @@ function openModal(html, opts={}) {
 function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
 document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target.id === 'modalOverlay') closeModal(); });
 
-/* Drawer */
 function openDrawer() { document.getElementById('drawer').classList.add('active'); document.getElementById('drawerOverlay').classList.add('active'); refreshDrawerProfile(); }
 function closeDrawer() { document.getElementById('drawer').classList.remove('active'); document.getElementById('drawerOverlay').classList.remove('active'); }
 document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
@@ -690,36 +761,41 @@ function refreshDrawerProfile() {
   else av.textContent = (p.name ? p.name[0].toUpperCase() : 'U');
 }
 
-/* About */
 function openAbout() {
   openModal(`
     <div class="modal-header"><h3>ℹ️ About Qunverio</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div style="font-size:14px;line-height:1.7;color:var(--text-2)">
-      <p style="margin-bottom:10px"><strong style="color:var(--text)">Qunverio</strong> — free online tools for daily life & work.</p>
-      <ul style="padding-left:18px">
-        <li>100% Free tools</li>
-        <li>No signup required</li>
-        <li>Mobile-first design</li>
-        <li>PDF, Print &amp; Image export</li>
+    <div class="legal-content">
+      <p><strong>Qunverio</strong> is a free online tools platform offering 50+ handy utilities for daily life, study, and work.</p>
+      <h4>What We Offer</h4>
+      <ul>
+        <li>Calculators — CTC, GST, SIP, Age, BMI & more</li>
+        <li>Generators — QR Code, Barcode, Password</li>
+        <li>Converters — Unit, Case, Currency</li>
+        <li>Utilities — Word Counter, Image Tools</li>
       </ul>
-      <p class="muted" style="margin-top:12px">Made with ❤️ for India</p>
+      <h4>Why Qunverio?</h4>
+      <ul>
+        <li>100% Free — no hidden charges</li>
+        <li>No signup required</li>
+        <li>Works on any device</li>
+        <li>Privacy-first — data stays on your device</li>
+      </ul>
+      <p class="muted" style="margin-top:14px">Made with ❤️ for India</p>
     </div>
-  `);
+  `, { wide: true });
 }
 
-/* Footer pages */
 function openFooterPage(page) {
   const pages = {
-    about: `<div class="modal-header"><h3>ℹ️ About Us</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div style="font-size:14px;line-height:1.7;color:var(--text-2)"><p><strong style="color:var(--text)">Qunverio</strong> — free online tools for daily life. Fast, free & no signup.</p></div>`,
-    contact: `<div class="modal-header"><h3>📧 Contact</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div style="font-size:14px;line-height:1.7;color:var(--text-2)"><p>Email: support@qunverio.app</p></div>`,
-    privacy: `<div class="modal-header"><h3>🔒 Privacy</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div style="font-size:13.5px;line-height:1.7;color:var(--text-2)"><p>All tool data is stored locally in your browser. We do not access it.</p></div>`,
-    terms: `<div class="modal-header"><h3>📜 Terms</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div style="font-size:13.5px;line-height:1.7;color:var(--text-2)"><p>By using Qunverio, you agree to these terms. Tools are provided as-is.</p></div>`,
-    disclaimer: `<div class="modal-header"><h3>⚠️ Disclaimer</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div style="font-size:13.5px;line-height:1.7;color:var(--text-2)"><p>All calculators give approximate results. Consult a professional for important decisions.</p></div>`
+    about: `<div class="modal-header"><h3>ℹ️ About Us</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="legal-content"><p><strong>Qunverio</strong> is a free online tools platform built to make everyday tasks simpler, faster, and more accessible for everyone.</p><h4>Our Mission</h4><p>We believe useful digital tools should be available to everyone — students, professionals, business owners, and homemakers — without paywalls, signups, or complicated interfaces.</p><h4>What We Offer</h4><p>From financial calculators like CTC and GST to creative tools like QR generators and resume builders, Qunverio brings 50+ utilities under one clean, mobile-friendly platform.</p><h4>Our Values</h4><ul><li><strong>Simplicity</strong> — clean design, zero clutter</li><li><strong>Privacy</strong> — your data stays on your device</li><li><strong>Accessibility</strong> — works on any phone, any browser</li><li><strong>Free Forever</strong> — no premium tier</li></ul><h4>Contact Us</h4><p>Have suggestions? Reach us at <strong>support@qunverio.app</strong></p></div>`,
+    contact: `<div class="modal-header"><h3>📧 Contact Us</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="legal-content"><p>We'd love to hear from you! Whether you have feedback, suggestions, or need support — reach out anytime.</p><h4>Email</h4><p><strong>support@qunverio.app</strong></p><h4>Response Time</h4><p>We typically respond within 24-48 hours on business days.</p><h4>Feedback Form</h4><p>You can also use the in-app feedback form to report issues or request new tools directly.</p><h4>Business Inquiries</h4><p>For partnerships or collaboration, email us with the subject line "Business Inquiry".</p></div>`,
+    privacy: `<div class="modal-header"><h3>🔒 Privacy Policy</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="legal-content"><p>Last updated: 27 September 2026</p><p>At Qunverio, your privacy is important to us. This policy explains what data we collect and how we use it.</p><h4>1. Information We Collect</h4><p>Qunverio does not require signup and does not collect personal information by default. All tool data you enter (salary figures, resume details, images, etc.) is processed entirely in your browser and stored on your own device using localStorage.</p><h4>2. How We Use Data</h4><p>Any data you input into our tools stays on your device. We do not transmit it to any server. The only exception is the feedback form, which is stored securely in Firebase to help us improve.</p><h4>3. Cookies & Local Storage</h4><p>We use browser localStorage to save your preferences (theme, favorites, recently used tools) for a better experience. You can clear this anytime via browser settings.</p><h4>4. Third-Party Services</h4><p>We use Firebase (Google) for storing feedback and CDN services (jsDelivr, Cloudflare) for loading libraries. These may collect standard technical data as per their own privacy policies.</p><h4>5. Analytics</h4><p>We do not currently use any user-tracking analytics. If added in the future, this policy will be updated.</p><h4>6. Children's Privacy</h4><p>Qunverio is safe for all ages. We do not knowingly collect data from children under 13.</p><h4>7. Your Rights</h4><p>You have full control over your data since it's stored locally on your device. Clear your browser data anytime to remove all saved information.</p><h4>8. Changes to Policy</h4><p>We may update this policy occasionally. Changes will be posted on this page.</p><h4>9. Contact</h4><p>For privacy concerns, email: <strong>support@qunverio.app</strong></p></div>`,
+    terms: `<div class="modal-header"><h3>📜 Terms & Conditions</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="legal-content"><p>Last updated: 27 September 2026</p><p>By accessing or using Qunverio, you agree to these terms. Please read them carefully.</p><h4>1. Acceptance of Terms</h4><p>Using our website and tools constitutes your acceptance of these Terms & Conditions. If you disagree, please do not use the service.</p><h4>2. Use of Service</h4><p>Qunverio provides free online tools "as-is" for personal and commercial use. You agree not to:</p><ul><li>Use tools for illegal purposes</li><li>Attempt to hack, scrape, or overload our servers</li><li>Resell or rebrand our tools without permission</li><li>Misuse the service in any harmful way</li></ul><h4>3. User Responsibility</h4><p>You are responsible for the accuracy of data you enter and any decisions made based on tool output. Qunverio is not liable for consequences arising from tool usage.</p><h4>4. Intellectual Property</h4><p>All content, design, code, and branding of Qunverio are owned by us. You may not copy, reproduce, or redistribute without written permission.</p><h4>5. Limitation of Liability</h4><p>Qunverio is provided without warranties. We are not liable for any direct, indirect, incidental, or consequential damages arising from use of our tools.</p><h4>6. Service Availability</h4><p>We aim for 99% uptime but do not guarantee uninterrupted service. We may modify, suspend, or discontinue any tool at any time.</p><h4>7. Changes to Terms</h4><p>We reserve the right to update these terms. Continued use after changes implies acceptance.</p><h4>8. Governing Law</h4><p>These terms are governed by the laws of India.</p><h4>9. Contact</h4><p>For questions: <strong>support@qunverio.app</strong></p></div>`,
+    disclaimer: `<div class="modal-header"><h3>⚠️ Disclaimer</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="legal-content"><p>Last updated: 27 September 2026</p><p>The information and tools provided on Qunverio are for general informational and educational purposes only.</p><h4>1. Accuracy of Results</h4><p>Our calculators (CTC, GST, SIP, EMI, etc.) provide approximate results based on standard formulas. Actual figures may vary due to company policies, tax laws, and other factors.</p><h4>2. Not Professional Advice</h4><p>Content on Qunverio does not constitute financial, legal, tax, medical, or professional advice. Always consult a qualified professional before making important decisions.</p><h4>3. External Links</h4><p>Our website may contain links to third-party sites. We are not responsible for their content, accuracy, or privacy practices.</p><h4>4. Use at Your Own Risk</h4><p>Any reliance you place on our tools is strictly at your own risk. Qunverio and its team are not liable for any loss or damage arising from the use of our services.</p><h4>5. Errors & Omissions</h4><p>While we strive for accuracy, Qunverio does not warrant that tools are error-free. We reserve the right to correct errors or update content anytime.</p><h4>6. No Guarantee</h4><p>We do not guarantee that our website will always be available, secure, or free from viruses or harmful components.</p><h4>7. Contact</h4><p>Questions? Email: <strong>support@qunverio.app</strong></p></div>`
   };
   openModal(pages[page] || pages.about, { wide: true });
 }
 
-/* Profile */
 function openProfile() {
   const p = DB.get('profile', { name: '', email: '', photo: '' });
   openModal(`
@@ -737,7 +813,6 @@ function saveProfile() {
   refreshDrawerProfile(); closeModal(); toast('Profile saved', 'success');
 }
 
-/* Settings */
 function openSettings() {
   const theme = DB.get('theme', 'dark');
   openModal(`
@@ -753,7 +828,6 @@ function openSettings() {
 }
 function setTheme(t) { applyTheme(t); document.querySelectorAll('.theme-opt').forEach(o => o.classList.remove('active')); document.querySelector('.theme-opt[onclick*="'+t+'"]')?.classList.add('active'); toast('Theme: ' + t); }
 
-/* Feedback */
 function openFeedback() {
   openModal(`
     <div class="modal-header"><h3>💬 Feedback</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
@@ -773,7 +847,6 @@ async function submitFeedback() {
   closeModal(); toast('Feedback submitted! ✅', 'success');
 }
 
-/* Drawer items */
 document.querySelectorAll('.drawer-item').forEach(item => {
   item.addEventListener('click', () => {
     const menu = item.dataset.menu;
@@ -781,26 +854,26 @@ document.querySelectorAll('.drawer-item').forEach(item => {
     setTimeout(() => {
       if (menu === 'profile') openProfile();
       else if (menu === 'home') goHome();
+      else if (menu === 'tools') openToolsView();
       else if (menu === 'favorites') openFavoritesView();
       else if (menu === 'recent') openRecentView();
       else if (menu === 'setting') openSettings();
-        else if (menu === 'feedback') openFeedback();
-}, 250);
+      else if (menu === 'feedback') openFeedback();
+    }, 250);
   });
 });
 
-/* Bottom nav */
 document.querySelectorAll('.bn-item').forEach(item => {
   item.addEventListener('click', () => {
     const bn = item.dataset.bn;
     if (bn === 'home') goHome();
+    else if (bn === 'tools') openToolsView();
     else if (bn === 'favorites') openFavoritesView();
     else if (bn === 'recent') openRecentView();
     else if (bn === 'menu') openDrawer();
   });
 });
 
-/* Back to top */
 const backToTop = document.getElementById('backToTop');
 window.addEventListener('scroll', () => {
   if (window.scrollY > 400) backToTop.classList.add('show');
@@ -808,17 +881,6 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-/* Sticky search */
-const searchWrap = document.getElementById('searchWrap');
-window.addEventListener('scroll', () => {
-  if (window.innerWidth > 900) { searchWrap.classList.remove('sticky'); return; }
-  const homeActive = document.getElementById('homeView')?.classList.contains('active');
-  if (!homeActive) { searchWrap.classList.remove('sticky'); return; }
-  if (window.scrollY > 200) searchWrap.classList.add('sticky');
-  else if (window.scrollY < 100) searchWrap.classList.remove('sticky');
-}, { passive: true });
-
-/* Counters */
 function animateCounter(el, target) {
   const duration = 1400;
   const start = performance.now();
@@ -832,50 +894,45 @@ function animateCounter(el, target) {
   requestAnimationFrame(tick);
 }
 function runCounters() {
-  ['statTools', 'statCats', 'statFeatures'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) animateCounter(el, parseInt(el.dataset.count) || 0);
-  });
+  const tools = (window.EXTRA_TOOLS || []).length;
+  const cats = (window.CATEGORIES || []).length;
+  const el1 = document.getElementById('statTools');
+  const el2 = document.getElementById('statCats');
+  if (el1) animateCounter(el1, tools || 4);
+  if (el2) animateCounter(el2, cats || 6);
+  const el3 = document.getElementById('statFeatures');
+  if (el3) animateCounter(el3, 50);
 }
 
-/* INIT */
 function init() {
   applyTheme(DB.get('theme', 'dark'));
   document.getElementById('yearNow').textContent = new Date().getFullYear();
-
-  // Header buttons
   document.getElementById('aboutBtn').addEventListener('click', openAbout);
   document.getElementById('themeBtn').addEventListener('click', cycleTheme);
   document.getElementById('menuBtn').addEventListener('click', openDrawer);
   document.getElementById('drawerProfile').addEventListener('click', () => { closeDrawer(); setTimeout(openProfile, 250); });
 
-  // Search
   const si = document.getElementById('searchInput');
   si.addEventListener('input', handleSearch);
   document.getElementById('searchClear').addEventListener('click', () => { si.value = ''; document.getElementById('searchResults').classList.remove('active'); si.focus(); });
   document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) document.getElementById('searchResults').classList.remove('active'); });
 
   setTimeout(runCounters, 300);
-// Secret Logo Tap
-let logoTaps = 0;
-let logoTimer = null;
-const logoEl = document.getElementById('logo');
-if (logoEl) {
-  logoEl.addEventListener('click', () => {
-    logoTaps++;
-    clearTimeout(logoTimer);
-    logoTimer = setTimeout(() => { logoTaps = 0; }, 2500);
-    if (logoTaps >= 5) {
-      logoTaps = 0;
-      openSecretModal();
-    }
-  });
-}
+
+  let logoTaps = 0;
+  let logoTimer = null;
+  const logoEl = document.getElementById('logo');
+  if (logoEl) {
+    logoEl.addEventListener('click', () => {
+      logoTaps++;
+      clearTimeout(logoTimer);
+      logoTimer = setTimeout(() => { logoTaps = 0; }, 2500);
+      if (logoTaps >= 5) { logoTaps = 0; openSecretModal(); }
+    });
+  }
   console.log('%c✅ Qunverio initialized', 'color:#10b981;font-weight:bold;font-size:14px');
 }
-/* ============================================================
-   ADMIN PANEL
-   ============================================================ */
+
 let _adminData = {};
 let _adminListener = null;
 
@@ -894,34 +951,11 @@ function openSecretModal() {
       setTimeout(openAdminPanel, 400);
     } else {
       document.getElementById('secretErr').classList.remove('hidden');
-      inp.value = '';
-      inp.focus();
+      inp.value = ''; inp.focus();
     }
   });
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('secretBtn').click(); });
   setTimeout(() => inp.focus(), 100);
-}
-
-function openAdminLogin() {
-  openModal(`
-    <div class="modal-header"><h3>🔐 Admin Login</h3><button class="modal-close" onclick="closeModal()">✕</button></div>
-    <div class="field"><label>Password</label><input type="password" id="adminPass" placeholder="Enter admin password" /></div>
-    <div id="adminErr" class="hidden" style="color:var(--danger);font-size:13px;margin-bottom:10px">Incorrect password.</div>
-    <div class="btn-group"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="adminLoginBtn">Login</button></div>
-  `);
-  const passEl = document.getElementById('adminPass');
-  document.getElementById('adminLoginBtn').addEventListener('click', () => {
-    if (passEl.value === 'Pass@word!2') {
-      closeModal();
-      setTimeout(openAdminPanel, 400);
-    } else {
-      document.getElementById('adminErr').classList.remove('hidden');
-      passEl.value = '';
-      passEl.focus();
-    }
-  });
-  passEl.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('adminLoginBtn').click(); });
-  setTimeout(() => passEl.focus(), 100);
 }
 
 function openAdminPanel() {
@@ -942,7 +976,6 @@ function openAdminPanel() {
   `, { wide: true });
 
   let filter = 'all', search = '';
-
   const renderList = () => {
     let list = Object.values(_adminData).sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
     const totalCount = list.length;
@@ -1002,29 +1035,24 @@ function openAdminPanel() {
   }
   renderList();
 }
-
 function refreshAdminPanel() { if (window._adminRenderFn) window._adminRenderFn(); if (typeof toast === 'function') toast('Refreshed'); }
-
 async function adminSetStatus(key, status) {
   if (!fbDB) { if (typeof toast === 'function') toast('Firebase not available', 'error'); return; }
-  try {
-    await fbDB.ref('feedback/' + key).update({ status });
-    if (typeof toast === 'function') toast('Marked as ' + status, 'success');
-  } catch(e) { if (typeof toast === 'function') toast('Update failed', 'error'); }
+  try { await fbDB.ref('feedback/' + key).update({ status }); if (typeof toast === 'function') toast('Marked as ' + status, 'success'); }
+  catch(e) { if (typeof toast === 'function') toast('Update failed', 'error'); }
 }
-
 async function adminDelete(key) {
   if (!confirm('Delete this feedback?')) return;
   if (!fbDB) { if (typeof toast === 'function') toast('Firebase not available', 'error'); return; }
-  try {
-    await fbDB.ref('feedback/' + key).remove();
-    if (typeof toast === 'function') toast('Deleted', 'success');
-  } catch(e) { if (typeof toast === 'function') toast('Delete failed', 'error'); }
+  try { await fbDB.ref('feedback/' + key).remove(); if (typeof toast === 'function') toast('Deleted', 'success'); }
+  catch(e) { if (typeof toast === 'function') toast('Delete failed', 'error'); }
 }
+
 document.addEventListener('DOMContentLoaded', init);
 </script>
 
 <script src="tools/setup.js"></script>
+<script src="tools/categories.js"></script>
 <script src="tools/qr-generator.js"></script>
 <script src="tools/ctc-salary.js"></script>
 <script src="tools/barcode-generator.js"></script>
