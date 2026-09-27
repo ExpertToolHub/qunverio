@@ -304,14 +304,14 @@ const EXTRA_TOOLS = [
     kw: ['marriage', 'baby', 'planning', 'savings', 'goal']
   },
   {
-    id: 'yield-calculator',
-    name: 'Yield Calculator',
-    cat: 'calculators',
-    icon: '📈',
-    desc: 'Calculate annual yield and CAGR on investments',
-    howto: 'Enter investment, current value, years. Click Calculate Yield.',
-    kw: ['yield', 'return', 'investment', 'cagr', 'annual yield']
-  }
+  id: 'production-yield-calculator',
+  name: 'Production Yield Calculator',
+  cat: 'calculators',
+  icon: '📊',
+  desc: 'Calculate yield rate from total and achieved quantity',
+  howto: 'Enter total quantity and achieved quantity. Click Calculate to get yield rate percentage.',
+  kw: ['yield', 'yield rate', 'production', 'quality', 'achieved', 'total quantity']
+}
 ];
 
 /* ============================================================
