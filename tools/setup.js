@@ -316,7 +316,7 @@ const EXTRA_TOOLS = [
     howto: 'Enter total quantity and achieved quantity. Click Calculate to get yield rate percentage.',
     kw: ['yield', 'yield rate', 'production', 'quality', 'achieved', 'total quantity']
   },
-  {
+    {
     id: 'pdf-merger',
     name: 'PDF Merger',
     cat: 'pdf',
@@ -324,6 +324,15 @@ const EXTRA_TOOLS = [
     desc: 'Merge multiple PDF files into one — drag, reorder, download',
     howto: 'PDF files select karo ya drag karo. ↑↓ buttons ya drag se order change karo. Merge PDFs click karo.',
     kw: ['pdf', 'merge', 'merger', 'combine', 'join', 'pdf merge', 'pdf merger', 'pdf combine']
+  },
+  {
+    id: 'pdf-splitter',
+    name: 'PDF Splitter',
+    cat: 'pdf',
+    icon: '✂️',
+    desc: 'Split PDF into multiple files — by range, every page, or every N pages',
+    howto: 'PDF upload karo. Split mode choose karo (range, every page, every N). Split click karo. ZIP download hoga.',
+    kw: ['pdf', 'split', 'splitter', 'cut', 'extract', 'pages', 'range', 'separate']
   }
 ];
 
