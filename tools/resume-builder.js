@@ -1,7 +1,9 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v4)
-   - Photo upload with CROP option (Cropper.js)
-   - Fixed rectangle size, right top corner
+   RESUME BUILDER — Qunverio (FINAL v5)
+   - 7 Templates: Modern, Professional, Minimal, ATS Classic,
+     Executive, Sidebar Professional, Modern Simple
+   - Photo: fixed rectangle, right top (except sidebar/simple)
+   - Save/PDF/Print fixed
    - Fixed dark theme (works in all modes)
    ============================================================ */
 
@@ -28,7 +30,7 @@
     .rb-field textarea { resize: vertical; min-height: 70px; }
     .rb-field input[type="color"] { height: 40px; padding: 4px; cursor: pointer; }
     .rb-counter { font-size: 10px; opacity: .6; text-align: right; color: #e0e0e0; }
-    .rb-item { background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 10px; padding: 14px; margin-bottom: 10px; position: relative; }
+    .rb-item { background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
     .rb-item-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .rb-item-head strong { font-size: 13px; opacity: .85; color: #e0e0e0; }
     .rb-btns { display: flex; gap: 6px; }
@@ -47,13 +49,13 @@
     .rb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 20px; font-size: 12px; color: #e0e0e0; margin: 4px 4px 0 0; }
     .rb-chip button { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
 
-    /* Photo preview in form */
+    /* ===== PHOTO PREVIEW IN FORM ===== */
     .rb-photo-preview { display: flex; align-items: center; gap: 12px; margin-top: 8px; padding: 10px; background: #0f0f1a; border: 1px solid #2a2a3e; border-radius: 10px; }
     .rb-photo-preview img { width: 80px; height: 100px; object-fit: cover; border-radius: 6px; border: 1px solid #2a2a3e; }
     .rb-photo-preview .rpp-info { flex: 1; font-size: 12px; color: #a0a0a0; }
     .rb-photo-preview .rpp-info strong { color: #00d4ff; display: block; margin-bottom: 4px; }
 
-    /* Crop Modal */
+    /* ===== CROP MODAL ===== */
     .rb-crop-modal { position: fixed; inset: 0; background: rgba(0,0,0,.9); z-index: 99999; display: none; flex-direction: column; }
     .rb-crop-modal.active { display: flex; }
     .rb-crop-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a3e; background: #1a1a2e; }
@@ -67,36 +69,79 @@
 
     /* ===== PREVIEW ===== */
     .rb-preview-wrap { background: #333; padding: 14px; border-radius: 12px; overflow: auto; max-height: 85vh; }
-    .rb-preview { width: 794px; min-height: 1123px; margin: 0 auto; background: #fff; color: #222; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+    .rb-preview { width: 794px; min-height: auto; margin: 0 auto; background: #fff; color: #222; font-family: 'Segoe UI', Arial, sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+
+    /* Common header for modern/professional/minimal/ats/executive */
+    .rb-preview .rb-h { display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
+    .rb-preview .rb-h-info { flex: 1; min-width: 0; }
+    .rb-preview .rb-h-photo { flex-shrink: 0; }
 
     /* ===== MODERN ===== */
-    .rb-preview.tpl-modern .rb-h { background: linear-gradient(135deg, var(--rc, #00d4ff), #7b2ff7); color: #fff; padding: 32px 40px; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
-    .rb-preview.tpl-modern .rb-h-info { flex: 1; min-width: 0; }
-    .rb-preview.tpl-modern .rb-h-photo { width: 110px; height: 130px; border-radius: 8px; object-fit: cover; border: 3px solid rgba(255,255,255,.5); flex-shrink: 0; }
+    .rb-preview.tpl-modern .rb-h { background: linear-gradient(135deg, var(--rc, #00d4ff), #7b2ff7); color: #fff; padding: 32px 40px; }
+    .rb-preview.tpl-modern .rb-h-photo { width: 110px; height: 130px; border-radius: 8px; object-fit: cover; border: 3px solid rgba(255,255,255,.5); }
     .rb-preview.tpl-modern .rb-h-info h1 { margin: 0 0 6px; font-size: 30px; font-weight: 700; }
     .rb-preview.tpl-modern .rb-h-info .rb-title { font-size: 15px; opacity: .9; margin-bottom: 10px; }
     .rb-preview.tpl-modern .rb-h-info .rb-contacts { font-size: 12px; opacity: .95; line-height: 1.7; word-break: break-word; }
     .rb-preview.tpl-modern .rb-body { padding: 30px 40px; }
 
     /* ===== PROFESSIONAL ===== */
-    .rb-preview.tpl-professional .rb-h { padding: 30px 40px 20px; border-bottom: 2px solid #222; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
-    .rb-preview.tpl-professional .rb-h-info { flex: 1; min-width: 0; }
-    .rb-preview.tpl-professional .rb-h-photo { width: 100px; height: 120px; border-radius: 6px; object-fit: cover; border: 2px solid #222; flex-shrink: 0; }
+    .rb-preview.tpl-professional .rb-h { padding: 30px 40px 20px; border-bottom: 2px solid #222; }
+    .rb-preview.tpl-professional .rb-h-photo { width: 100px; height: 120px; border-radius: 6px; object-fit: cover; border: 2px solid #222; }
     .rb-preview.tpl-professional .rb-h-info h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: 2px; text-transform: uppercase; }
     .rb-preview.tpl-professional .rb-h-info .rb-title { font-size: 14px; letter-spacing: 3px; text-transform: uppercase; color: #666; margin-bottom: 12px; }
     .rb-preview.tpl-professional .rb-h-info .rb-contacts { font-size: 12px; color: #444; line-height: 1.7; word-break: break-word; }
     .rb-preview.tpl-professional .rb-body { padding: 24px 40px; }
 
     /* ===== MINIMAL ===== */
-    .rb-preview.tpl-minimal .rb-h { padding: 30px 40px 16px; display: flex; gap: 24px; align-items: flex-start; justify-content: space-between; }
-    .rb-preview.tpl-minimal .rb-h-info { flex: 1; min-width: 0; }
-    .rb-preview.tpl-minimal .rb-h-photo { width: 90px; height: 110px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+    .rb-preview.tpl-minimal .rb-h { padding: 30px 40px 16px; }
+    .rb-preview.tpl-minimal .rb-h-photo { width: 90px; height: 110px; border-radius: 6px; object-fit: cover; }
     .rb-preview.tpl-minimal .rb-h-info h1 { margin: 0 0 4px; font-size: 30px; font-weight: 300; letter-spacing: 1px; }
     .rb-preview.tpl-minimal .rb-h-info .rb-title { font-size: 14px; color: #888; margin-bottom: 10px; }
     .rb-preview.tpl-minimal .rb-h-info .rb-contacts { font-size: 12px; color: #666; line-height: 1.7; word-break: break-word; }
     .rb-preview.tpl-minimal .rb-body { padding: 16px 40px 30px; }
 
-    /* ===== SECTIONS ===== */
+    /* ===== ATS CLASSIC ===== */
+    .rb-preview.tpl-ats .rb-h { padding: 26px 40px 16px; border-bottom: 2px solid #333; }
+    .rb-preview.tpl-ats .rb-h-photo { width: 90px; height: 110px; border-radius: 4px; object-fit: cover; border: 1px solid #999; }
+    .rb-preview.tpl-ats .rb-h-info h1 { margin: 0 0 4px; font-size: 24px; font-weight: 700; color: #111; }
+    .rb-preview.tpl-ats .rb-h-info .rb-title { font-size: 14px; color: #444; margin-bottom: 8px; }
+    .rb-preview.tpl-ats .rb-h-info .rb-contacts { font-size: 11.5px; color: #555; line-height: 1.6; word-break: break-word; }
+    .rb-preview.tpl-ats .rb-body { padding: 20px 40px; }
+    .rb-preview.tpl-ats .rb-sec-title { color: #111; border-bottom: 1.5px solid #333; }
+    .rb-preview.tpl-ats .rb-edu-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; font-size: 12px; }
+    .rb-preview.tpl-ats .rb-edu-table th { background: #f0f0f0; border: 1px solid #ccc; padding: 6px 8px; text-align: left; font-weight: 700; color: #222; }
+    .rb-preview.tpl-ats .rb-edu-table td { border: 1px solid #ccc; padding: 6px 8px; color: #333; }
+
+    /* ===== EXECUTIVE SERIF ===== */
+    .rb-preview.tpl-executive { font-family: Georgia, 'Times New Roman', serif; }
+    .rb-preview.tpl-executive .rb-h { padding: 28px 40px 16px; border-bottom: 1px solid #999; }
+    .rb-preview.tpl-executive .rb-h-photo { width: 95px; height: 115px; border-radius: 4px; object-fit: cover; border: 1px solid #666; }
+    .rb-preview.tpl-executive .rb-h-info h1 { margin: 0 0 4px; font-size: 26px; font-weight: 400; letter-spacing: 1px; color: #111; }
+    .rb-preview.tpl-executive .rb-h-info .rb-title { font-size: 14px; color: #555; font-style: italic; margin-bottom: 8px; }
+    .rb-preview.tpl-executive .rb-h-info .rb-contacts { font-size: 11.5px; color: #555; line-height: 1.6; word-break: break-word; }
+    .rb-preview.tpl-executive .rb-body { padding: 20px 40px; }
+    .rb-preview.tpl-executive .rb-sec-title { color: #222; border-bottom: 1px solid #555; letter-spacing: 2px; }
+
+    /* ===== SIDEBAR PROFESSIONAL ===== */
+    .rb-preview.tpl-sidebar { display: grid; grid-template-columns: 260px 1fr; }
+    .rb-preview.tpl-sidebar .rb-h { grid-column: 1; background: #2c3e50; color: #fff; padding: 30px 22px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .rb-preview.tpl-sidebar .rb-h-photo { width: 130px; height: 150px; border-radius: 6px; object-fit: cover; border: 3px solid rgba(255,255,255,.3); }
+    .rb-preview.tpl-sidebar .rb-h-info h1 { margin: 0 0 6px; font-size: 22px; font-weight: 700; color: #fff; }
+    .rb-preview.tpl-sidebar .rb-h-info .rb-title { font-size: 13px; color: #bdc3c7; margin-bottom: 14px; }
+    .rb-preview.tpl-sidebar .rb-h-info .rb-contacts { font-size: 11.5px; color: #ecf0f1; line-height: 1.8; word-break: break-word; text-align: left; }
+    .rb-preview.tpl-sidebar .rb-body { grid-column: 2; padding: 30px 32px; }
+    .rb-preview.tpl-sidebar .rb-sec-title { color: #2c3e50; border-bottom: 1.5px solid #2c3e50; }
+
+    /* ===== MODERN SIMPLE ===== */
+    .rb-preview.tpl-simple .rb-h { text-align: center; padding: 28px 40px 18px; border-bottom: 1px solid #ddd; display: block; }
+    .rb-preview.tpl-simple .rb-h-photo { width: 110px; height: 130px; border-radius: 6px; object-fit: cover; margin: 0 auto 12px; display: block; border: 2px solid #eee; }
+    .rb-preview.tpl-simple .rb-h-info h1 { margin: 0 0 4px; font-size: 28px; font-weight: 600; color: #222; }
+    .rb-preview.tpl-simple .rb-h-info .rb-title { font-size: 14px; color: #666; margin-bottom: 8px; letter-spacing: 1px; }
+    .rb-preview.tpl-simple .rb-h-info .rb-contacts { font-size: 11.5px; color: #666; line-height: 1.7; word-break: break-word; }
+    .rb-preview.tpl-simple .rb-body { padding: 20px 40px; }
+    .rb-preview.tpl-simple .rb-sec-title { color: #333; border-bottom: 2px solid #333; letter-spacing: 1.5px; }
+
+    /* ===== SECTIONS COMMON ===== */
     .rb-sec { margin-bottom: 18px; }
     .rb-sec-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--rc,#00d4ff); border-bottom: 1.5px solid var(--rc,#00d4ff); padding-bottom: 4px; margin-bottom: 10px; }
     .rb-sec p { margin: 0 0 6px; font-size: 12.5px; line-height: 1.55; color: #333; }
@@ -119,7 +164,7 @@
     @media (max-width: 768px) {
       .rb-grid { grid-template-columns: 1fr; }
       .rb-preview-wrap { padding: 8px; overflow-x: auto; }
-      .rb-preview { width: 794px; min-height: 1123px; transform: scale(.42); transform-origin: top left; margin-bottom: -600px; }
+      .rb-preview { width: 794px; transform: scale(.42); transform-origin: top left; margin-bottom: -600px; }
       .rb-actions { position: static; }
       .rb-tab { font-size: 12px; padding: 8px 12px; }
     }
@@ -171,7 +216,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     <button class="rb-tab" data-tab="preview">👁️ Preview</button>
   </div>
 
-  <!-- PERSONAL -->
   <div class="rb-panel active" data-panel="personal">
     <div class="rb-section">
       <h3>👤 Personal Information</h3>
@@ -197,7 +241,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- SUMMARY -->
   <div class="rb-panel" data-panel="summary">
     <div class="rb-section">
       <h3>📝 Professional Summary</h3>
@@ -209,7 +252,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- EXPERIENCE -->
   <div class="rb-panel" data-panel="experience">
     <div class="rb-section">
       <h3>💼 Work Experience</h3>
@@ -218,7 +260,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- EDUCATION -->
   <div class="rb-panel" data-panel="education">
     <div class="rb-section">
       <h3>🎓 Education</h3>
@@ -227,7 +268,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- SKILLS -->
   <div class="rb-panel" data-panel="skills">
     <div class="rb-section">
       <h3>⚡ Skills</h3>
@@ -249,7 +289,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- PROJECTS -->
   <div class="rb-panel" data-panel="projects">
     <div class="rb-section">
       <h3>🚀 Projects</h3>
@@ -258,7 +297,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- CERTIFICATIONS -->
   <div class="rb-panel" data-panel="certifications">
     <div class="rb-section">
       <h3>📜 Certifications</h3>
@@ -267,7 +305,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- LANGUAGES -->
   <div class="rb-panel" data-panel="languages">
     <div class="rb-section">
       <h3>🌐 Languages</h3>
@@ -276,7 +313,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- DESIGN -->
   <div class="rb-panel" data-panel="design">
     <div class="rb-section">
       <h3>🎨 Design Customization</h3>
@@ -286,6 +322,10 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
             <option value="modern">Modern</option>
             <option value="professional">Professional</option>
             <option value="minimal">Minimal</option>
+            <option value="ats">ATS Classic</option>
+            <option value="executive">Executive Serif</option>
+            <option value="sidebar">Sidebar Professional</option>
+            <option value="simple">Modern Simple</option>
           </select>
         </div>
         <div class="rb-field"><label>Theme Color</label>
@@ -312,7 +352,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
     </div>
   </div>
 
-  <!-- PREVIEW -->
   <div class="rb-panel" data-panel="preview">
     <div class="rb-preview-wrap">
       <div id="rbPreview" class="rb-preview tpl-modern"></div>
@@ -320,7 +359,6 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
   </div>
 </div>
 
-<!-- CROP MODAL -->
 <div class="rb-crop-modal" id="rbCropModal">
   <div class="rb-crop-header">
     <h3>✂️ Crop Photo</h3>
@@ -379,8 +417,19 @@ window.rbAutoSave = () => {
 };
 
 window.rbSave = () => {
-  localStorage.setItem('qunverio_resume_data', JSON.stringify(rbData));
-  rbToast('✅ Resume saved!');
+  try {
+    const data = JSON.stringify(rbData);
+    localStorage.setItem('qunverio_resume_data', data);
+    const sizeKB = Math.round(data.length / 1024);
+    rbToast('✅ Saved! (' + sizeKB + ' KB)');
+  } catch(e) {
+    console.error('Save error:', e);
+    if (e.name === 'QuotaExceededError') {
+      rbToast('❌ Storage full! Photo chhota karo');
+    } else {
+      rbToast('❌ Save fail: ' + e.message);
+    }
+  }
 };
 
 window.rbLoad = () => {
@@ -413,14 +462,13 @@ window.rbFillForm = () => {
 window.rbToast = (msg) => {
   const t = document.createElement('div');
   t.textContent = msg;
-  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999999;border:1px solid #00d4ff;box-shadow:0 4px 20px rgba(0,0,0,.4)';
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999999;border:1px solid #00d4ff;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:90vw;text-align:center';
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
+  setTimeout(() => t.remove(), 2400);
 };
 
-// ====== PHOTO UPLOAD + CROP ======
+// ====== PHOTO ======
 let rbCropper = null;
-let rbOriginalImage = null;
 
 window.rbHandlePhoto = (e) => {
   const f = e.target.files[0];
@@ -431,13 +479,10 @@ window.rbHandlePhoto = (e) => {
     return;
   }
   const r = new FileReader();
-  r.onload = ev => {
-    rbOriginalImage = ev.target.result;
-    rbOpenCropModal(ev.target.result);
-  };
+  r.onload = ev => rbOpenCropModal(ev.target.result);
   r.onerror = () => rbToast('❌ Photo read nahi hui');
   r.readAsDataURL(f);
-  e.target.value = ''; // reset so same file can be selected again
+  e.target.value = '';
 };
 
 window.rbOpenCropModal = (src) => {
@@ -447,22 +492,16 @@ window.rbOpenCropModal = (src) => {
   img.src = src;
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
-
-  // Wait for image load, then init cropper
   img.onload = () => {
     if (rbCropper) { rbCropper.destroy(); rbCropper = null; }
     if (typeof Cropper === 'undefined') {
-      // Fallback: no crop, just use as-is
       rbData.personal.photo = src;
-      rbAutoSave();
-      rbCloseCropModal();
-      rbRenderPhotoPreview();
-      rbPreviewRefresh();
+      rbAutoSave(); rbCloseCropModal(); rbRenderPhotoPreview(); rbPreviewRefresh();
       rbToast('⚠️ Crop library load nahi hui — original photo use ki');
       return;
     }
     rbCropper = new Cropper(img, {
-      aspectRatio: 110 / 130, // matches resume photo ratio
+      aspectRatio: 110 / 130,
       viewMode: 1,
       dragMode: 'move',
       autoCropArea: 0.9,
@@ -475,7 +514,6 @@ window.rbOpenCropModal = (src) => {
       highlight: false,
       cropBoxMovable: true,
       cropBoxResizable: true,
-      toggleDragModeOnDblclick: false,
       minContainerHeight: 300
     });
   };
@@ -488,21 +526,13 @@ window.rbCloseCropModal = () => {
   if (rbCropper) { rbCropper.destroy(); rbCropper = null; }
 };
 
-window.rbCropCancel = () => {
-  rbCloseCropModal();
-  rbToast('Photo cancel kiya');
-};
+window.rbCropCancel = () => { rbCloseCropModal(); rbToast('Photo cancel kiya'); };
 
 window.rbCropApply = () => {
   if (!rbCropper) return;
   try {
-    const canvas = rbCropper.getCroppedCanvas({
-      width: 330,   // 3x of 110
-      height: 390,  // 3x of 130
-      imageSmoothingQuality: 'high'
-    });
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    rbData.personal.photo = dataUrl;
+    const canvas = rbCropper.getCroppedCanvas({ width: 330, height: 390, imageSmoothingQuality: 'high' });
+    rbData.personal.photo = canvas.toDataURL('image/jpeg', 0.92);
     rbAutoSave();
     rbCloseCropModal();
     rbRenderPhotoPreview();
@@ -534,18 +564,12 @@ window.rbRenderPhotoPreview = () => {
   `;
 };
 
-window.rbEditPhoto = () => {
-  if (rbData.personal.photo) {
-    rbOpenCropModal(rbData.personal.photo);
-  }
-};
+window.rbEditPhoto = () => { if (rbData.personal.photo) rbOpenCropModal(rbData.personal.photo); };
 
 window.rbRemovePhoto = () => {
   if (!confirm('Photo remove kar dein?')) return;
   rbData.personal.photo = '';
-  rbAutoSave();
-  rbRenderPhotoPreview();
-  rbPreviewRefresh();
+  rbAutoSave(); rbRenderPhotoPreview(); rbPreviewRefresh();
   rbToast('Photo removed');
 };
 
@@ -757,9 +781,8 @@ window.rbUpdateProgress = () => {
   if (rbData.projects.length) filled++;
   if (rbData.certifications.length) filled++;
   if (rbData.languages.length) filled++;
-  const pct = Math.round((filled/total)*100);
   const bar = document.getElementById('rbProgress');
-  if (bar) bar.style.width = pct + '%';
+  if (bar) bar.style.width = Math.round((filled/total)*100) + '%';
 };
 
 // ====== PREVIEW ======
@@ -791,18 +814,25 @@ window.rbPreviewRefresh = () => {
       <div class="rb-contacts">${contacts || 'Contact info'}</div>
     </div>`;
 
-  const header = `<div class="rb-h">${infoHtml}${photoHtml}</div>`;
+  let header;
+  if (tpl === 'sidebar') {
+    header = `<div class="rb-h">${photoHtml}${infoHtml}</div>`;
+  } else if (tpl === 'simple') {
+    header = `<div class="rb-h">${photoHtml}${infoHtml}</div>`;
+  } else {
+    header = `<div class="rb-h">${infoHtml}${photoHtml}</div>`;
+  }
 
   let body = '<div class="rb-body">';
   for (const sec of rbData.sectionOrder) {
-    body += rbRenderSection(sec);
+    body += rbRenderSection(sec, tpl);
   }
   body += '</div>';
 
   el.innerHTML = header + body;
 };
 
-function rbRenderSection(sec) {
+function rbRenderSection(sec, tpl) {
   if (sec === 'summary' && rbData.summary) {
     return `<div class="rb-sec"><div class="rb-sec-title">Professional Summary</div><p>${rbData.summary.replace(/\n/g,'<br>')}</p></div>`;
   }
@@ -816,6 +846,15 @@ function rbRenderSection(sec) {
       </div>`).join('')}</div>`;
   }
   if (sec === 'education' && rbData.education.length) {
+    // ATS template: table format
+    if (tpl === 'ats') {
+      return `<div class="rb-sec"><div class="rb-sec-title">Education</div>
+        <table class="rb-edu-table">
+          <thead><tr><th>Course / Degree</th><th>School / University</th><th>Grade / Score</th><th>Year</th></tr></thead>
+          <tbody>${rbData.education.map(e => `<tr><td>${e.degree||''}</td><td>${e.college||''}</td><td>${e.score||''}</td><td>${e.end||''}</td></tr>`).join('')}</tbody>
+        </table>
+      </div>`;
+    }
     return `<div class="rb-sec"><div class="rb-sec-title">Education</div>${rbData.education.map(e => `
       <div class="rb-entry">
         <div class="rb-entry-top"><strong>${e.degree||'Degree'}</strong><em>${e.start||''} - ${e.end||''}</em></div>
@@ -863,7 +902,7 @@ window.rbDownloadPDF = async () => {
     if (typeof htmlToImage === 'undefined' || typeof jspdf === 'undefined') {
       rbToast('❌ Libraries load nahi hui'); return;
     }
-    const canvas = await htmlToImage.toCanvas(el, { pixelRatio: 3, backgroundColor: '#ffffff' });
+    const canvas = await htmlToImage.toCanvas(el, { pixelRatio: 3, backgroundColor: '#ffffff', cacheBust: true });
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p', 'mm', 'a4');
@@ -871,21 +910,26 @@ window.rbDownloadPDF = async () => {
     const ph = pdf.internal.pageSize.getHeight();
     const imgW = pw;
     const imgH = (canvas.height * imgW) / canvas.width;
-    let heightLeft = imgH;
-    let position = 0;
-    pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
-    heightLeft -= ph;
-    while (heightLeft > 0) {
-      position = heightLeft - imgH;
-      pdf.addPage();
+
+    if (imgH <= ph) {
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH);
+    } else {
+      let heightLeft = imgH;
+      let position = 0;
       pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
       heightLeft -= ph;
+      while (heightLeft > 5) {
+        position = heightLeft - imgH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
+        heightLeft -= ph;
+      }
     }
     pdf.save((rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume.pdf');
     rbToast('✅ PDF downloaded!');
   } catch(e) {
     console.error(e);
-    rbToast('❌ PDF banane me error');
+    rbToast('❌ PDF banane me error: ' + e.message);
   }
 };
 
@@ -911,4 +955,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v4 - crop feature)');
+console.log('✅ Resume Builder loaded (v5 - 7 templates)');
