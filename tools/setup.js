@@ -404,7 +404,7 @@ const EXTRA_TOOLS = [
     howto: 'Images add karo. Aspect ratio choose karo (1:1, 16:9, Passport, etc). Zoom, rotate, flip karo. Apply Crop click. Download.',
     kw: ['crop', 'cropper', 'image crop', 'photo crop', 'cut image', 'aspect ratio', 'resize crop', 'passport crop']
   },
-  {
+    {
     id: 'signature-cropper',
     name: 'Signature Cropper',
     cat: 'digital-studio',
@@ -412,6 +412,15 @@ const EXTRA_TOOLS = [
     desc: 'Crop signature, auto-clean background — perfect for PAN, Aadhaar, bank & exam forms',
     howto: 'Signature photo upload karo. Crop karo. Auto-white background aur enhancement auto-apply hoga. Preset choose karo (PAN/Aadhaar/Exam). Download.',
     kw: ['signature', 'signature cropper', 'signature maker', 'pan signature', 'aadhaar signature', 'signature clean', 'signature crop', 'signature background remover']
+  },
+  {
+    id: 'background-remover',
+    name: 'Background Remover',
+    cat: 'digital-studio',
+    icon: '🎨',
+    desc: 'Remove image background with AI — no signup, 100% browser, transparent PNG',
+    howto: 'Image upload karo. "Remove Background" click. AI background hata dega (30-60 sec first time). Transparent PNG ya color background choose karo. Download.',
+    kw: ['background remover', 'remove background', 'bg remover', 'transparent background', 'png transparent', 'remove bg online', 'ai background remover', 'photo background remove']
   }
 ];
 
