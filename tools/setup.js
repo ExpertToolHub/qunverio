@@ -414,14 +414,14 @@ const EXTRA_TOOLS = [
     kw: ['signature', 'signature cropper', 'signature maker', 'pan signature', 'aadhaar signature', 'signature clean', 'signature crop', 'signature background remover']
   },
   {
-    id: 'background-remover',
-    name: 'Background Remover',
-    cat: 'digital-studio',
-    icon: '🎨',
-    desc: 'Remove image background with AI — no signup, 100% browser, transparent PNG',
-    howto: 'Image upload karo. "Remove Background" click. AI background hata dega (30-60 sec first time). Transparent PNG ya color background choose karo. Download.',
-    kw: ['background remover', 'remove background', 'bg remover', 'transparent background', 'png transparent', 'remove bg online', 'ai background remover', 'photo background remove']
-  }
+  id: 'image-enhancer',
+  name: 'Image Enhancer',
+  cat: 'digital-studio',
+  icon: '🎨',
+  desc: 'Enhance photos with auto-fix, filters, sharpen, denoise & before/after comparison.',
+  howto: 'Upload one or more images, tweak brightness, contrast, saturation, sharpen, or pick a filter. Use the before/after slider to compare. Download individually or all as ZIP.',
+  kw: ['enhance', 'photo', 'brightness', 'contrast', 'saturation', 'sharpen', 'denoise', 'filter', 'grayscale', 'sepia', 'vintage', 'image', 'edit'],
+}
 ];
 
 /* ============================================================
