@@ -1,9 +1,9 @@
 /* ============================================================
-   QUNVERIO — BACKGROUND REMOVER (v7 — FINAL)
-   Auto-fallback: medium → small
+   QUNVERIO — BACKGROUND REMOVER (v8 — Mobile Friendly)
+   Uses @imgly/background-removal@1.0.7 (smaller, mobile-friendly)
    ============================================================ */
 
-console.log('%cBackground Remover v7 loading...', 'color:#ec4899;font-weight:bold');
+console.log('%cBackground Remover v8 loading...', 'color:#ec4899;font-weight:bold');
 
 let bgOriginalFile = null;
 let bgOriginalUrl = null;
@@ -17,7 +17,7 @@ let bgSettings = {
   bgColor: '#ffffff',
   outputFormat: 'png',
   quality: 92,
-  maxDim: 1200
+  maxDim: 800
 };
 
 /* ============================================================
@@ -52,48 +52,42 @@ function bgHideProgress() {
 }
 
 /* ============================================================
-   LOAD AI LIBRARY
+   LOAD LIBRARY
    ============================================================ */
 async function bgLoadLibrary() {
   if (bgLibraryLoaded) return true;
 
-  bgSetProgress(3, '🔍 AI library check...');
+  bgSetProgress(5, '🔍 AI library load...');
 
+  // Check globals (script tag)
   if (typeof window.removeBackground === 'function') {
     window.__bgRemoveFn = window.removeBackground;
     bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready');
+    bgSetProgress(20, '✅ AI ready');
     return true;
   }
 
   if (window.ImglyBackgroundRemoval && typeof window.ImglyBackgroundRemoval.removeBackground === 'function') {
     window.__bgRemoveFn = window.ImglyBackgroundRemoval.removeBackground;
     bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready');
+    bgSetProgress(20, '✅ AI ready');
     return true;
   }
 
-  if (window['@imgly/background-removal'] && typeof window['@imgly/background-removal'].removeBackground === 'function') {
-    window.__bgRemoveFn = window['@imgly/background-removal'].removeBackground;
-    bgLibraryLoaded = true;
-    bgSetProgress(15, '✅ AI ready');
-    return true;
-  }
-
-  console.log('%c⚠️ Script tag failed — trying dynamic import', 'color:#f59e0b');
+  // Dynamic import fallback — 1.0.7 (smaller)
   const cdns = [
-    'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.4.5/+esm',
-    'https://esm.sh/@imgly/background-removal@1.4.5'
+    'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.0.7/+esm',
+    'https://unpkg.com/@imgly/background-removal@1.0.7/+esm'
   ];
 
   for (let i = 0; i < cdns.length; i++) {
     try {
-      bgSetProgress(8 + i * 3, `📥 CDN try ${i + 1}/${cdns.length}...`);
+      bgSetProgress(10 + i * 5, `📥 Loading AI (${i + 1}/${cdns.length})...`);
       const mod = await import(cdns[i]);
       if (mod && typeof mod.removeBackground === 'function') {
         window.__bgRemoveFn = mod.removeBackground;
         bgLibraryLoaded = true;
-        bgSetProgress(15, `✅ AI ready (CDN ${i + 1})`);
+        bgSetProgress(20, `✅ AI ready`);
         return true;
       }
     } catch (e) {
@@ -101,71 +95,39 @@ async function bgLoadLibrary() {
     }
   }
 
-  bgSetProgress(0, '❌ Library load failed');
+  bgSetProgress(0, '❌ AI load fail');
   bgToast('❌ AI library load nahi hui', 'error');
   bgHideProgress();
   return false;
 }
 
 /* ============================================================
-   PROCESS WITH FALLBACK — medium → small
+   PROCESS — Simple approach (no model parameter)
    ============================================================ */
 async function bgProcessWithFallback(file) {
   bgSetProgress(25, '⏳ Image prepare...');
   const resizedFile = await bgResizeIfNeeded(file);
 
-  bgSetProgress(28, '📥 AI library load...');
+  bgSetProgress(30, '📥 AI library load...');
   const ok = await bgLoadLibrary();
   if (!ok) throw new Error('Library load nahi hui');
 
-  // ⭐ Correct model names for @imgly/background-removal@1.4.5
-  const modelTiers = [
-    { name: 'medium', label: '🎨 Best quality', startPct: 30 },
-    { name: 'small', label: '⚡ Fast mode', startPct: 50 }
-  ];
+  bgSetProgress(35, '🎨 Background remove ho raha hai...');
 
-  let resultBlob = null;
-  let lastError = null;
-
-  for (let tier = 0; tier < modelTiers.length; tier++) {
-    const t = modelTiers[tier];
-    try {
-      console.log(`%c🎯 Trying model: ${t.name}`, 'color:#f59e0b;font-weight:bold');
-      bgSetProgress(t.startPct, `${t.label} — try ${tier + 1}/${modelTiers.length}`);
-
-      const config = {
-        output: {
-          format: 'image/png',
-          quality: 1
-        },
-        model: t.name,
-        progress: (key, current, total) => {
-          const pct = t.startPct + Math.round((current / total) * 15);
-          const mb = (current / (1024 * 1024)).toFixed(1);
-          const totalMb = (total / (1024 * 1024)).toFixed(1);
-          if (typeof key === 'string' && (key.includes('fetch') || key.includes('model'))) {
-            bgSetProgress(pct, `📥 ${t.label}: ${mb}MB / ${totalMb}MB`);
-          } else {
-            bgSetProgress(pct, `🎨 Processing: ${mb}MB`);
-          }
-        }
-      };
-
-      resultBlob = await window.__bgRemoveFn(resizedFile, config);
-      console.log(`%c✅ Success with: ${t.name}`, 'color:#10b981;font-weight:bold');
-      bgToast(`✅ Done (${t.name})`, 'success');
-      break;
-    } catch (e) {
-      console.warn(`%c❌ Model ${t.name} failed: ${e.message}`, 'color:#ef4444');
-      lastError = e;
+  // Simple config — no model parameter (1.0.7 doesn't need it)
+  const config = {
+    progress: (key, current, total) => {
+      const pct = 35 + Math.round((current / total) * 50);
+      const mb = (current / (1024 * 1024)).toFixed(1);
+      const totalMb = (total / (1024 * 1024)).toFixed(1);
+      bgSetProgress(pct, `📥 AI: ${mb}MB / ${totalMb}MB`);
     }
-  }
+  };
 
-  if (!resultBlob) {
-    throw lastError || new Error('Saare models fail ho gaye');
-  }
+  const resultBlob = await window.__bgRemoveFn(resizedFile, config);
+  console.log('%c✅ Background removed', 'color:#10b981;font-weight:bold');
 
-  bgSetProgress(85, '🖼️ Background apply...');
+  bgSetProgress(88, '🖼️ Background apply...');
   let finalBlob = resultBlob;
 
   if (bgSettings.bgType === 'color') {
@@ -197,6 +159,7 @@ async function bgProcessImage(file) {
 
     bgRenderResult();
     bgHideProgress();
+    bgToast('✅ Background removed!', 'success');
   } catch (e) {
     console.error('BG remove error:', e);
     bgToast('❌ Fail: ' + (e.message || 'unknown'), 'error');
@@ -290,7 +253,7 @@ function bgConvertToJpg(blob) {
 }
 
 /* ============================================================
-   RENDER
+   RENDER FUNCTIONS
    ============================================================ */
 function bgRenderDrop() {
   const drop = document.getElementById('bgDrop');
@@ -359,7 +322,7 @@ window.bgSetSetting = (key, val) => {
     if (el) el.textContent = val + '%';
   }
   if (key === 'maxDim') {
-    bgSettings.maxDim = parseInt(val, 10) || 1200;
+    bgSettings.maxDim = parseInt(val, 10) || 800;
   }
   if (bgProcessedBlob && (key === 'bgType' || key === 'bgColor' || key === 'outputFormat')) {
     bgReprocess();
@@ -471,7 +434,7 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
         <div id="bgProgressFill" style="height:100%;width:0%;background:var(--gradient);transition:width .3s"></div>
       </div>
       <div class="hint" style="margin-top:8px;font-size:11px">
-        ⚡ Auto-fallback: medium → small (best quality pehle)
+        ⚡ Mobile-friendly AI model • Small image = faster
       </div>
     </div>
 
@@ -521,10 +484,10 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
         <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
           Max Dimension (px)
         </label>
-        <input type="number" value="${bgSettings.maxDim}" min="600" max="3000" step="100"
+        <input type="number" value="${bgSettings.maxDim}" min="400" max="2000" step="100"
           onchange="bgSetSetting('maxDim',this.value)"
           style="width:100%;padding:10px;background:var(--surface-2);border:1.5px solid var(--border-strong);border-radius:10px;color:var(--text)">
-        <div class="hint">1200 = fast + quality achhi</div>
+        <div class="hint">800 = fast on mobile • 1200 = balance • 2000 = quality</div>
       </div>
     </div>
 
@@ -604,4 +567,4 @@ window.EXTRA_TOOL_INITS['background-remover'] = () => {
   });
 };
 
-console.log('%c✅ Background Remover v7 loaded', 'color:#ec4899;font-weight:bold');
+console.log('%c✅ Background Remover v8 loaded', 'color:#ec4899;font-weight:bold');
