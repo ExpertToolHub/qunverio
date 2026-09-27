@@ -1,11 +1,10 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v10)
-   - PDF error fixed (jsPDF.scale issue)
-   - Print white screen fixed
-   - 3x Ultra HD quality (safe, no crash)
-   - Preview button: tab switch + refresh
-   - Save button: clear message
-   - 7 Templates
+   RESUME BUILDER — Qunverio (FINAL v11)
+   - Ultra HD Photo (1100×1300 — 10x)
+   - Photo limit 20 MB
+   - PDF pixel ratio 8x (max quality)
+   - 7 Templates perfect
+   - A4 multi-page smart logic
    ============================================================ */
 
 // ====== STYLES INJECT ======
@@ -154,7 +153,7 @@
     .rb-entry ul { margin: 4px 0 0; padding-left: 18px; }
     .rb-entry li { font-size: 12px; line-height: 1.5; color: #333; margin-bottom: 2px; }
 
-    /* ===== PRINT (FIXED — no white screen) ===== */
+    /* ===== PRINT ===== */
     @media print {
       @page { size: A4; margin: 0; }
       html, body {
@@ -276,7 +275,7 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
         <div class="rb-field"><label>Other Link</label><input id="rbOther" placeholder="twitter.com/rahul" oninput="rbSet('personal.other',this.value)"></div>
       </div>
       <div class="rb-field" style="margin-top:10px">
-        <label>Profile Photo (optional)</label>
+        <label>Profile Photo (optional) — Max 20 MB</label>
         <input type="file" accept="image/*" id="rbPhoto">
         <div id="rbPhotoPreviewWrap"></div>
       </div>
@@ -532,14 +531,14 @@ window.rbToast = (msg) => {
   setTimeout(() => t.remove(), 2400);
 };
 
-// ====== PHOTO ======
+// ====== PHOTO (ULTRA HD) ======
 let rbCropper = null;
 
 window.rbHandlePhoto = (e) => {
   const f = e.target.files[0];
   if (!f) return;
-  if (f.size > 10 * 1024 * 1024) {
-    rbToast('❌ Photo 10MB se choti honi chahiye');
+  if (f.size > 20 * 1024 * 1024) {
+    rbToast('❌ Photo 20MB se choti honi chahiye');
     e.target.value = '';
     return;
   }
@@ -596,13 +595,14 @@ window.rbCropCancel = () => { rbCloseCropModal(); rbToast('Photo cancel kiya'); 
 window.rbCropApply = () => {
   if (!rbCropper) return;
   try {
-    const canvas = rbCropper.getCroppedCanvas({ width: 440, height: 520, imageSmoothingQuality: 'high' });
+    // ULTRA HD: 1100×1300 (10x of display 110×130)
+    const canvas = rbCropper.getCroppedCanvas({ width: 1100, height: 1300, imageSmoothingQuality: 'high' });
     rbData.personal.photo = canvas.toDataURL('image/jpeg', 1.0);
     rbAutoSave();
     rbCloseCropModal();
     rbRenderPhotoPreview();
     rbPreviewRefresh();
-    rbToast('✅ Photo cropped & added!');
+    rbToast('✅ Ultra HD Photo added!');
   } catch(e) {
     console.error(e);
     rbToast('❌ Crop apply nahi hua');
@@ -618,8 +618,8 @@ window.rbRenderPhotoPreview = () => {
     <div class="rb-photo-preview">
       <img src="${photo}" alt="Photo">
       <div class="rpp-info">
-        <strong>✅ Photo ready</strong>
-        <div>Preview tab me dekho</div>
+        <strong>✅ Ultra HD Photo ready</strong>
+        <div>1100×1300 • 10x quality</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <button class="rb-btn ghost small" onclick="rbEditPhoto()">✏️ Edit</button>
@@ -954,12 +954,12 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF ULTRA HD (SAFE) ======
+// ====== PDF ULTRA HD (8x) ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
   if (!el) return;
-  rbToast('⏳ Ultra HD PDF ban raha hai...');
+  rbToast('⏳ Ultra HD PDF ban raha hai (8x quality)...');
   try {
     if (typeof htmlToImage === 'undefined' || typeof jspdf === 'undefined') {
       rbToast('❌ Libraries load nahi hui'); return;
@@ -975,11 +975,11 @@ window.rbDownloadPDF = async () => {
     el.style.height = 'auto';
     el.style.marginBottom = '0';
 
-    await new Promise(r => setTimeout(r, 150));
+    await new Promise(r => setTimeout(r, 200));
 
-    // 3x Ultra HD (safe — no jsPDF.scale error)
+    // 8x ULTRA HD
     const canvas = await htmlToImage.toCanvas(el, {
-      pixelRatio: 3,
+      pixelRatio: 8,
       backgroundColor: '#ffffff',
       cacheBust: true,
       width: 794,
@@ -1030,7 +1030,7 @@ window.rbDownloadPDF = async () => {
 
     const fileName = (rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume.pdf';
     pdf.save(fileName);
-    rbToast('✅ Ultra HD PDF downloaded!');
+    rbToast('✅ Ultra HD PDF downloaded (8x)!');
   } catch(e) {
     console.error(e);
     rbToast('❌ PDF error: ' + e.message);
@@ -1061,4 +1061,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v10 - all fixes)');
+console.log('✅ Resume Builder loaded (v11 - Ultra HD 8x, photo 1100×1300)');
