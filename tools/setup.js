@@ -1,9 +1,60 @@
+
 /* ============================================================
    QUNVERIO — COMMON SETUP (tools/setup.js)
-   Sab tools ke liye common code
+   Sab tools ke liye common code + Categories
    ============================================================ */
 
 console.log('%cQunverio Setup Loading...', 'color:#10b981;font-weight:bold');
+
+/* ============================================================
+   CATEGORIES DATA
+   ============================================================ */
+const CATEGORIES = [
+  {
+    id: 'calculators',
+    name: 'Calculators',
+    icon: '🧮',
+    desc: 'CTC, GST, SIP, EMI, Age & more',
+    gradient: 'linear-gradient(135deg,#22c55e,#10b981)'
+  },
+  {
+    id: 'finance',
+    name: 'Finance',
+    icon: '💰',
+    desc: 'Tax, Loan, Investment tools',
+    gradient: 'linear-gradient(135deg,#3b82f6,#6366f1)'
+  },
+  {
+    id: 'students',
+    name: 'Students',
+    icon: '🎓',
+    desc: 'Resume, CGPA, Percentage tools',
+    gradient: 'linear-gradient(135deg,#8b5cf6,#6366f1)'
+  },
+  {
+    id: 'generators',
+    name: 'Generators',
+    icon: '📄',
+    desc: 'QR, Barcode, Password generators',
+    gradient: 'linear-gradient(135deg,#f59e0b,#f97316)'
+  },
+  {
+    id: 'converters',
+    name: 'Converters',
+    icon: '🔄',
+    desc: 'Unit, Case, Currency converters',
+    gradient: 'linear-gradient(135deg,#ec4899,#8b5cf6)'
+  },
+  {
+    id: 'utilities',
+    name: 'Utilities',
+    icon: '🛠️',
+    desc: 'Word Counter, Image Tools & more',
+    gradient: 'linear-gradient(135deg,#14b8a6,#06b6d4)'
+  }
+];
+
+window.CATEGORIES = CATEGORIES;
 
 /* ============================================================
    TOOLS DATA
@@ -12,7 +63,7 @@ const EXTRA_TOOLS = [
   {
     id: 'qr-generator',
     name: 'QR Code Generator',
-    cat: 'utility',
+    cat: 'generators',
     icon: '📱',
     desc: 'Generate QR codes for URLs and text instantly',
     howto: 'Paste any URL or text. Click Generate QR. Download as PNG or SVG, or Print. Perfect for sharing links, WiFi, contacts.',
@@ -21,30 +72,30 @@ const EXTRA_TOOLS = [
   {
     id: 'ctc-salary',
     name: 'CTC → In-Hand Salary',
-    cat: 'finance',
+    cat: 'calculators',
     icon: '💼',
     desc: 'Calculate your take-home salary from CTC',
     howto: 'Enter annual CTC, basic %, HRA %, PF, tax. Click Calculate to see monthly in-hand salary with full breakdown.',
     kw: ['ctc', 'salary', 'in-hand', 'take home', 'monthly salary', 'income', 'pf', 'tax']
   },
-{
-  id: 'barcode-generator',
-  name: 'Barcode Generator',
-  cat: 'utility',
-  icon: '🎫',
-  desc: 'Generate barcodes for products',
-  howto: 'Enter barcode text/number. Choose format. Click Generate. Download or Print.',
-  kw: ['barcode', 'bar code', 'product', 'scan']
-},
-{
-  id: 'resume-builder',
-  name: 'Resume Builder',
-  cat: 'career',
-  icon: '📄',
-  desc: 'Create professional ATS-friendly resume with PDF download',
-  howto: 'Fill personal info, education, experience, skills. Choose template. Preview and download PDF.',
-  kw: ['resume', 'cv', 'bio data', 'resume maker', 'cv builder', 'job', 'career']
-}
+  {
+    id: 'barcode-generator',
+    name: 'Barcode Generator',
+    cat: 'generators',
+    icon: '🎫',
+    desc: 'Generate barcodes for products',
+    howto: 'Enter barcode text/number. Choose format. Click Generate. Download or Print.',
+    kw: ['barcode', 'bar code', 'product', 'scan']
+  },
+  {
+    id: 'resume-builder',
+    name: 'Resume Builder',
+    cat: 'students',
+    icon: '📄',
+    desc: 'Create professional ATS-friendly resume with PDF download',
+    howto: 'Fill personal info, education, experience, skills. Choose template. Preview and download PDF.',
+    kw: ['resume', 'cv', 'bio data', 'resume maker', 'cv builder', 'job', 'career']
+  }
 ];
 
 window.EXTRA_TOOLS = EXTRA_TOOLS;
@@ -53,14 +104,8 @@ window.EXTRA_TOOLS = EXTRA_TOOLS;
    TOOL CARD HTML GENERATOR
    ============================================================ */
 function extraToolCardHTML(t) {
-  const catMap = {
-    'finance': 'linear-gradient(135deg,#22c55e,#10b981)',
-    'utility': 'linear-gradient(135deg,#6366f1,#8b5cf6)',
-    'pdf':     'linear-gradient(135deg,#ef4444,#f97316)',
-    'photo':   'linear-gradient(135deg,#ec4899,#8b5cf6)',
-    'student': 'linear-gradient(135deg,#8b5cf6,#6366f1)'
-  };
-  const grad = catMap[t.cat] || 'var(--gradient)';
+  const cat = CATEGORIES.find(c => c.id === t.cat);
+  const grad = cat ? cat.gradient : 'var(--gradient)';
   const isFav = (typeof isFavorite === 'function' && isFavorite(t.id));
   const fav = isFav ? 'active' : '';
   const star = isFav ? '★' : '☆';
@@ -75,7 +120,7 @@ function extraToolCardHTML(t) {
 window.extraToolCardHTML = extraToolCardHTML;
 
 /* ============================================================
-   AUTO-INJECT CARDS
+   AUTO-INJECT CARDS (Home pe saare tools — hidden, sirf fallback)
    ============================================================ */
 function injectExtraTools() {
   const allToolsGrid = document.getElementById('allTools');
@@ -174,7 +219,6 @@ window.extraDownloadPDF = function(boxId, filename) {
       e.style.background = 'none';
     }
   });
-  // Dark blue rows → white text
   clone.querySelectorAll('[style*="var(--surface-2)"]').forEach(row => {
     row.style.background = '#1c2250';
     row.querySelectorAll('*').forEach(el => {
@@ -396,4 +440,20 @@ window.extraShare = function(title, text) {
   else window.extraCopy(text);
 };
 
-console.log('%c✅ Setup loaded — ' + EXTRA_TOOLS.length + ' tools ready', 'color:#10b981;font-weight:bold;font-size:14px');
+/* ============================================================
+   CATEGORY HELPERS
+   ============================================================ */
+window.getCategoryById = function(id) {
+  return CATEGORIES.find(c => c.id === id);
+};
+window.getToolsByCategory = function(catId) {
+  return EXTRA_TOOLS.filter(t => t.cat === catId);
+};
+window.getToolCategoryName = function(toolId) {
+  const tool = EXTRA_TOOLS.find(t => t.id === toolId);
+  if (!tool) return '';
+  const cat = CATEGORIES.find(c => c.id === tool.cat);
+  return cat ? cat.name : '';
+};
+
+console.log('%c✅ Setup loaded — ' + EXTRA_TOOLS.length + ' tools, ' + CATEGORIES.length + ' categories', 'color:#10b981;font-weight:bold;font-size:14px');
