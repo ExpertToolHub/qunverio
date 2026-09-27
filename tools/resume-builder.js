@@ -1,6 +1,6 @@
 /* ============================================================
-   RESUME BUILDER — Qunverio (FINAL v8)
-   - 8x ULTRA HD PDF/Print quality
+   RESUME BUILDER — Qunverio (FINAL v9)
+   - 4x Ultra HD PDF/Print (safe + maximum quality)
    - Preview button: tab switch + refresh
    - Save button: clear message
    - 7 Templates
@@ -196,7 +196,7 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
   <div class="rb-actions">
     <button class="rb-btn primary" onclick="rbSave()">💾 Save</button>
     <button class="rb-btn success" onclick="rbGoToPreview()">👁️ Preview</button>
-    <button class="rb-btn ghost" onclick="rbDownloadPDF()">📥 PDF 8K</button>
+    <button class="rb-btn ghost" onclick="rbDownloadPDF()">📥 PDF Ultra HD</button>
     <button class="rb-btn ghost" onclick="rbPrint()">🖨️ Print</button>
     <button class="rb-btn ghost" onclick="rbDuplicate()">📋 Copy</button>
     <button class="rb-btn danger" onclick="rbReset()">🔄 Reset</button>
@@ -204,7 +204,7 @@ window.EXTRA_TOOL_RENDERERS['resume-builder'] = () => `
   <div class="rb-actions-hint">
     💾 <strong>Save</strong> = data browser me save (auto-save bhi hota hai) &nbsp;•&nbsp; 
     👁️ <strong>Preview</strong> = resume dekho &nbsp;•&nbsp; 
-    📥 <strong>PDF 8K</strong> = ultra HD download (file bada hoga, quality best)
+    📥 <strong>PDF</strong> = ultra HD download
   </div>
 
   <div class="rb-progress"><div class="rb-progress-fill" id="rbProgress" style="width:0%"></div></div>
@@ -560,8 +560,8 @@ window.rbCropCancel = () => { rbCloseCropModal(); rbToast('Photo cancel kiya'); 
 window.rbCropApply = () => {
   if (!rbCropper) return;
   try {
-    // 8x resolution: 110*8=880, 130*8=1040
-    const canvas = rbCropper.getCroppedCanvas({ width: 880, height: 1040, imageSmoothingQuality: 'high' });
+    // 4x resolution for photo: 110*4=440, 130*4=520
+    const canvas = rbCropper.getCroppedCanvas({ width: 440, height: 520, imageSmoothingQuality: 'high' });
     rbData.personal.photo = canvas.toDataURL('image/jpeg', 1.0);
     rbAutoSave();
     rbCloseCropModal();
@@ -919,12 +919,12 @@ function rbRenderSection(sec, tpl) {
   return '';
 }
 
-// ====== PDF 8K ULTRA HD ======
+// ====== PDF 4X ULTRA HD (SAFE) ======
 window.rbDownloadPDF = async () => {
   rbPreviewRefresh();
   const el = document.getElementById('rbPreview');
   if (!el) return;
-  rbToast('⏳ 8K PDF ban raha hai... thoda time lagega');
+  rbToast('⏳ Ultra HD PDF ban raha hai...');
   try {
     if (typeof htmlToImage === 'undefined' || typeof jspdf === 'undefined') {
       rbToast('❌ Libraries load nahi hui'); return;
@@ -942,9 +942,9 @@ window.rbDownloadPDF = async () => {
 
     await new Promise(r => setTimeout(r, 150));
 
-    // 8x ULTRA HD capture
+    // 4x Ultra HD capture (safe, no crash)
     const canvas = await htmlToImage.toCanvas(el, {
-      pixelRatio: 8,
+      pixelRatio: 4,
       backgroundColor: '#ffffff',
       cacheBust: true,
       width: 794,
@@ -972,7 +972,7 @@ window.rbDownloadPDF = async () => {
       title: (rbData.personal.name || 'Resume') + ' - Resume',
       subject: 'Resume',
       author: rbData.personal.name || 'Qunverio User',
-      creator: 'Qunverio Resume Builder (8K)'
+      creator: 'Qunverio Resume Builder'
     });
 
     const pw = pdf.internal.pageSize.getWidth();
@@ -981,23 +981,23 @@ window.rbDownloadPDF = async () => {
     const imgH = (canvas.height * imgW) / canvas.width;
 
     if (imgH <= ph + 5) {
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH, undefined, 'FAST');
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgW, imgH);
     } else {
       let heightLeft = imgH;
       let position = 0;
-      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
+      pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
       heightLeft -= ph;
       while (heightLeft > 5) {
         position = heightLeft - imgH;
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH, undefined, 'FAST');
+        pdf.addImage(imgData, 'JPEG', 0, position, imgW, imgH);
         heightLeft -= ph;
       }
     }
 
-    const fileName = (rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume_8K.pdf';
+    const fileName = (rbData.personal.name || 'resume').replace(/\s+/g,'_') + '_Resume.pdf';
     pdf.save(fileName);
-    rbToast('✅ 8K PDF downloaded!');
+    rbToast('✅ Ultra HD PDF downloaded!');
   } catch(e) {
     console.error(e);
     rbToast('❌ PDF error: ' + e.message);
@@ -1068,4 +1068,4 @@ window.rbReset = () => {
   location.reload();
 };
 
-console.log('✅ Resume Builder loaded (v8 - 8K Ultra HD PDF)');
+console.log('✅ Resume Builder loaded (v9 - 4x Ultra HD, no errors)');
