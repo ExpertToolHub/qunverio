@@ -44,12 +44,19 @@ const CATEGORIES = [
     desc: 'Unit, Case, Currency converters',
     gradient: 'linear-gradient(135deg,#ec4899,#8b5cf6)'
   },
-  {
+    {
     id: 'utilities',
     name: 'Utilities',
     icon: '🛠️',
     desc: 'Word Counter, Image Tools & more',
     gradient: 'linear-gradient(135deg,#14b8a6,#06b6d4)'
+  },
+  {
+    id: 'pdf',
+    name: 'PDF Tools',
+    icon: '📄',
+    desc: 'Merge, split, compress & more',
+    gradient: 'linear-gradient(135deg,#ec4899,#ef4444)'
   }
 ];
 
