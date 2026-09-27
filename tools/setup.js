@@ -334,7 +334,7 @@ const EXTRA_TOOLS = [
     howto: 'PDF upload karo. Split mode choose karo (range, every page, every N). Split click karo. ZIP download hoga.',
     kw: ['pdf', 'split', 'splitter', 'cut', 'extract', 'pages', 'range', 'separate']
   },
-  {
+    {
     id: 'jpg-to-pdf',
     name: 'JPG to PDF',
     cat: 'pdf',
@@ -342,6 +342,15 @@ const EXTRA_TOOLS = [
     desc: 'Convert JPG, PNG, WebP images to a single PDF — reorder, set page size & margin',
     howto: 'Images drag ya select karo. Reorder karo. Page size, orientation, margin choose karo. Create PDF click karo.',
     kw: ['jpg', 'jpeg', 'png', 'image', 'to pdf', 'jpg to pdf', 'png to pdf', 'images to pdf', 'convert']
+  },
+  {
+    id: 'pdf-to-jpg',
+    name: 'PDF to JPG',
+    cat: 'pdf',
+    icon: '🖼️',
+    desc: 'Convert PDF pages to JPG or PNG images — choose quality, download as ZIP',
+    howto: 'PDF upload karo. Quality aur format choose karo. Pages select karo. Convert click karo.',
+    kw: ['pdf', 'to jpg', 'to png', 'pdf to jpg', 'pdf to image', 'pdf to png', 'convert', 'extract images']
   }
 ];
 
