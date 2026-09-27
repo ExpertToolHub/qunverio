@@ -368,7 +368,7 @@ const EXTRA_TOOLS = [
     howto: 'Images drag ya select karo. Resize mode choose karo (pixels/percent/preset). Dimensions set karo. Resize All click karo.',
     kw: ['image', 'resize', 'resizer', 'scale', 'dimensions', 'compress', 'bulk resize', 'photo resize']
   },
-  {
+    {
     id: 'image-compressor',
     name: 'Image Compressor',
     cat: 'digital-studio',
@@ -376,6 +376,15 @@ const EXTRA_TOOLS = [
     desc: 'Compress images by quality or target size (KB) — perfect for government forms',
     howto: 'Images add karo. Quality mode ya Target Size mode choose karo. Compress All click karo. Download as ZIP.',
     kw: ['image', 'compress', 'compressor', 'reduce size', '20kb', '50kb', '100kb', 'photo compressor', 'govt form', 'aadhaar', 'pan', 'ssc']
+  },
+  {
+    id: 'passport-photo',
+    name: 'Passport Photo Maker',
+    cat: 'digital-studio',
+    icon: '🆔',
+    desc: 'Create passport size photos + A4 print sheet — with background color and crop',
+    howto: 'Photo upload karo. Face crop karo. Size choose karo (Passport/Stamp/Visa). Background color set karo. A4 sheet automatically generate hoga. Download JPG/PDF ya Print.',
+    kw: ['passport photo', 'passport size photo', 'id photo', 'photo maker', 'a4 sheet', 'stamp size', 'visa photo', '35x45mm', 'passport photo online']
   }
 ];
 
