@@ -1,6 +1,6 @@
 /* ============================================================
-   QUNVERIO — PASSPORT PHOTO MAKER (FINAL v3)
-   With adjustable stroke width + color picker
+   QUNVERIO — PASSPORT PHOTO MAKER (FINAL v4)
+   Stroke dropdown + Adjustments dropdown
    ============================================================ */
 
 console.log('%cPassport Photo Maker loading...', 'color:#3b82f6;font-weight:bold');
@@ -14,9 +14,17 @@ let ppSettings = {
   size: 'passport_in',
   customW: 35, customH: 45,
   bgColor: '#ffffff',
+  // Stroke
   border: false,
   borderColor: '#000000',
   borderWidth: 4,
+  // Adjustments
+  sharpness: 0,
+  brightness: 100,
+  contrast: 100,
+  saturation: 100,
+  smooth: 0,
+  // Sheet
   sheetSize: 'a4',
   sheetOrientation: 'portrait',
   gap: 2,
@@ -52,9 +60,7 @@ const PP_STROKE_COLORS = [
   { name: 'Grey',  color: '#6b7280' },
   { name: 'Blue',  color: '#1e3a8a' },
   { name: 'Red',   color: '#dc2626' },
-  { name: 'Green', color: '#059669' },
-  { name: 'Pink',  color: '#fbcfe8' },
-  { name: 'Custom'}
+  { name: 'Green', color: '#059669' }
 ];
 
 /* ============================================================
@@ -67,10 +73,6 @@ function ppToast(msg, type) {
 
 function ppMMToPx(mm, dpi) {
   return Math.round((mm / 25.4) * dpi);
-}
-
-function ppBaseName(name) {
-  return (name || 'photo').replace(/\.[^.]+$/, '').replace(/[^a-z0-9_\-]/gi, '_');
 }
 
 /* ============================================================
@@ -179,12 +181,12 @@ window.ppSetSetting = (key, val) => {
   } else if (key === 'customW' || key === 'customH') {
     ppSettings[key] = parseFloat(val) || 35;
     ppRenderPreview();
-  } else if (key === 'bgColor' || key === 'borderColor') {
+  } else if (key === 'bgColor') {
     ppRenderPreview();
-  } else if (key === 'border' || key === 'showCutMarks' || key === 'showBorderOnSheet') {
+  } else if (key === 'showCutMarks' || key === 'showBorderOnSheet') {
     ppSettings[key] = !!val;
     ppRenderPreview();
-  } else if (key === 'borderWidth' || key === 'dpi' || key === 'gap' || key === 'margin') {
+  } else if (key === 'dpi' || key === 'gap' || key === 'margin') {
     ppSettings[key] = parseFloat(val) || 0;
     ppRenderPreview();
   } else if (key === 'sheetSize' || key === 'sheetOrientation') {
@@ -193,33 +195,125 @@ window.ppSetSetting = (key, val) => {
 };
 
 /* ============================================================
-   STROKE CONTROLS
+   DROPDOWN TOGGLES
+   ============================================================ */
+window.ppToggleDropdown = (id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display === 'block';
+  el.style.display = isOpen ? 'none' : 'block';
+  // Arrow update
+  const arrow = document.getElementById(id + 'Arrow');
+  if (arrow) arrow.textContent = isOpen ? '▼' : '▲';
+};
+
+/* ============================================================
+   STROKE
    ============================================================ */
 window.ppToggleStroke = (checked) => {
   ppSettings.border = !!checked;
+  const controls = document.getElementById('ppStrokeControls');
+  if (controls) controls.style.display = checked ? 'block' : 'none';
+  const status = document.getElementById('ppStrokeStatus');
+  if (status) status.textContent = checked ? 'ON' : 'OFF';
   ppRenderPreview();
 };
 
 window.ppSetStrokeWidth = (val) => {
-  ppSettings.borderWidth = parseInt(val, 10) || 1;
-  const el = document.getElementById('ppStrokeWidthVal');
-  if (el) el.textContent = ppSettings.borderWidth;
+  let v = parseInt(val, 10);
+  if (isNaN(v)) v = 1;
+  v = Math.max(1, Math.min(20, v));
+  ppSettings.borderWidth = v;
+  const label = document.getElementById('ppStrokeWidthVal');
+  if (label) label.textContent = v;
+  const slider = document.getElementById('ppStrokeWidthSlider');
+  if (slider) slider.value = v;
   ppRenderPreview();
+};
+
+window.ppStrokeStep = (delta) => {
+  ppSetStrokeWidth(ppSettings.borderWidth + delta);
 };
 
 window.ppSetStrokeColor = (color) => {
   ppSettings.borderColor = color;
   const picker = document.getElementById('ppStrokeColorPicker');
   if (picker) picker.value = color;
-  // Update active chip
   document.querySelectorAll('.pp-stroke-chip').forEach(c => {
     c.classList.toggle('active', c.dataset.color === color);
   });
   ppRenderPreview();
 };
 
+window.ppResetStroke = () => {
+  ppSettings.borderColor = '#000000';
+  ppSettings.borderWidth = 4;
+  const picker = document.getElementById('ppStrokeColorPicker');
+  if (picker) picker.value = '#000000';
+  const label = document.getElementById('ppStrokeWidthVal');
+  if (label) label.textContent = '4';
+  const slider = document.getElementById('ppStrokeWidthSlider');
+  if (slider) slider.value = 4;
+  document.querySelectorAll('.pp-stroke-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.color === '#000000');
+  });
+  ppRenderPreview();
+  ppToast('🔄 Stroke reset', 'success');
+};
+
 /* ============================================================
-   QUICK PRESETS
+   ADJUSTMENTS
+   ============================================================ */
+window.ppSetAdjustment = (key, val) => {
+  ppSettings[key] = parseInt(val, 10) || 0;
+  // Update label
+  const labels = {
+    sharpness: 'ppSharpVal',
+    brightness: 'ppBrightVal',
+    contrast: 'ppContrastVal',
+    saturation: 'ppSatVal',
+    smooth: 'ppSmoothVal'
+  };
+  const el = document.getElementById(labels[key]);
+  if (el) el.textContent = val;
+  ppRenderPreview();
+};
+
+window.ppResetAdjustments = () => {
+  ppSettings.sharpness = 0;
+  ppSettings.brightness = 100;
+  ppSettings.contrast = 100;
+  ppSettings.saturation = 100;
+  ppSettings.smooth = 0;
+
+  // Update sliders
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  };
+  set('ppSharpSlider', 0);
+  set('ppBrightSlider', 100);
+  set('ppContrastSlider', 100);
+  set('ppSatSlider', 100);
+  set('ppSmoothSlider', 0);
+
+  // Update labels
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+  setText('ppSharpVal', 0);
+  setText('ppBrightVal', 100);
+  setText('ppContrastVal', 100);
+  setText('ppSatVal', 100);
+  setText('ppSmoothVal', 0);
+
+  ppRenderPreview();
+  ppToast('🔄 Adjustments reset', 'success');
+};
+
+/* ============================================================
+   QUICK BG PRESETS
    ============================================================ */
 window.ppApplyBgPreset = (idx) => {
   const p = PP_BG_PRESETS[idx];
@@ -227,13 +321,12 @@ window.ppApplyBgPreset = (idx) => {
   ppSettings.bgColor = p.color;
   ppSettings.borderColor = p.border;
   ppSettings.border = true;
-  // Re-crop with new bg
   if (ppOriginal) ppOpenCropper();
   else ppRenderPreview();
   document.querySelectorAll('.pp-bg-chip').forEach((c, i) => {
     c.classList.toggle('active', i === idx);
   });
-  ppToast(`🎨 ${p.name} + border applied`, 'success');
+  ppToast(`🎨 ${p.name} applied`, 'success');
 };
 
 /* ============================================================
@@ -244,6 +337,127 @@ function ppRenderDrop() {
   const panel = document.getElementById('ppPanel');
   if (drop) drop.style.display = 'block';
   if (panel) panel.style.display = 'none';
+}
+
+/* ============================================================
+   APPLY ADJUSTMENTS TO CANVAS
+   ============================================================ */
+function ppApplyAdjustments(canvas) {
+  if (!canvas) return canvas;
+  const ctx = canvas.getContext('2d');
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+
+  const brightness = ppSettings.brightness / 100;
+  const contrast = ppSettings.contrast / 100;
+  const saturation = ppSettings.saturation / 100;
+  const sharpness = ppSettings.sharpness;
+  const smooth = ppSettings.smooth;
+
+  // Brightness + Contrast + Saturation
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i], g = data[i + 1], b = data[i + 2];
+
+    // Brightness
+    r *= brightness; g *= brightness; b *= brightness;
+
+    // Contrast
+    r = ((r / 255 - 0.5) * contrast + 0.5) * 255;
+    g = ((g / 255 - 0.5) * contrast + 0.5) * 255;
+    b = ((b / 255 - 0.5) * contrast + 0.5) * 255;
+
+    // Saturation
+    const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+    r = gray + (r - gray) * saturation;
+    g = gray + (g - gray) * saturation;
+    b = gray + (b - gray) * saturation;
+
+    data[i] = Math.max(0, Math.min(255, r));
+    data[i + 1] = Math.max(0, Math.min(255, g));
+    data[i + 2] = Math.max(0, Math.min(255, b));
+  }
+
+  // Sharpness (simple unsharp mask)
+  if (sharpness > 0) {
+    const copy = new Uint8ClampedArray(data);
+    const amt = sharpness / 100;
+    const w = canvas.width, h = canvas.height;
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = (y * w + x) * 4;
+        for (let c = 0; c < 3; c++) {
+          const center = copy[i + c];
+          const avg = (
+            copy[((y - 1) * w + x) * 4 + c] +
+            copy[((y + 1) * w + x) * 4 + c] +
+            copy[(y * w + x - 1) * 4 + c] +
+            copy[(y * w + x + 1) * 4 + c]
+          ) / 4;
+          const diff = center - avg;
+          data[i + c] = Math.max(0, Math.min(255, center + diff * amt * 2));
+        }
+      }
+    }
+  }
+
+  // Smooth (simple box blur)
+  if (smooth > 0) {
+    const copy = new Uint8ClampedArray(data);
+    const radius = Math.max(1, Math.round(smooth / 20));
+    const w = canvas.width, h = canvas.height;
+    const amt = smooth / 100;
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4;
+        let rSum = 0, gSum = 0, bSum = 0, count = 0;
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const ny = y + dy, nx = x + dx;
+            if (ny >= 0 && ny < h && nx >= 0 && nx < w) {
+              const ni = (ny * w + nx) * 4;
+              rSum += copy[ni]; gSum += copy[ni + 1]; bSum += copy[ni + 2];
+              count++;
+            }
+          }
+        }
+        const rAvg = rSum / count, gAvg = gSum / count, bAvg = bSum / count;
+        data[i] = copy[i] * (1 - amt) + rAvg * amt;
+        data[i + 1] = copy[i + 1] * (1 - amt) + gAvg * amt;
+        data[i + 2] = copy[i + 2] * (1 - amt) + bAvg * amt;
+      }
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  return canvas;
+}
+
+/* ============================================================
+   BUILD PHOTO WITH STROKE + ADJUSTMENTS
+   ============================================================ */
+function ppBuildPhoto() {
+  if (!ppCroppedCanvas) return null;
+  const temp = document.createElement('canvas');
+  temp.width = ppCroppedCanvas.width;
+  temp.height = ppCroppedCanvas.height;
+  const ctx = temp.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, temp.width, temp.height);
+  ctx.drawImage(ppCroppedCanvas, 0, 0);
+
+  // Apply adjustments
+  ppApplyAdjustments(temp);
+
+  // Apply stroke
+  if (ppSettings.border) {
+    const bpx = Math.max(1, Math.round(ppSettings.borderWidth * ppSettings.dpi / 96));
+    ctx.strokeStyle = ppSettings.borderColor || '#000000';
+    ctx.lineWidth = bpx * 2;
+    ctx.strokeRect(bpx, bpx, temp.width - bpx * 2, temp.height - bpx * 2);
+  }
+
+  return temp;
 }
 
 /* ============================================================
@@ -258,25 +472,20 @@ function ppRenderPreview() {
   const single = document.getElementById('ppSinglePreview');
   if (single) {
     if (ppCroppedCanvas) {
-      const dataUrl = ppCroppedCanvas.toDataURL('image/jpeg', 0.95);
+      const canvas = ppBuildPhoto();
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
       const preset = PP_PRESETS[ppSettings.size];
       const wMM = preset ? preset.w : ppSettings.customW;
       const hMM = preset ? preset.h : ppSettings.customH;
 
-      const bw = ppSettings.border ? ppSettings.borderWidth : 0;
-      const bc = ppSettings.borderColor || '#000000';
-
       single.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <div style="position:relative;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.15);border-radius:4px;padding:${bw}px">
-            <img src="${dataUrl}" style="
-              max-width:200px;max-height:260px;
-              display:block;border-radius:2px;
-              border:${ppSettings.border ? `${bw}px solid ${bc}` : 'none'}">
+          <div style="background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.15);border-radius:4px">
+            <img src="${dataUrl}" style="max-width:200px;max-height:260px;display:block;border-radius:2px">
           </div>
           <div style="font-size:12px;color:var(--text-3)">
             ${wMM}×${hMM}mm @ ${ppSettings.dpi} DPI
-            ${ppSettings.border ? ` • Stroke: ${bw}px ${bc}` : ''}
+            ${ppSettings.border ? ` • ${ppSettings.borderWidth}px border` : ''}
           </div>
         </div>
       `;
@@ -327,23 +536,8 @@ function ppRenderSheet() {
 
   const scale = Math.min(360 / pageW, 500 / pageH);
 
-  // Build photo preview with stroke
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = ppCroppedCanvas.width;
-  tempCanvas.height = ppCroppedCanvas.height;
-  const tctx = tempCanvas.getContext('2d');
-  tctx.fillStyle = '#ffffff';
-  tctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-  tctx.drawImage(ppCroppedCanvas, 0, 0);
-
-  if (ppSettings.border) {
-    const bpx = Math.max(1, Math.round(ppSettings.borderWidth * ppSettings.dpi / 96));
-    tctx.strokeStyle = ppSettings.borderColor || '#000000';
-    tctx.lineWidth = bpx * 2;
-    tctx.strokeRect(bpx, bpx, tempCanvas.width - bpx * 2, tempCanvas.height - bpx * 2);
-  }
-
-  const bgData = tempCanvas.toDataURL('image/jpeg', 0.9);
+  const photoCanvas = ppBuildPhoto();
+  const bgData = photoCanvas.toDataURL('image/jpeg', 0.9);
 
   let html = `<div class="pp-sheet-canvas" style="
     width:${pageW * scale}px;height:${pageH * scale}px;
@@ -353,7 +547,7 @@ function ppRenderSheet() {
     for (let c = 0; c < cols; c++) {
       const x = margin + c * (wMM + gap);
       const y = margin + r * (hMM + gap);
-      html += `<div class="pp-photo-slot" style="
+      html += `<div style="
         position:absolute;
         left:${x * scale}px;top:${y * scale}px;
         width:${wMM * scale}px;height:${hMM * scale}px;
@@ -370,41 +564,18 @@ function ppRenderSheet() {
 
   html += '</div>';
   html += `<div style="font-size:11.5px;color:var(--text-3);text-align:center;margin-top:8px">
-    ${cols} × ${rows} = <strong>${total}</strong> photos fit on this page
+    ${cols} × ${rows} = <strong>${total}</strong> photos
   </div>`;
 
   sheet.innerHTML = html;
 }
 
 /* ============================================================
-   BUILD FINAL PHOTO WITH STROKE
-   ============================================================ */
-function ppBuildPhotoWithStroke() {
-  if (!ppCroppedCanvas) return null;
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = ppCroppedCanvas.width;
-  tempCanvas.height = ppCroppedCanvas.height;
-  const ctx = tempCanvas.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-  ctx.drawImage(ppCroppedCanvas, 0, 0);
-
-  if (ppSettings.border) {
-    const bpx = Math.max(1, Math.round(ppSettings.borderWidth * ppSettings.dpi / 96));
-    ctx.strokeStyle = ppSettings.borderColor || '#000000';
-    ctx.lineWidth = bpx * 2;
-    ctx.strokeRect(bpx, bpx, tempCanvas.width - bpx * 2, tempCanvas.height - bpx * 2);
-  }
-  return tempCanvas;
-}
-
-/* ============================================================
-   DOWNLOAD SINGLE
+   DOWNLOADS
    ============================================================ */
 window.ppDownloadSingle = () => {
   if (!ppCroppedCanvas) { ppToast('❌ Pehle photo crop karo', 'error'); return; }
-  const canvas = ppBuildPhotoWithStroke();
-  if (!canvas) return;
+  const canvas = ppBuildPhoto();
   const url = canvas.toDataURL('image/jpeg', 0.95);
   const a = document.createElement('a');
   a.href = url;
@@ -415,9 +586,6 @@ window.ppDownloadSingle = () => {
   ppToast('✅ Single photo downloaded', 'success');
 };
 
-/* ============================================================
-   BUILD SHEET
-   ============================================================ */
 function ppBuildSheetCanvas() {
   if (!ppCroppedCanvas) return null;
 
@@ -456,21 +624,15 @@ function ppBuildSheetCanvas() {
   const cols = Math.max(1, Math.floor((availW + gapPx) / (wPx + gapPx)));
   const rows = Math.max(1, Math.floor((availH + gapPx) / (hPx + gapPx)));
 
-  // Photo with stroke
+  // Build photo at target size
+  const photoSource = ppBuildPhoto();
   const photoCanvas = document.createElement('canvas');
   photoCanvas.width = wPx;
   photoCanvas.height = hPx;
   const pctx = photoCanvas.getContext('2d');
   pctx.fillStyle = '#ffffff';
   pctx.fillRect(0, 0, wPx, hPx);
-  pctx.drawImage(ppCroppedCanvas, 0, 0, wPx, hPx);
-
-  if (ppSettings.border) {
-    const bpx = Math.max(1, Math.round(ppSettings.borderWidth * dpi / 96));
-    pctx.strokeStyle = ppSettings.borderColor || '#000000';
-    pctx.lineWidth = bpx * 2;
-    pctx.strokeRect(bpx, bpx, wPx - bpx * 2, hPx - bpx * 2);
-  }
+  pctx.drawImage(photoSource, 0, 0, wPx, hPx);
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -488,9 +650,6 @@ function ppBuildSheetCanvas() {
   return { canvas, cols, rows, pageW, pageH };
 }
 
-/* ============================================================
-   DOWNLOAD SHEET
-   ============================================================ */
 window.ppDownloadSheet = async () => {
   if (!ppCroppedCanvas) { ppToast('❌ Pehle photo crop karo', 'error'); return; }
   if (ppBusy) return;
@@ -642,39 +801,36 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
       </div>
     </div>
 
-    <!-- STROKE CONTROL — Click to open -->
-    <div class="pp-settings" style="margin-top:12px">
-      <div class="pp-stroke-toggle" onclick="document.getElementById('ppStrokeBox').style.display = document.getElementById('ppStrokeBox').style.display === 'block' ? 'none' : 'block';">
+    <!-- STROKE DROPDOWN -->
+    <div class="pp-dropdown">
+      <div class="pp-dropdown-header" onclick="ppToggleDropdown('ppStrokeDropdown')">
         <span style="font-size:16px">🖼️</span>
-        <span style="font-weight:700;flex:1">Stroke / Border</span>
-        <span id="ppStrokeStatus" style="font-size:11.5px;color:var(--text-3)">${ppSettings.border ? 'ON • ' + ppSettings.borderWidth + 'px' : 'OFF'}</span>
-        <span style="font-size:14px;color:var(--text-3)">▼</span>
+        <span style="font-weight:700;flex:1;color:var(--text)">Stroke / Border</span>
+        <span id="ppStrokeStatus" style="font-size:11.5px;color:var(--text-3);margin-right:8px">${ppSettings.border ? 'ON' : 'OFF'}</span>
+        <span id="ppStrokeDropdownArrow" style="font-size:12px;color:var(--text-3)">▼</span>
       </div>
 
-      <div id="ppStrokeBox" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+      <div id="ppStrokeDropdown" style="display:none;padding:14px;background:var(--surface-2);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px">
 
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;font-weight:600;color:var(--text-2);font-size:13px">
-            <input type="checkbox" ${ppSettings.border ? 'checked' : ''} onchange="ppToggleStroke(this.checked)" style="width:auto">
-            Enable Stroke
-          </label>
-        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:14px;font-weight:600;color:var(--text-2);font-size:13px">
+          <input type="checkbox" ${ppSettings.border ? 'checked' : ''} onchange="ppToggleStroke(this.checked)" style="width:auto">
+          Enable Stroke
+        </label>
 
         <div id="ppStrokeControls" style="display:${ppSettings.border ? 'block' : 'none'}">
 
-          <!-- Color picker chips -->
           <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px">
-            Stroke Color
+            Color
           </label>
           <div class="pp-stroke-colors">
-            ${PP_STROKE_COLORS.filter(c => c.color).map(c => `
+            ${PP_STROKE_COLORS.map(c => `
               <div class="pp-stroke-chip ${ppSettings.borderColor === c.color ? 'active' : ''}"
                    data-color="${c.color}"
                    onclick="ppSetStrokeColor('${c.color}')"
                    style="background:${c.color};${c.color === '#ffffff' ? 'border:1px solid #ccc' : ''}"
                    title="${c.name}"></div>
             `).join('')}
-            <div class="pp-stroke-chip pp-stroke-custom" title="Custom color">
+            <div class="pp-stroke-chip pp-stroke-custom" title="Custom">
               <input type="color" id="ppStrokeColorPicker" value="${ppSettings.borderColor}"
                 onchange="ppSetStrokeColor(this.value)"
                 style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
@@ -682,25 +838,85 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
             </div>
           </div>
 
-          <!-- Width slider -->
           <div style="margin-top:16px">
             <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px">
-              Stroke Width: <span id="ppStrokeWidthVal">${ppSettings.borderWidth}</span> px
+              Width: <span id="ppStrokeWidthVal">${ppSettings.borderWidth}</span> px
             </label>
             <div style="display:flex;align-items:center;gap:10px">
-              <button class="pp-step-btn" onclick="ppSetStrokeWidth(Math.max(1, ppSettings.borderWidth - 1))">−</button>
+              <button class="pp-step-btn" onclick="ppStrokeStep(-1)">−</button>
               <input type="range" id="ppStrokeWidthSlider" min="1" max="20" value="${ppSettings.borderWidth}"
                 oninput="ppSetStrokeWidth(parseInt(this.value))"
                 style="flex:1">
-              <button class="pp-step-btn" onclick="ppSetStrokeWidth(Math.min(20, ppSettings.borderWidth + 1))">+</button>
+              <button class="pp-step-btn" onclick="ppStrokeStep(1)">+</button>
             </div>
           </div>
+
+          <button class="btn btn-secondary btn-sm" style="width:100%;margin-top:12px" onclick="ppResetStroke()">🔄 Reset Stroke</button>
 
         </div>
       </div>
     </div>
 
-    <!-- SHEET SETTINGS -->
+    <!-- ADJUSTMENTS DROPDOWN -->
+    <div class="pp-dropdown" style="margin-top:12px">
+      <div class="pp-dropdown-header" onclick="ppToggleDropdown('ppAdjDropdown')">
+        <span style="font-size:16px">🎚️</span>
+        <span style="font-weight:700;flex:1;color:var(--text)">Adjustments</span>
+        <span id="ppAdjDropdownArrow" style="font-size:12px;color:var(--text-3)">▼</span>
+      </div>
+
+      <div id="ppAdjDropdown" style="display:none;padding:14px;background:var(--surface-2);border:1px solid var(--border);border-top:none;border-radius:0 0 12px 12px">
+
+        <div style="margin-bottom:14px">
+          <label style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+            <span>✨ Sharpness</span>
+            <span id="ppSharpVal">${ppSettings.sharpness}</span>
+          </label>
+          <input type="range" id="ppSharpSlider" min="0" max="100" value="${ppSettings.sharpness}"
+            oninput="ppSetAdjustment('sharpness', this.value)" style="width:100%">
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+            <span>☀️ Brightness</span>
+            <span id="ppBrightVal">${ppSettings.brightness}</span>
+          </label>
+          <input type="range" id="ppBrightSlider" min="50" max="200" value="${ppSettings.brightness}"
+            oninput="ppSetAdjustment('brightness', this.value)" style="width:100%">
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+            <span>◐ Contrast</span>
+            <span id="ppContrastVal">${ppSettings.contrast}</span>
+          </label>
+          <input type="range" id="ppContrastSlider" min="50" max="200" value="${ppSettings.contrast}"
+            oninput="ppSetAdjustment('contrast', this.value)" style="width:100%">
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+            <span>🎨 Saturation</span>
+            <span id="ppSatVal">${ppSettings.saturation}</span>
+          </label>
+          <input type="range" id="ppSatSlider" min="0" max="200" value="${ppSettings.saturation}"
+            oninput="ppSetAdjustment('saturation', this.value)" style="width:100%">
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+            <span>💧 Smooth</span>
+            <span id="ppSmoothVal">${ppSettings.smooth}</span>
+          </label>
+          <input type="range" id="ppSmoothSlider" min="0" max="100" value="${ppSettings.smooth}"
+            oninput="ppSetAdjustment('smooth', this.value)" style="width:100%">
+        </div>
+
+        <button class="btn btn-secondary btn-sm" style="width:100%" onclick="ppResetAdjustments()">🔄 Reset All</button>
+      </div>
+    </div>
+
+    <!-- A4 SHEET SETTINGS -->
     <div class="pp-settings" style="margin-top:12px">
       <div class="card-title" style="margin-bottom:10px">📄 A4 Sheet Settings</div>
 
@@ -808,21 +1024,26 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
     cursor: pointer; transition: all .15s;
   }
   .pp-bg-chip:hover { background: var(--surface-hover); border-color: var(--primary); }
+  .pp-bg-chip.active { background: var(--gradient); color: #fff; border-color: transparent; }
   .pp-bg-dot {
     width: 14px; height: 14px; border-radius: 50%;
     display: inline-block; border: 2px solid;
   }
 
-  .pp-stroke-toggle {
+  /* DROPDOWN */
+  .pp-dropdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .pp-dropdown-header {
     display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px;
-    background: var(--surface-2);
-    border: 1.5px solid var(--border-strong);
-    border-radius: 10px;
+    padding: 14px;
     cursor: pointer;
     transition: all .15s;
   }
-  .pp-stroke-toggle:hover { background: var(--surface-hover); border-color: var(--primary); }
+  .pp-dropdown-header:hover { background: var(--surface-hover); }
 
   .pp-stroke-colors { display: flex; gap: 8px; flex-wrap: wrap; }
   .pp-stroke-chip {
@@ -842,13 +1063,13 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
 
   .pp-step-btn {
     width: 36px; height: 36px; border-radius: 10px;
-    background: var(--surface-2); border: 1px solid var(--border-strong);
+    background: var(--surface); border: 1px solid var(--border-strong);
     color: var(--text); font-size: 18px; font-weight: 700;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
   }
   .pp-step-btn:hover { background: var(--surface-hover); color: var(--primary); }
 
-  input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--surface-2); outline: none; }
+  input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--surface); outline: none; }
   input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gradient); cursor: pointer; }
 
   .pp-sheet-canvas { border: 1px solid #ddd; }
