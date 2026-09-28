@@ -421,6 +421,15 @@ const EXTRA_TOOLS = [
   desc: 'Enhance photos with auto-fix, filters, sharpen, denoise & before/after comparison.',
   howto: 'Upload one or more images, tweak brightness, contrast, saturation, sharpen, or pick a filter. Use the before/after slider to compare. Download individually or all as ZIP.',
   kw: ['enhance', 'photo', 'brightness', 'contrast', 'saturation', 'sharpen', 'denoise', 'filter', 'grayscale', 'sepia', 'vintage', 'image', 'edit'],
+},
+{
+  id: 'background-remover',
+  name: 'Background Remover',
+  cat: 'digital-studio',
+  icon: '🎨',
+  desc: 'Remove image background with AI — change color, gradient, custom bg, brush edit',
+  howto: 'Image upload karo. Remove Background click. AI background hata dega. Background change karo (color/gradient/custom). Brush se edit karo. Download karo.',
+  kw: ['background remover', 'remove background', 'bg remover', 'transparent background', 'background change', 'bg color change', 'ai background remover', 'photo background']
 }
 ];
 
