@@ -1,6 +1,6 @@
 /* ============================================================
-   QUNVERIO — PASSPORT PHOTO MAKER (FINAL v2)
-   With Stroke/Border customization
+   QUNVERIO — PASSPORT PHOTO MAKER (FINAL v3)
+   With adjustable stroke width + color picker
    ============================================================ */
 
 console.log('%cPassport Photo Maker loading...', 'color:#3b82f6;font-weight:bold');
@@ -16,7 +16,7 @@ let ppSettings = {
   bgColor: '#ffffff',
   border: false,
   borderColor: '#000000',
-  borderWidth: 1,
+  borderWidth: 4,
   sheetSize: 'a4',
   sheetOrientation: 'portrait',
   gap: 2,
@@ -46,6 +46,17 @@ const PP_BG_PRESETS = [
   { name: 'Yellow',color: '#fef3c7', border: '#78350f' }
 ];
 
+const PP_STROKE_COLORS = [
+  { name: 'Black', color: '#000000' },
+  { name: 'White', color: '#ffffff' },
+  { name: 'Grey',  color: '#6b7280' },
+  { name: 'Blue',  color: '#1e3a8a' },
+  { name: 'Red',   color: '#dc2626' },
+  { name: 'Green', color: '#059669' },
+  { name: 'Pink',  color: '#fbcfe8' },
+  { name: 'Custom'}
+];
+
 /* ============================================================
    HELPERS
    ============================================================ */
@@ -62,28 +73,15 @@ function ppBaseName(name) {
   return (name || 'photo').replace(/\.[^.]+$/, '').replace(/[^a-z0-9_\-]/gi, '_');
 }
 
-function ppUid() {
-  return 'pp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
-}
-
 /* ============================================================
    LOAD FILE
    ============================================================ */
 window.ppLoadFile = (file) => {
   if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    ppToast('❌ Sirf image select karo', 'error');
-    return;
-  }
-  if (file.size > 30 * 1024 * 1024) {
-    ppToast('❌ Image 30MB se choti honi chahiye', 'error');
-    return;
-  }
+  if (!file.type.startsWith('image/')) { ppToast('❌ Sirf image select karo', 'error'); return; }
+  if (file.size > 30 * 1024 * 1024) { ppToast('❌ Image 30MB se choti honi chahiye', 'error'); return; }
   const reader = new FileReader();
-  reader.onload = e => {
-    ppOriginal = e.target.result;
-    ppOpenCropper();
-  };
+  reader.onload = e => { ppOriginal = e.target.result; ppOpenCropper(); };
   reader.readAsDataURL(file);
 };
 
@@ -109,11 +107,7 @@ window.ppOpenCropper = () => {
 
   img.onload = () => {
     if (ppCropper) { ppCropper.destroy(); ppCropper = null; }
-    if (typeof Cropper === 'undefined') {
-      ppCroppedCanvas = null;
-      ppToast('⚠️ Cropper load nahi hui');
-      return;
-    }
+    if (typeof Cropper === 'undefined') { ppCroppedCanvas = null; ppToast('⚠️ Cropper load nahi hui'); return; }
     ppCropper = new Cropper(img, {
       aspectRatio: getRatio(),
       viewMode: 1,
@@ -150,8 +144,7 @@ window.ppCropApply = () => {
     const hPx = ppMMToPx(hMM, ppSettings.dpi);
 
     const canvas = ppCropper.getCroppedCanvas({
-      width: wPx,
-      height: hPx,
+      width: wPx, height: hPx,
       imageSmoothingQuality: 'high',
       fillColor: ppSettings.bgColor
     });
@@ -167,16 +160,10 @@ window.ppCropApply = () => {
 
 window.ppCropCancel = () => {
   ppCloseCropModal();
-  if (!ppCroppedCanvas) {
-    ppOriginal = null;
-    ppRenderDrop();
-  }
+  if (!ppCroppedCanvas) { ppOriginal = null; ppRenderDrop(); }
 };
 
-window.ppRecrop = () => {
-  if (!ppOriginal) return;
-  ppOpenCropper();
-};
+window.ppRecrop = () => { if (ppOriginal) ppOpenCropper(); };
 
 /* ============================================================
    SETTINGS
@@ -186,10 +173,7 @@ window.ppSetSetting = (key, val) => {
   if (key === 'size') {
     if (ppOriginal) {
       const preset = PP_PRESETS[val];
-      if (preset) {
-        ppSettings.customW = preset.w;
-        ppSettings.customH = preset.h;
-      }
+      if (preset) { ppSettings.customW = preset.w; ppSettings.customH = preset.h; }
       ppRenderPreview();
     }
   } else if (key === 'customW' || key === 'customH') {
@@ -209,24 +193,47 @@ window.ppSetSetting = (key, val) => {
 };
 
 /* ============================================================
-   QUICK BG + BORDER PRESETS
+   STROKE CONTROLS
+   ============================================================ */
+window.ppToggleStroke = (checked) => {
+  ppSettings.border = !!checked;
+  ppRenderPreview();
+};
+
+window.ppSetStrokeWidth = (val) => {
+  ppSettings.borderWidth = parseInt(val, 10) || 1;
+  const el = document.getElementById('ppStrokeWidthVal');
+  if (el) el.textContent = ppSettings.borderWidth;
+  ppRenderPreview();
+};
+
+window.ppSetStrokeColor = (color) => {
+  ppSettings.borderColor = color;
+  const picker = document.getElementById('ppStrokeColorPicker');
+  if (picker) picker.value = color;
+  // Update active chip
+  document.querySelectorAll('.pp-stroke-chip').forEach(c => {
+    c.classList.toggle('active', c.dataset.color === color);
+  });
+  ppRenderPreview();
+};
+
+/* ============================================================
+   QUICK PRESETS
    ============================================================ */
 window.ppApplyBgPreset = (idx) => {
   const p = PP_BG_PRESETS[idx];
   if (!p) return;
   ppSettings.bgColor = p.color;
   ppSettings.borderColor = p.border;
-  if (ppOriginal && ppCropper) {
-    // Re-crop with new bg
-    ppCropApply();
-  } else {
-    ppRenderPreview();
-  }
-  // Update selected chip
+  ppSettings.border = true;
+  // Re-crop with new bg
+  if (ppOriginal) ppOpenCropper();
+  else ppRenderPreview();
   document.querySelectorAll('.pp-bg-chip').forEach((c, i) => {
     c.classList.toggle('active', i === idx);
   });
-  ppToast(`🎨 ${p.name} applied`, 'success');
+  ppToast(`🎨 ${p.name} + border applied`, 'success');
 };
 
 /* ============================================================
@@ -256,20 +263,21 @@ function ppRenderPreview() {
       const wMM = preset ? preset.w : ppSettings.customW;
       const hMM = preset ? preset.h : ppSettings.customH;
 
-      // Border style
       const bw = ppSettings.border ? ppSettings.borderWidth : 0;
       const bc = ppSettings.borderColor || '#000000';
-      const borderStyle = ppSettings.border ? `${bw}px solid ${bc}` : '1px solid #ccc';
 
       single.innerHTML = `
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <div style="position:relative;background:#fff;padding:${bw}px;box-shadow:0 2px 12px rgba(0,0,0,.15);border-radius:4px">
+          <div style="position:relative;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.15);border-radius:4px;padding:${bw}px">
             <img src="${dataUrl}" style="
               max-width:200px;max-height:260px;
               display:block;border-radius:2px;
               border:${ppSettings.border ? `${bw}px solid ${bc}` : 'none'}">
           </div>
-          <div style="font-size:12px;color:var(--text-3)">${wMM}×${hMM}mm @ ${ppSettings.dpi} DPI${ppSettings.border ? ` • ${bw}px ${bc} border` : ''}</div>
+          <div style="font-size:12px;color:var(--text-3)">
+            ${wMM}×${hMM}mm @ ${ppSettings.dpi} DPI
+            ${ppSettings.border ? ` • Stroke: ${bw}px ${bc}` : ''}
+          </div>
         </div>
       `;
     } else {
@@ -290,10 +298,7 @@ function ppRenderPreview() {
 function ppRenderSheet() {
   const sheet = document.getElementById('ppSheetPreview');
   if (!sheet) return;
-  if (!ppCroppedCanvas) {
-    sheet.innerHTML = '';
-    return;
-  }
+  if (!ppCroppedCanvas) { sheet.innerHTML = ''; return; }
 
   const preset = PP_PRESETS[ppSettings.size];
   const wMM = preset ? preset.w : ppSettings.customW;
@@ -322,29 +327,20 @@ function ppRenderSheet() {
 
   const scale = Math.min(360 / pageW, 500 / pageH);
 
-  // Apply border to preview thumbnail
+  // Build photo preview with stroke
   const tempCanvas = document.createElement('canvas');
   tempCanvas.width = ppCroppedCanvas.width;
   tempCanvas.height = ppCroppedCanvas.height;
   const tctx = tempCanvas.getContext('2d');
-
-  // Draw bg
   tctx.fillStyle = '#ffffff';
   tctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-  // Draw photo
   tctx.drawImage(ppCroppedCanvas, 0, 0);
 
-  // Apply border if enabled
   if (ppSettings.border) {
+    const bpx = Math.max(1, Math.round(ppSettings.borderWidth * ppSettings.dpi / 96));
     tctx.strokeStyle = ppSettings.borderColor || '#000000';
-    tctx.lineWidth = ppSettings.borderWidth * 2;
-    tctx.strokeRect(
-      ppSettings.borderWidth,
-      ppSettings.borderWidth,
-      tempCanvas.width - ppSettings.borderWidth * 2,
-      tempCanvas.height - ppSettings.borderWidth * 2
-    );
+    tctx.lineWidth = bpx * 2;
+    tctx.strokeRect(bpx, bpx, tempCanvas.width - bpx * 2, tempCanvas.height - bpx * 2);
   }
 
   const bgData = tempCanvas.toDataURL('image/jpeg', 0.9);
@@ -381,30 +377,35 @@ function ppRenderSheet() {
 }
 
 /* ============================================================
+   BUILD FINAL PHOTO WITH STROKE
+   ============================================================ */
+function ppBuildPhotoWithStroke() {
+  if (!ppCroppedCanvas) return null;
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = ppCroppedCanvas.width;
+  tempCanvas.height = ppCroppedCanvas.height;
+  const ctx = tempCanvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+  ctx.drawImage(ppCroppedCanvas, 0, 0);
+
+  if (ppSettings.border) {
+    const bpx = Math.max(1, Math.round(ppSettings.borderWidth * ppSettings.dpi / 96));
+    ctx.strokeStyle = ppSettings.borderColor || '#000000';
+    ctx.lineWidth = bpx * 2;
+    ctx.strokeRect(bpx, bpx, tempCanvas.width - bpx * 2, tempCanvas.height - bpx * 2);
+  }
+  return tempCanvas;
+}
+
+/* ============================================================
    DOWNLOAD SINGLE
    ============================================================ */
 window.ppDownloadSingle = () => {
   if (!ppCroppedCanvas) { ppToast('❌ Pehle photo crop karo', 'error'); return; }
-
-  // Build with border
-  const tempCanvas = document.createElement('canvas');
-  tempCanvas.width = ppCroppedCanvas.width;
-  tempCanvas.height = ppCroppedCanvas.height;
-  const tctx = tempCanvas.getContext('2d');
-  tctx.drawImage(ppCroppedCanvas, 0, 0);
-
-  if (ppSettings.border) {
-    tctx.strokeStyle = ppSettings.borderColor || '#000000';
-    tctx.lineWidth = ppSettings.borderWidth * 2;
-    tctx.strokeRect(
-      ppSettings.borderWidth,
-      ppSettings.borderWidth,
-      tempCanvas.width - ppSettings.borderWidth * 2,
-      tempCanvas.height - ppSettings.borderWidth * 2
-    );
-  }
-
-  const url = tempCanvas.toDataURL('image/jpeg', 0.95);
+  const canvas = ppBuildPhotoWithStroke();
+  if (!canvas) return;
+  const url = canvas.toDataURL('image/jpeg', 0.95);
   const a = document.createElement('a');
   a.href = url;
   a.download = `passport_photo_${Date.now()}.jpg`;
@@ -415,7 +416,7 @@ window.ppDownloadSingle = () => {
 };
 
 /* ============================================================
-   BUILD SHEET CANVAS
+   BUILD SHEET
    ============================================================ */
 function ppBuildSheetCanvas() {
   if (!ppCroppedCanvas) return null;
@@ -455,7 +456,7 @@ function ppBuildSheetCanvas() {
   const cols = Math.max(1, Math.floor((availW + gapPx) / (wPx + gapPx)));
   const rows = Math.max(1, Math.floor((availH + gapPx) / (hPx + gapPx)));
 
-  // Create photo with border
+  // Photo with stroke
   const photoCanvas = document.createElement('canvas');
   photoCanvas.width = wPx;
   photoCanvas.height = hPx;
@@ -488,7 +489,7 @@ function ppBuildSheetCanvas() {
 }
 
 /* ============================================================
-   DOWNLOAD SHEET / PDF / PRINT
+   DOWNLOAD SHEET
    ============================================================ */
 window.ppDownloadSheet = async () => {
   if (!ppCroppedCanvas) { ppToast('❌ Pehle photo crop karo', 'error'); return; }
@@ -498,7 +499,6 @@ window.ppDownloadSheet = async () => {
     const result = ppBuildSheetCanvas();
     if (!result) return;
     const { canvas, cols, rows } = result;
-
     const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.95));
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -512,9 +512,7 @@ window.ppDownloadSheet = async () => {
   } catch (e) {
     console.error(e);
     ppToast('❌ Download fail', 'error');
-  } finally {
-    ppBusy = false;
-  }
+  } finally { ppBusy = false; }
 };
 
 window.ppDownloadPDF = async () => {
@@ -526,11 +524,9 @@ window.ppDownloadPDF = async () => {
     const result = ppBuildSheetCanvas();
     if (!result) return;
     const { canvas, pageW, pageH, cols, rows } = result;
-
     const { jsPDF } = jspdf;
     const orientation = pageW > pageH ? 'landscape' : 'portrait';
     const pdf = new jsPDF({ unit: 'mm', format: [pageW, pageH], orientation, compress: true });
-
     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     pdf.addImage(dataUrl, 'JPEG', 0, 0, pageW, pageH, undefined, 'FAST');
     pdf.save(`passport_sheet_${cols}x${rows}_${Date.now()}.pdf`);
@@ -538,9 +534,7 @@ window.ppDownloadPDF = async () => {
   } catch (e) {
     console.error(e);
     ppToast('❌ PDF fail', 'error');
-  } finally {
-    ppBusy = false;
-  }
+  } finally { ppBusy = false; }
 };
 
 window.ppPrint = () => {
@@ -549,14 +543,12 @@ window.ppPrint = () => {
   if (!result) return;
   const { canvas, pageW, pageH } = result;
   const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-
   const html = `<!DOCTYPE html><html><head><title>Passport Photo Print</title>
     <style>
       @page { size: ${pageW}mm ${pageH}mm; margin: 0; }
       html,body{margin:0;padding:0;background:#fff}
       img{width:${pageW}mm;height:${pageH}mm;display:block}
     </style></head><body><img src="${dataUrl}" onload="window.focus();window.print();setTimeout(()=>window.close(),500)"></body></html>`;
-
   const w = window.open('', '_blank');
   if (!w) { ppToast('❌ Popup blocked', 'error'); return; }
   w.document.write(html);
@@ -628,7 +620,6 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
       </div>
       ` : ''}
 
-      <!-- QUICK PRESETS -->
       <div class="pp-setting-row">
         <label>⚡ Quick Background + Border</label>
         <div class="pp-bg-presets">
@@ -641,7 +632,6 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
         </div>
       </div>
 
-      <!-- CUSTOM BG COLOR -->
       <div class="pp-setting-row">
         <label>🎨 Custom Background</label>
         <div style="display:flex;gap:8px;align-items:center">
@@ -652,39 +642,62 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
       </div>
     </div>
 
-    <!-- STROKE / BORDER -->
+    <!-- STROKE CONTROL — Click to open -->
     <div class="pp-settings" style="margin-top:12px">
-      <div class="card-title" style="margin-bottom:10px">🖼️ Stroke / Border</div>
-
-      <div class="pp-setting-row" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;font-weight:600;color:var(--text-2)">
-          <input type="checkbox" ${ppSettings.border ? 'checked' : ''} onchange="ppSetSetting('border',this.checked)" style="width:auto">
-          Border ON / OFF
-        </label>
+      <div class="pp-stroke-toggle" onclick="document.getElementById('ppStrokeBox').style.display = document.getElementById('ppStrokeBox').style.display === 'block' ? 'none' : 'block';">
+        <span style="font-size:16px">🖼️</span>
+        <span style="font-weight:700;flex:1">Stroke / Border</span>
+        <span id="ppStrokeStatus" style="font-size:11.5px;color:var(--text-3)">${ppSettings.border ? 'ON • ' + ppSettings.borderWidth + 'px' : 'OFF'}</span>
+        <span style="font-size:14px;color:var(--text-3)">▼</span>
       </div>
 
-      ${ppSettings.border ? `
-        <div class="pp-setting-row" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-          <div class="field" style="flex:1;min-width:120px">
-            <label>Stroke Color</label>
-            <input type="color" value="${ppSettings.borderColor}" onchange="ppSetSetting('borderColor',this.value)"
-              style="width:100%;height:42px;padding:4px;cursor:pointer;background:var(--surface-2);border:1.5px solid var(--border-strong);border-radius:10px">
-          </div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button class="pp-quick-color" style="background:#000000" onclick="ppSetSetting('borderColor','#000000');ppRenderPreview()" title="Black">Black</button>
-            <button class="pp-quick-color" style="background:#ffffff;color:#000;border:1px solid #ccc" onclick="ppSetSetting('borderColor','#ffffff');ppRenderPreview()" title="White">White</button>
-            <button class="pp-quick-color" style="background:#374151;color:#fff" onclick="ppSetSetting('borderColor','#374151');ppRenderPreview()" title="Grey">Grey</button>
-            <button class="pp-quick-color" style="background:#1e3a8a;color:#fff" onclick="ppSetSetting('borderColor','#1e3a8a');ppRenderPreview()" title="Blue">Blue</button>
-          </div>
+      <div id="ppStrokeBox" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;font-weight:600;color:var(--text-2);font-size:13px">
+            <input type="checkbox" ${ppSettings.border ? 'checked' : ''} onchange="ppToggleStroke(this.checked)" style="width:auto">
+            Enable Stroke
+          </label>
         </div>
 
-        <div class="pp-setting-row">
-          <label>Stroke Width: <span id="ppBorderWidthVal">${ppSettings.borderWidth}</span> px</label>
-          <input type="range" min="1" max="20" value="${ppSettings.borderWidth}"
-            oninput="ppSetSetting('borderWidth',parseInt(this.value));document.getElementById('ppBorderWidthVal').textContent=this.value"
-            style="width:100%">
+        <div id="ppStrokeControls" style="display:${ppSettings.border ? 'block' : 'none'}">
+
+          <!-- Color picker chips -->
+          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px">
+            Stroke Color
+          </label>
+          <div class="pp-stroke-colors">
+            ${PP_STROKE_COLORS.filter(c => c.color).map(c => `
+              <div class="pp-stroke-chip ${ppSettings.borderColor === c.color ? 'active' : ''}"
+                   data-color="${c.color}"
+                   onclick="ppSetStrokeColor('${c.color}')"
+                   style="background:${c.color};${c.color === '#ffffff' ? 'border:1px solid #ccc' : ''}"
+                   title="${c.name}"></div>
+            `).join('')}
+            <div class="pp-stroke-chip pp-stroke-custom" title="Custom color">
+              <input type="color" id="ppStrokeColorPicker" value="${ppSettings.borderColor}"
+                onchange="ppSetStrokeColor(this.value)"
+                style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+              🎨
+            </div>
+          </div>
+
+          <!-- Width slider -->
+          <div style="margin-top:16px">
+            <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px">
+              Stroke Width: <span id="ppStrokeWidthVal">${ppSettings.borderWidth}</span> px
+            </label>
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="pp-step-btn" onclick="ppSetStrokeWidth(Math.max(1, ppSettings.borderWidth - 1))">−</button>
+              <input type="range" id="ppStrokeWidthSlider" min="1" max="20" value="${ppSettings.borderWidth}"
+                oninput="ppSetStrokeWidth(parseInt(this.value))"
+                style="flex:1">
+              <button class="pp-step-btn" onclick="ppSetStrokeWidth(Math.min(20, ppSettings.borderWidth + 1))">+</button>
+            </div>
+          </div>
+
         </div>
-      ` : ''}
+      </div>
     </div>
 
     <!-- SHEET SETTINGS -->
@@ -795,16 +808,45 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
     cursor: pointer; transition: all .15s;
   }
   .pp-bg-chip:hover { background: var(--surface-hover); border-color: var(--primary); }
-  .pp-bg-chip.active { background: var(--gradient); color: #fff; border-color: transparent; }
   .pp-bg-dot {
     width: 14px; height: 14px; border-radius: 50%;
     display: inline-block; border: 2px solid;
   }
-  .pp-quick-color {
-    padding: 6px 10px; border-radius: 6px;
-    font-size: 10.5px; font-weight: 700;
-    color: #fff; cursor: pointer; border: none;
+
+  .pp-stroke-toggle {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .15s;
   }
+  .pp-stroke-toggle:hover { background: var(--surface-hover); border-color: var(--primary); }
+
+  .pp-stroke-colors { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pp-stroke-chip {
+    width: 40px; height: 40px; border-radius: 10px;
+    cursor: pointer; position: relative;
+    border: 2px solid transparent;
+    transition: all .15s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .pp-stroke-chip:hover { transform: scale(1.08); }
+  .pp-stroke-chip.active { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,.25); }
+  .pp-stroke-custom {
+    background: linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcB77,#4d96ff,#9b5de5);
+    overflow: hidden;
+  }
+
+  .pp-step-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--surface-2); border: 1px solid var(--border-strong);
+    color: var(--text); font-size: 18px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .pp-step-btn:hover { background: var(--surface-hover); color: var(--primary); }
 
   input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--surface-2); outline: none; }
   input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gradient); cursor: pointer; }
@@ -823,6 +865,7 @@ window.EXTRA_TOOL_RENDERERS['passport-photo'] = () => `
   @media (max-width: 480px) {
     .pp-setting-row { flex-wrap: wrap; }
     .pp-sheet-canvas { transform: scale(0.85); transform-origin: top center; }
+    .pp-stroke-chip { width: 36px; height: 36px; }
   }
 </style>
 `;
