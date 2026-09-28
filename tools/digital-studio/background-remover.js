@@ -1,7 +1,6 @@
 /* ============================================================
-   QUNVERIO — BACKGROUND REMOVER (Qunverio Style + All Features)
-   Uses @imgly/background-removal via ESM CDN
-   Features: BG change, brush, undo, compare, export
+   QUNVERIO — BACKGROUND REMOVER (FINAL v2)
+   AI + Crop + Brush + BG Change + Export all formats
    ============================================================ */
 
 console.log('%cBackground Remover loading...', 'color:#ec4899;font-weight:bold');
@@ -11,38 +10,36 @@ console.log('%cBackground Remover loading...', 'color:#ec4899;font-weight:bold')
    ============================================================ */
 let brOriginalFile = null;
 let brOriginalUrl = null;
-let brRemovedBlob = null;       // Transparent PNG blob (AI output)
-let brRemovedImg = null;        // Loaded Image of AI output
-let brCanvas = null;            // Main canvas (editable)
+let brRemovedBlob = null;
+let brRemovedImg = null;
+let brCanvas = null;
 let brCtx = null;
-let brHistory = [];             // Undo stack
+let brHistory = [];
 let brHistoryIdx = -1;
 let brBusy = false;
 let brLibFn = null;
 let brLibLoading = false;
-let brBrushMode = 'none';       // none | erase | restore
+let brBrushMode = 'none';
 let brBrushSize = 30;
 let brZoom = 1;
 let brPanX = 0, brPanY = 0;
 let brCompareMode = false;
-let brAIResult = null;          // Original AI output (before brush edits)
+let brCropInstance = null;
 
 let brSettings = {
-  bgType: 'transparent',        // transparent | color | gradient | blur | image
+  bgType: 'transparent',
   bgColor: '#ffffff',
   bgGrad1: '#667eea',
   bgGrad2: '#764ba2',
-  bgGradDir: '135deg',
   bgBlur: 10,
-  bgImage: null,                // Uploaded custom bg
-  outputFormat: 'png',          // png | jpg | webp
+  bgImage: null,
+  outputFormat: 'png',
   quality: 92,
   maxDim: 1500,
-  feather: 0,                   // 0-5 px
-  halo: 0,                      // 0-3
-  sharpen: 0,                   // 0-3
-  hdUpscale: 1,                 // 1x | 1.5x | 2x
-  exportSize: 'original'        // original | 500 | 1000 | 2000
+  feather: 0,
+  halo: 0,
+  sharpen: 0,
+  hdUpscale: 1
 };
 
 /* ============================================================
@@ -77,7 +74,7 @@ function brHideProgress() {
 }
 
 /* ============================================================
-   LOAD AI LIBRARY
+   AI LIBRARY
    ============================================================ */
 async function brLoadLibrary() {
   if (brLibFn) return true;
@@ -85,6 +82,12 @@ async function brLoadLibrary() {
   brLibLoading = true;
   brSetProgress(3, '⏳ AI library load ho rahi hai...');
   try {
+    // Pehle check global preload
+    if (typeof window.__bgLibFn === 'function') {
+      brLibFn = window.__bgLibFn;
+      brSetProgress(10, '✅ AI ready (preloaded)');
+      return true;
+    }
     const mod = await import('https://esm.sh/@imgly/background-removal@1.5.5');
     if (mod && typeof mod.removeBackground === 'function') {
       brLibFn = mod.removeBackground;
@@ -103,7 +106,7 @@ async function brLoadLibrary() {
 }
 
 /* ============================================================
-   LOAD FILE (upload)
+   LOAD FILE (opens crop modal first)
    ============================================================ */
 window.brLoadFile = (file) => {
   if (!file) return;
@@ -119,14 +122,104 @@ window.brLoadFile = (file) => {
   if (brOriginalUrl) URL.revokeObjectURL(brOriginalUrl);
   brOriginalUrl = URL.createObjectURL(file);
   brResetAll();
-  brRenderPanel();
-  brToast('✅ Image loaded', 'success');
+  brOpenCropModal();
 };
 
+/* ============================================================
+   CROP MODAL
+   ============================================================ */
+window.brOpenCropModal = () => {
+  const modal = document.getElementById('brCropModal');
+  const img = document.getElementById('brCropImage');
+  if (!modal || !img || !brOriginalUrl) return;
+
+  img.src = brOriginalUrl;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  img.onload = () => {
+    if (brCropInstance) { brCropInstance.destroy(); brCropInstance = null; }
+    if (typeof Cropper === 'undefined') {
+      brCloseCropModal();
+      brUseOriginalImage();
+      return;
+    }
+    brCropInstance = new Cropper(img, {
+      aspectRatio: NaN,
+      viewMode: 1,
+      dragMode: 'move',
+      autoCropArea: 0.9,
+      background: false,
+      responsive: true,
+      checkOrientation: false,
+      modal: true,
+      guides: true,
+      center: true,
+      highlight: false,
+      cropBoxMovable: true,
+      cropBoxResizable: true,
+      minContainerHeight: 320
+    });
+  };
+};
+
+window.brCloseCropModal = () => {
+  const modal = document.getElementById('brCropModal');
+  if (modal) modal.classList.remove('active');
+  document.body.style.overflow = '';
+  if (brCropInstance) { brCropInstance.destroy(); brCropInstance = null; }
+};
+
+window.brSkipCrop = () => {
+  brCloseCropModal();
+  brUseOriginalImage();
+};
+
+window.brApplyCrop = async () => {
+  if (!brCropInstance) { brCloseCropModal(); brUseOriginalImage(); return; }
+  try {
+    const canvas = brCropInstance.getCroppedCanvas({ imageSmoothingQuality: 'high' });
+    if (!canvas) { brSkipCrop(); return; }
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    if (blob) {
+      if (brOriginalUrl) URL.revokeObjectURL(brOriginalUrl);
+      brOriginalFile = new File([blob], 'cropped.png', { type: 'image/png' });
+      brOriginalUrl = URL.createObjectURL(blob);
+    }
+    brCloseCropModal();
+    brRenderPanel();
+    brToast('✅ Cropped — now Remove Background', 'success');
+  } catch (e) {
+    console.error(e);
+    brSkipCrop();
+  }
+};
+
+function brUseOriginalImage() {
+  brRenderPanel();
+  brToast('✅ Image loaded — now Remove Background', 'success');
+}
+
+window.brReCrop = () => { if (brOriginalUrl) brOpenCropModal(); };
+window.brRotateCrop = (deg) => { if (brCropInstance) brCropInstance.rotate(deg); };
+window.brFlipCropH = () => {
+  if (!brCropInstance) return;
+  const d = brCropInstance.getData();
+  brCropInstance.scaleX(d.scaleX === -1 ? 1 : -1);
+};
+window.brFlipCropV = () => {
+  if (!brCropInstance) return;
+  const d = brCropInstance.getData();
+  brCropInstance.scaleY(d.scaleY === -1 ? 1 : -1);
+};
+window.brResetCrop = () => { if (brCropInstance) brCropInstance.reset(); };
+
+/* ============================================================
+   RESET
+   ============================================================ */
 window.brResetAll = () => {
   brRemovedBlob = null;
   brRemovedImg = null;
-  brAIResult = null;
   brHistory = [];
   brHistoryIdx = -1;
   brZoom = 1;
@@ -136,7 +229,7 @@ window.brResetAll = () => {
 };
 
 /* ============================================================
-   RENDER PANEL
+   RENDER
    ============================================================ */
 function brRenderDrop() {
   const drop = document.getElementById('brDrop');
@@ -155,12 +248,10 @@ function brRenderPanel() {
   if (orig && brOriginalUrl) {
     orig.innerHTML = `<img src="${brOriginalUrl}" alt="Original" style="max-width:100%;max-height:160px;border-radius:10px;display:block;margin:0 auto">`;
   }
-
-  brRenderCanvas();
 }
 
 /* ============================================================
-   MAIN — REMOVE BACKGROUND
+   REMOVE BACKGROUND — MAIN
    ============================================================ */
 window.brRemoveBackground = async () => {
   if (!brOriginalFile) { brToast('❌ Pehle image upload karo', 'error'); return; }
@@ -176,7 +267,7 @@ window.brRemoveBackground = async () => {
 
     brSetProgress(20, '⏳ Image prepare...');
     const resized = await brResizeIfNeeded(brOriginalFile);
-    brSetProgress(30, '🎨 AI background remove kar raha hai...');
+    brSetProgress(30, '🎨 AI background remove...');
 
     const blob = await brLibFn(resized, {
       model: 'medium',
@@ -199,8 +290,10 @@ window.brRemoveBackground = async () => {
 
     brSetProgress(100, '✅ Ready!');
     brHideProgress();
-    brToast('✅ Background removed! Ab edit kar sakte ho.', 'success');
-    brRenderControls();
+    brToast('✅ Background removed!', 'success');
+    const c = document.getElementById('brControls');
+    if (c) c.style.display = 'block';
+    brRenderPreview();
   } catch (e) {
     console.error('BG remove error:', e);
     brToast('❌ Fail: ' + (e.message || 'unknown'), 'error');
@@ -212,9 +305,6 @@ window.brRemoveBackground = async () => {
   }
 };
 
-/* ============================================================
-   RESIZE IF NEEDED
-   ============================================================ */
 function brResizeIfNeeded(file) {
   return new Promise(resolve => {
     const img = new Image();
@@ -249,7 +339,7 @@ function brResizeIfNeeded(file) {
 }
 
 /* ============================================================
-   SETUP CANVAS (with brush, zoom, compare)
+   SETUP CANVAS
    ============================================================ */
 async function brSetupCanvas(blob) {
   const img = await new Promise((resolve, reject) => {
@@ -259,7 +349,6 @@ async function brSetupCanvas(blob) {
     im.src = URL.createObjectURL(blob);
   });
   brRemovedImg = img;
-  brAIResult = img;
 
   const canvas = document.getElementById('brCanvas');
   if (!canvas) return;
@@ -267,24 +356,18 @@ async function brSetupCanvas(blob) {
   canvas.height = img.height;
   brCanvas = canvas;
   brCtx = canvas.getContext('2d');
-
-  // Draw AI result
   brCtx.clearRect(0, 0, canvas.width, canvas.height);
   brCtx.drawImage(img, 0, 0);
 
-  // Save initial state
   brHistory = [brCtx.getImageData(0, 0, canvas.width, canvas.height)];
   brHistoryIdx = 0;
 
-  // Setup brush events
   brSetupBrushEvents();
-
-  // Render preview at current zoom/pan
   brRenderPreview();
 }
 
 /* ============================================================
-   BRUSH EVENTS (erase / restore)
+   BRUSH
    ============================================================ */
 function brSetupBrushEvents() {
   const canvas = brCanvas;
@@ -357,10 +440,7 @@ function brSaveHistory() {
   brHistoryIdx++;
   brHistory = brHistory.slice(0, brHistoryIdx);
   brHistory.push(brCtx.getImageData(0, 0, brCanvas.width, brCanvas.height));
-  if (brHistory.length > 20) {
-    brHistory.shift();
-    brHistoryIdx--;
-  }
+  if (brHistory.length > 20) { brHistory.shift(); brHistoryIdx--; }
 }
 
 window.brUndo = () => {
@@ -396,15 +476,12 @@ window.brSetBrushSize = (val) => {
 };
 
 /* ============================================================
-   ZOOM / PAN
+   ZOOM / COMPARE
    ============================================================ */
 window.brZoomIn = () => { brZoom = Math.min(3, brZoom + 0.2); brRenderPreview(); };
 window.brZoomOut = () => { brZoom = Math.max(0.3, brZoom - 0.2); brRenderPreview(); };
 window.brZoomReset = () => { brZoom = 1; brPanX = 0; brPanY = 0; brRenderPreview(); };
 
-/* ============================================================
-   COMPARE (before/after)
-   ============================================================ */
 window.brToggleCompare = () => {
   brCompareMode = !brCompareMode;
   const btn = document.getElementById('brCompareBtn');
@@ -413,42 +490,19 @@ window.brToggleCompare = () => {
 };
 
 /* ============================================================
-   RENDER PREVIEW (with all effects)
+   RENDER PREVIEW
    ============================================================ */
 function brRenderPreview() {
-  const wrap = document.getElementById('brCanvasWrap');
-  if (!wrap || !brCanvas) return;
+  if (!brCanvas) return;
 
-  // Apply composite background to preview (temporary canvas)
   const preview = document.createElement('canvas');
   preview.width = brCanvas.width;
   preview.height = brCanvas.height;
   const pctx = preview.getContext('2d');
 
-  // 1. Draw background
   brDrawBackground(pctx, preview.width, preview.height);
-
-  // 2. Draw foreground (canvas content) — or original if compare
-  if (brCompareMode && brOriginalUrl) {
-    // Load original image and draw
-    const img = new Image();
-    img.onload = () => {
-      pctx.drawImage(img, 0, 0, preview.width, preview.height);
-      brDisplayPreview(preview);
-    };
-    img.src = brOriginalUrl;
-    return;
-  }
-
   pctx.drawImage(brCanvas, 0, 0);
 
-  // 3. Apply feather/halo/sharpen if any
-  if (brSettings.feather > 0 || brSettings.halo > 0) {
-    // Simple edge smoothing — draw multiple offsets (approximation)
-    // (proper implementation would need a mask, this is a lightweight version)
-  }
-
-  // 4. Apply sharpen (simple convolution)
   if (brSettings.sharpen > 0) {
     brApplySharpen(pctx, preview.width, preview.height, brSettings.sharpen);
   }
@@ -460,7 +514,6 @@ function brDisplayPreview(preview) {
   const view = document.getElementById('brPreviewCanvas');
   if (!view) return;
 
-  // Match display size
   const maxW = view.parentElement.clientWidth || 400;
   const maxH = 340;
   const scale = Math.min(maxW / preview.width, maxH / preview.height) * brZoom;
@@ -476,15 +529,8 @@ function brDisplayPreview(preview) {
 
 function brDrawBackground(ctx, w, h) {
   const t = brSettings.bgType;
-  if (t === 'transparent') {
-    // Checkerboard will be handled by CSS on parent
-    return;
-  }
-  if (t === 'color') {
-    ctx.fillStyle = brSettings.bgColor;
-    ctx.fillRect(0, 0, w, h);
-    return;
-  }
+  if (t === 'transparent') return;
+  if (t === 'color') { ctx.fillStyle = brSettings.bgColor; ctx.fillRect(0, 0, w, h); return; }
   if (t === 'gradient') {
     const grad = ctx.createLinearGradient(0, 0, w, h);
     grad.addColorStop(0, brSettings.bgGrad1);
@@ -493,23 +539,11 @@ function brDrawBackground(ctx, w, h) {
     ctx.fillRect(0, 0, w, h);
     return;
   }
-  if (t === 'blur') {
-    // Draw original image blurred
-    if (brOriginalUrl) {
-      const img = new Image();
-      img.src = brOriginalUrl;
-      // Can't draw synchronously — skip for now
-      // (Would need async rendering)
-    }
-    return;
-  }
   if (t === 'image' && brSettings.bgImage) {
     const img = brSettings.bgImage;
-    // Cover fit
     const r = Math.max(w / img.width, h / img.height);
     const dw = img.width * r, dh = img.height * r;
     ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
-    return;
   }
 }
 
@@ -533,9 +567,7 @@ function brApplySharpen(ctx, w, h, amount) {
       }
     }
     ctx.putImageData(imgData, 0, 0);
-  } catch (e) {
-    // ignore
-  }
+  } catch (e) { /* ignore */ }
 }
 
 /* ============================================================
@@ -587,27 +619,35 @@ window.brSetBgImage = (file) => {
 };
 
 /* ============================================================
-   RESET / UNDO / DOWNLOAD / SHARE / PRINT / PDF
+   BUILD FINAL
    ============================================================ */
-window.brReset = () => {
-  if (!confirm('Reset kar dein? Saara kaam delete ho jayega.')) return;
-  if (brOriginalUrl) URL.revokeObjectURL(brOriginalUrl);
-  brOriginalFile = null;
-  brOriginalUrl = null;
-  brResetAll();
-  brRenderDrop();
-  brToast('🔄 Reset done');
-};
+async function brBuildFinalCanvas() {
+  const w = brCanvas.width;
+  const h = brCanvas.height;
+  const scale = brSettings.hdUpscale;
+  const fw = Math.round(w * scale);
+  const fh = Math.round(h * scale);
 
-window.brRegenerate = async () => {
-  if (!brOriginalFile) return;
-  brResetAll();
-  await brRemoveBackground();
-};
+  const final = document.createElement('canvas');
+  final.width = fw;
+  final.height = fh;
+  const fctx = final.getContext('2d');
+  fctx.imageSmoothingEnabled = true;
+  fctx.imageSmoothingQuality = 'high';
 
+  brDrawBackground(fctx, fw, fh);
+  fctx.drawImage(brCanvas, 0, 0, fw, fh);
+
+  if (brSettings.sharpen > 0) brApplySharpen(fctx, fw, fh, brSettings.sharpen);
+
+  return final;
+}
+
+/* ============================================================
+   DOWNLOAD / EXPORT
+   ============================================================ */
 window.brDownload = async () => {
   if (!brCanvas) { brToast('❌ Pehle background remove karo', 'error'); return; }
-
   const final = await brBuildFinalCanvas();
   if (!final) return;
 
@@ -630,52 +670,10 @@ window.brDownload = async () => {
   brToast(`✅ Downloaded (${brFmtSize(blob.size)})`, 'success');
 };
 
-async function brBuildFinalCanvas() {
-  const w = brCanvas.width;
-  const h = brCanvas.height;
-
-  // HD upscale
-  const scale = brSettings.hdUpscale;
-  const fw = Math.round(w * scale);
-  const fh = Math.round(h * scale);
-
-  const final = document.createElement('canvas');
-  final.width = fw;
-  final.height = fh;
-  const fctx = final.getContext('2d');
-  fctx.imageSmoothingEnabled = true;
-  fctx.imageSmoothingQuality = 'high';
-
-  // 1. Background
-  if (brSettings.bgType === 'blur' && brOriginalUrl) {
-    // Draw blurred original
-    const img = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = brOriginalUrl; });
-    fctx.save();
-    fctx.filter = `blur(${brSettings.bgBlur}px)`;
-    fctx.drawImage(img, 0, 0, fw, fh);
-    fctx.restore();
-  } else {
-    brDrawBackground(fctx, fw, fh);
-  }
-
-  // 2. Foreground (canvas)
-  fctx.drawImage(brCanvas, 0, 0, fw, fh);
-
-  // 3. Sharpen
-  if (brSettings.sharpen > 0) {
-    brApplySharpen(fctx, fw, fh, brSettings.sharpen);
-  }
-
-  return final;
-}
-
 window.brDownloadPDF = async () => {
   if (!brCanvas) { brToast('❌ Pehle background remove karo', 'error'); return; }
   if (typeof jspdf === 'undefined') { brToast('❌ jsPDF load nahi hui', 'error'); return; }
-
   const final = await brBuildFinalCanvas();
-  if (!final) return;
-
   const dataUrl = final.toDataURL('image/jpeg', 0.95);
   const { jsPDF } = jspdf;
   const pdf = new jsPDF({
@@ -698,12 +696,7 @@ window.brPrint = async () => {
   const dataUrl = final.toDataURL('image/png');
   const win = window.open('', '_blank');
   if (!win) { brToast('❌ Popup blocked', 'error'); return; }
-  win.document.write(`
-    <html><head><title>Print</title>
-    <style>html,body{margin:0;padding:20px;text-align:center;background:#fff}
-    img{max-width:100%;height:auto}</style></head>
-    <body><img src="${dataUrl}" onload="window.print();setTimeout(()=>window.close(),500)"></body></html>
-  `);
+  win.document.write(`<html><head><title>Print</title><style>html,body{margin:0;padding:20px;text-align:center;background:#fff}img{max-width:100%;height:auto}</style></head><body><img src="${dataUrl}" onload="window.print();setTimeout(()=>window.close(),500)"></body></html>`);
   win.document.close();
 };
 
@@ -713,10 +706,9 @@ window.brShare = async () => {
   const blob = await new Promise(res => final.toBlob(res, 'image/png'));
   const file = new File([blob], 'nobg.png', { type: 'image/png' });
   if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'Qunverio BG Removed' }); }
-    catch (e) { /* cancelled */ }
+    try { await navigator.share({ files: [file], title: 'Qunverio' }); } catch (e) {}
   } else {
-    brToast('⚠️ Share supported nahi — download use karo');
+    brToast('⚠️ Share supported nahi');
   }
 };
 
@@ -726,23 +718,28 @@ window.brCopy = async () => {
     const final = await brBuildFinalCanvas();
     const blob = await new Promise(res => final.toBlob(res, 'image/png'));
     await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-    brToast('📋 Copied to clipboard!', 'success');
-  } catch (e) {
-    brToast('❌ Copy fail', 'error');
-  }
+    brToast('📋 Copied!', 'success');
+  } catch (e) { brToast('❌ Copy fail', 'error'); }
+};
+
+window.brRegenerate = async () => {
+  if (!brOriginalFile) return;
+  brResetAll();
+  await brRemoveBackground();
+};
+
+window.brReset = () => {
+  if (!confirm('Reset kar dein?')) return;
+  if (brOriginalUrl) URL.revokeObjectURL(brOriginalUrl);
+  brOriginalFile = null;
+  brOriginalUrl = null;
+  brResetAll();
+  brRenderDrop();
+  brToast('🔄 Reset done');
 };
 
 /* ============================================================
-   RENDER CONTROLS (show after remove)
-   ============================================================ */
-function brRenderControls() {
-  const c = document.getElementById('brControls');
-  if (c) c.style.display = 'block';
-  brRenderPreview();
-}
-
-/* ============================================================
-   MAIN RENDER (HTML)
+   RENDER HTML
    ============================================================ */
 window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
 <div class="br-wrap">
@@ -759,16 +756,17 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
 
   <div id="brPanel" style="display:none;margin-top:14px">
 
-    <!-- ORIGINAL + REMOVE BUTTON -->
     <div class="card" style="text-align:center">
       <div class="card-title">📸 Original</div>
       <div id="brOriginalPreview"></div>
-      <button class="btn btn-primary" id="brRemoveBtn" style="width:100%;margin-top:12px" onclick="brRemoveBackground()">
-        ✨ Remove Background
-      </button>
+      <div style="display:flex;gap:6px;margin-top:12px">
+        <button class="btn btn-secondary" style="flex:1" onclick="brReCrop()">✂️ Re-crop</button>
+        <button class="btn btn-primary" id="brRemoveBtn" style="flex:2" onclick="brRemoveBackground()">
+          ✨ Remove Background
+        </button>
+      </div>
     </div>
 
-    <!-- PROGRESS -->
     <div id="brProgressWrap" style="display:none;margin-top:14px;padding:14px;background:var(--surface);border-radius:14px;border:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-3);margin-bottom:8px">
         <span id="brProgressText">Processing...</span>
@@ -779,10 +777,8 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
       </div>
     </div>
 
-    <!-- EDITOR (after removal) -->
     <div id="brControls" style="display:none">
 
-      <!-- CANVAS PREVIEW -->
       <div class="card" style="text-align:center">
         <div class="card-title">🎨 Preview</div>
         <div id="brCanvasWrap" style="background:repeating-conic-gradient(#e5e7eb 0 25%, #fff 0 50%) 50% / 20px 20px;border-radius:12px;padding:10px;overflow:hidden;position:relative;min-height:200px;display:flex;align-items:center;justify-content:center">
@@ -790,14 +786,13 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
           <canvas id="brCanvas" style="display:none"></canvas>
         </div>
         <div style="display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap">
-          <button class="btn btn-sm btn-secondary" onclick="brZoomOut()">➖ Zoom Out</button>
+          <button class="btn btn-sm btn-secondary" onclick="brZoomOut()">➖</button>
           <button class="btn btn-sm btn-secondary" onclick="brZoomReset()">100%</button>
-          <button class="btn btn-sm btn-secondary" onclick="brZoomIn()">➕ Zoom In</button>
+          <button class="btn btn-sm btn-secondary" onclick="brZoomIn()">➕</button>
           <button class="btn btn-sm btn-secondary" id="brCompareBtn" onclick="brToggleCompare()">👁️ Compare</button>
         </div>
       </div>
 
-      <!-- BRUSH -->
       <div class="card">
         <div class="card-title">🖌️ Brush (Erase / Restore)</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
@@ -818,7 +813,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
         </div>
       </div>
 
-      <!-- BACKGROUND CHANGE -->
       <div class="card">
         <div class="card-title">🎨 Background</div>
         <div class="br-bg-chips">
@@ -830,9 +824,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
           </div>
           <div class="br-bg-chip" data-val="gradient" onclick="brSetSetting('bgType','gradient')">
             <span>🌈</span><span>Gradient</span>
-          </div>
-          <div class="br-bg-chip" data-val="blur" onclick="brSetSetting('bgType','blur')">
-            <span>💨</span><span>Blur</span>
           </div>
           <div class="br-bg-chip" data-val="image" onclick="brSetSetting('bgType','image')">
             <span>🖼️</span><span>Custom</span>
@@ -860,27 +851,17 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
           </div>
         </div>
 
-        <div id="brBgBlurBox" style="display:none;margin-top:12px">
-          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px">Blur Amount</label>
-          <input type="range" min="2" max="30" value="10" oninput="brSetSetting('bgBlur',parseInt(this.value))" style="width:100%">
-        </div>
-
         <div id="brBgImageBox" style="display:none;margin-top:12px">
-          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px">Upload Custom Background</label>
+          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:8px">Custom Background</label>
           <input type="file" accept="image/*" onchange="brSetBgImage(this.files[0])" style="width:100%">
         </div>
       </div>
 
-      <!-- EDGE / EFFECTS -->
       <div class="card">
         <div class="card-title">✨ Effects</div>
         <div style="margin-bottom:12px">
-          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">Edge Feather: <span id="brFeatherVal">0</span></label>
+          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">Feather: <span id="brFeatherVal">0</span></label>
           <input type="range" min="0" max="5" value="0" oninput="brSetSetting('feather',this.value)" style="width:100%">
-        </div>
-        <div style="margin-bottom:12px">
-          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">Halo Removal: <span id="brHaloVal">0</span></label>
-          <input type="range" min="0" max="3" value="0" oninput="brSetSetting('halo',this.value)" style="width:100%">
         </div>
         <div>
           <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">Sharpen: <span id="brSharpenVal">0</span></label>
@@ -888,7 +869,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
         </div>
       </div>
 
-      <!-- EXPORT SETTINGS -->
       <div class="card">
         <div class="card-title">📤 Export</div>
         <div style="margin-bottom:12px">
@@ -903,7 +883,7 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
           <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">Quality: <span id="brQualityVal">92%</span></label>
           <input type="range" min="50" max="100" value="92" oninput="brSetSetting('quality',parseInt(this.value))" style="width:100%">
         </div>
-        <div style="margin-bottom:12px">
+        <div>
           <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">HD Upscale</label>
           <select onchange="brSetSetting('hdUpscale',parseFloat(this.value))" style="width:100%;padding:10px;background:var(--surface-2);border:1.5px solid var(--border-strong);border-radius:10px;color:var(--text)">
             <option value="1">1x (Original)</option>
@@ -913,7 +893,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
         </div>
       </div>
 
-      <!-- DOWNLOAD ACTIONS -->
       <div class="btn-group" style="margin-top:14px">
         <button class="btn btn-secondary" onclick="brCopy()">📋 Copy</button>
         <button class="btn btn-secondary" onclick="brShare()">🔗 Share</button>
@@ -926,6 +905,28 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
       </div>
 
     </div>
+  </div>
+</div>
+
+<!-- CROP MODAL -->
+<div class="br-crop-modal" id="brCropModal">
+  <div class="br-crop-header">
+    <h3>✂️ Crop Image</h3>
+    <button class="btn btn-secondary" onclick="brCloseCropModal()" style="padding:6px 12px">✕</button>
+  </div>
+  <div class="br-crop-body">
+    <img id="brCropImage" src="" alt="Crop">
+  </div>
+  <div class="br-crop-toolbar">
+    <button class="br-tool-btn" onclick="brRotateCrop(-90)" title="Rotate Left">↺</button>
+    <button class="br-tool-btn" onclick="brRotateCrop(90)" title="Rotate Right">↻</button>
+    <button class="br-tool-btn" onclick="brFlipCropH()" title="Flip H">⇄</button>
+    <button class="br-tool-btn" onclick="brFlipCropV()" title="Flip V">⇅</button>
+    <button class="br-tool-btn" onclick="brResetCrop()" title="Reset">⟳</button>
+  </div>
+  <div class="br-crop-footer">
+    <button class="btn btn-secondary" onclick="brSkipCrop()">Skip Crop</button>
+    <button class="btn btn-primary" onclick="brApplyCrop()">✓ Apply Crop</button>
   </div>
 </div>
 
@@ -954,6 +955,40 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
 
   input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--surface-2); outline: none; }
   input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gradient); cursor: pointer; }
+
+  .br-crop-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,.95);
+    z-index: 99999; display: none; flex-direction: column;
+  }
+  .br-crop-modal.active { display: flex; }
+  .br-crop-header {
+    padding: 14px 18px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .br-crop-header h3 { color: var(--text); font-size: 15px; margin: 0; }
+  .br-crop-body {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    padding: 16px; overflow: hidden; position: relative;
+  }
+  .br-crop-body img { max-width: 100%; max-height: 100%; display: block; }
+  .br-crop-toolbar {
+    padding: 10px 14px; display: flex; gap: 8px; justify-content: center;
+    border-top: 1px solid var(--border); background: var(--surface);
+    flex-wrap: wrap;
+  }
+  .br-tool-btn {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text-2); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .br-tool-btn:hover { background: var(--surface-hover); color: var(--primary); }
+  .br-crop-footer {
+    padding: 14px 18px; display: flex; gap: 10px;
+    border-top: 1px solid var(--border); background: var(--surface);
+  }
+  .br-crop-footer .btn { flex: 1; }
 
   @media (max-width: 480px) {
     .br-bg-chip { min-width: 50px; padding: 8px 6px; font-size: 11px; }
@@ -997,7 +1032,7 @@ window.EXTRA_TOOL_INITS['background-remover'] = () => {
     }
   });
 
-  // Preload AI library in background
+  // Preload AI library
   brLoadLibrary().then(ok => {
     if (ok) console.log('%c✅ AI library preloaded', 'color:#10b981');
   });
