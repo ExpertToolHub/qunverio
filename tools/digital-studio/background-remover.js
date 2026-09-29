@@ -1,6 +1,6 @@
 /* ============================================================
-   QUNVERIO — BACKGROUND REMOVER (FINAL v2)
-   AI + Crop + Brush + BG Change + Export all formats
+   QUNVERIO — BACKGROUND REMOVER (FINAL v5)
+   Fast CDN + Auto Cache + All Features
    ============================================================ */
 
 console.log('%cBackground Remover loading...', 'color:#ec4899;font-weight:bold');
@@ -35,9 +35,7 @@ let brSettings = {
   bgImage: null,
   outputFormat: 'png',
   quality: 92,
-  maxDim: 1500,
-  feather: 0,
-  halo: 0,
+  maxDim: 1200,
   sharpen: 0,
   hdUpscale: 1
 };
@@ -74,31 +72,53 @@ function brHideProgress() {
 }
 
 /* ============================================================
-   AI LIBRARY
+   LOAD LIBRARY — v5 (Fast CDN + Cache)
    ============================================================ */
 async function brLoadLibrary() {
   if (brLibFn) return true;
   if (brLibLoading) return false;
   brLibLoading = true;
-  brSetProgress(3, '⏳ AI library load ho rahi hai...');
+  brSetProgress(3, '⏳ AI library check...');
+
   try {
-    // Pehle check global preload
+    // 1. Already preloaded?
     if (typeof window.__bgLibFn === 'function') {
       brLibFn = window.__bgLibFn;
-      brSetProgress(10, '✅ AI ready (preloaded)');
+      brSetProgress(10, '✅ AI ready (cached)');
+      console.log('%c✅ Using cached library', 'color:#10b981');
       return true;
     }
-    const mod = await import('https://esm.sh/@imgly/background-removal@1.5.5');
-    if (mod && typeof mod.removeBackground === 'function') {
-      brLibFn = mod.removeBackground;
-    } else if (mod.default && typeof mod.default.removeBackground === 'function') {
-      brLibFn = mod.default.removeBackground;
+
+    // 2. Try dynamic import — FAST CDNs first
+    const cdns = [
+      'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm',
+      'https://unpkg.com/@imgly/background-removal@1.5.5/+esm',
+      'https://esm.sh/@imgly/background-removal@1.5.5'
+    ];
+
+    for (let i = 0; i < cdns.length; i++) {
+      try {
+        brSetProgress(5 + i * 2, `📥 CDN ${i + 1}/${cdns.length}...`);
+        console.log(`%c🎯 Trying CDN ${i + 1}: ${cdns[i]}`, 'color:#f59e0b');
+        const mod = await import(cdns[i]);
+        if (mod && typeof mod.removeBackground === 'function') {
+          brLibFn = mod.removeBackground;
+        } else if (mod.default && typeof mod.default.removeBackground === 'function') {
+          brLibFn = mod.default.removeBackground;
+        }
+        if (brLibFn) {
+          brSetProgress(10, `✅ AI ready (CDN ${i + 1})`);
+          window.__bgLibFn = brLibFn;
+          console.log(`%c✅ Library loaded from CDN ${i + 1}`, 'color:#10b981');
+          return true;
+        }
+      } catch (e) {
+        console.warn(`CDN ${i + 1} fail:`, e.message);
+      }
     }
-    brSetProgress(10, '✅ AI ready');
-    return !!brLibFn;
-  } catch (e) {
-    console.error('AI library load fail:', e);
-    brToast('❌ AI library load nahi hui', 'error');
+
+    brSetProgress(0, '❌ AI load failed');
+    brToast('❌ AI library load nahi hui — internet check karo', 'error');
     return false;
   } finally {
     brLibLoading = false;
@@ -106,18 +126,12 @@ async function brLoadLibrary() {
 }
 
 /* ============================================================
-   LOAD FILE (opens crop modal first)
+   LOAD FILE (opens crop modal)
    ============================================================ */
 window.brLoadFile = (file) => {
   if (!file) return;
-  if (!file.type.startsWith('image/')) {
-    brToast('❌ Sirf image select karo', 'error');
-    return;
-  }
-  if (file.size > 30 * 1024 * 1024) {
-    brToast('❌ Image 30MB se choti', 'error');
-    return;
-  }
+  if (!file.type.startsWith('image/')) { brToast('❌ Sirf image select karo', 'error'); return; }
+  if (file.size > 30 * 1024 * 1024) { brToast('❌ Image 30MB se choti', 'error'); return; }
   brOriginalFile = file;
   if (brOriginalUrl) URL.revokeObjectURL(brOriginalUrl);
   brOriginalUrl = URL.createObjectURL(file);
@@ -170,10 +184,7 @@ window.brCloseCropModal = () => {
   if (brCropInstance) { brCropInstance.destroy(); brCropInstance = null; }
 };
 
-window.brSkipCrop = () => {
-  brCloseCropModal();
-  brUseOriginalImage();
-};
+window.brSkipCrop = () => { brCloseCropModal(); brUseOriginalImage(); };
 
 window.brApplyCrop = async () => {
   if (!brCropInstance) { brCloseCropModal(); brUseOriginalImage(); return; }
@@ -197,7 +208,7 @@ window.brApplyCrop = async () => {
 
 function brUseOriginalImage() {
   brRenderPanel();
-  brToast('✅ Image loaded — now Remove Background', 'success');
+  brToast('✅ Image loaded — Remove Background click karo', 'success');
 }
 
 window.brReCrop = () => { if (brOriginalUrl) brOpenCropModal(); };
@@ -261,13 +272,15 @@ window.brRemoveBackground = async () => {
   const btn = document.getElementById('brRemoveBtn');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Processing...'; }
 
+  const startTime = Date.now();
+
   try {
     const ok = await brLoadLibrary();
     if (!ok) throw new Error('AI library load nahi hui');
 
     brSetProgress(20, '⏳ Image prepare...');
     const resized = await brResizeIfNeeded(brOriginalFile);
-    brSetProgress(30, '🎨 AI background remove...');
+    brSetProgress(30, '🎨 AI background remove kar raha hai...');
 
     const blob = await brLibFn(resized, {
       model: 'medium',
@@ -288,9 +301,10 @@ window.brRemoveBackground = async () => {
     brRemovedBlob = blob;
     await brSetupCanvas(blob);
 
-    brSetProgress(100, '✅ Ready!');
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    brSetProgress(100, `✅ Ready! (${elapsed}s)`);
     brHideProgress();
-    brToast('✅ Background removed!', 'success');
+    brToast(`✅ Background removed! (${elapsed}s)`, 'success');
     const c = document.getElementById('brControls');
     if (c) c.style.display = 'block';
     brRenderPreview();
@@ -382,10 +396,7 @@ function brSetupBrushEvents() {
     const scaleY = canvas.height / rect.height;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY
-    };
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
   };
 
   const start = (e) => {
@@ -444,19 +455,17 @@ function brSaveHistory() {
 }
 
 window.brUndo = () => {
-  if (brHistoryIdx <= 0) { brToast('⚠️ Kuch undo karne ko nahi', 'error'); return; }
+  if (brHistoryIdx <= 0) { brToast('⚠️ Kuch undo nahi', 'error'); return; }
   brHistoryIdx--;
   brCtx.putImageData(brHistory[brHistoryIdx], 0, 0);
   brRenderPreview();
-  brToast('↶ Undo', 'success');
 };
 
 window.brRedo = () => {
-  if (brHistoryIdx >= brHistory.length - 1) { brToast('⚠️ Kuch redo karne ko nahi', 'error'); return; }
+  if (brHistoryIdx >= brHistory.length - 1) { brToast('⚠️ Kuch redo nahi', 'error'); return; }
   brHistoryIdx++;
   brCtx.putImageData(brHistory[brHistoryIdx], 0, 0);
   brRenderPreview();
-  brToast('↷ Redo', 'success');
 };
 
 window.brSetBrush = (mode) => {
@@ -580,7 +589,7 @@ window.brSetSetting = (key, val) => {
     document.querySelectorAll('.br-bg-chip').forEach(c => {
       c.classList.toggle('active', c.dataset.val === val);
     });
-    ['color', 'gradient', 'blur', 'image'].forEach(t => {
+    ['color', 'gradient', 'image'].forEach(t => {
       const el = document.getElementById('brBg' + t.charAt(0).toUpperCase() + t.slice(1) + 'Box');
       if (el) el.style.display = t === val ? 'block' : 'none';
     });
@@ -594,10 +603,10 @@ window.brSetSetting = (key, val) => {
     const el = document.getElementById('brQualityVal');
     if (el) el.textContent = val + '%';
   }
-  if (key === 'maxDim') brSettings.maxDim = parseInt(val, 10) || 1500;
-  if (key === 'feather' || key === 'halo' || key === 'sharpen') {
-    brSettings[key] = parseInt(val, 10) || 0;
-    const el = document.getElementById('br' + key.charAt(0).toUpperCase() + key.slice(1) + 'Val');
+  if (key === 'maxDim') brSettings.maxDim = parseInt(val, 10) || 1200;
+  if (key === 'sharpen') {
+    brSettings.sharpen = parseInt(val, 10) || 0;
+    const el = document.getElementById('brSharpenVal');
     if (el) el.textContent = val;
   }
   if (key === 'hdUpscale') brSettings.hdUpscale = parseFloat(val) || 1;
@@ -775,6 +784,9 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
       <div style="height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden">
         <div id="brProgressFill" style="height:100%;width:0%;background:var(--gradient);transition:width .3s"></div>
       </div>
+      <div class="hint" style="margin-top:8px;font-size:11px">
+        ⚡ First time: model download (30-60s) • Next time: fast (cached)
+      </div>
     </div>
 
     <div id="brControls" style="display:none">
@@ -859,10 +871,6 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
 
       <div class="card">
         <div class="card-title">✨ Effects</div>
-        <div style="margin-bottom:12px">
-          <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">Feather: <span id="brFeatherVal">0</span></label>
-          <input type="range" min="0" max="5" value="0" oninput="brSetSetting('feather',this.value)" style="width:100%">
-        </div>
         <div>
           <label style="display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:6px">Sharpen: <span id="brSharpenVal">0</span></label>
           <input type="range" min="0" max="3" value="0" oninput="brSetSetting('sharpen',this.value)" style="width:100%">
@@ -956,38 +964,16 @@ window.EXTRA_TOOL_RENDERERS['background-remover'] = () => `
   input[type="range"] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: var(--surface-2); outline: none; }
   input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gradient); cursor: pointer; }
 
-  .br-crop-modal {
-    position: fixed; inset: 0; background: rgba(0,0,0,.95);
-    z-index: 99999; display: none; flex-direction: column;
-  }
+  .br-crop-modal { position: fixed; inset: 0; background: rgba(0,0,0,.95); z-index: 99999; display: none; flex-direction: column; }
   .br-crop-modal.active { display: flex; }
-  .br-crop-header {
-    padding: 14px 18px; display: flex; justify-content: space-between;
-    align-items: center; border-bottom: 1px solid var(--border);
-    background: var(--surface);
-  }
+  .br-crop-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: var(--surface); }
   .br-crop-header h3 { color: var(--text); font-size: 15px; margin: 0; }
-  .br-crop-body {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    padding: 16px; overflow: hidden; position: relative;
-  }
+  .br-crop-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px; overflow: hidden; position: relative; }
   .br-crop-body img { max-width: 100%; max-height: 100%; display: block; }
-  .br-crop-toolbar {
-    padding: 10px 14px; display: flex; gap: 8px; justify-content: center;
-    border-top: 1px solid var(--border); background: var(--surface);
-    flex-wrap: wrap;
-  }
-  .br-tool-btn {
-    width: 42px; height: 42px; border-radius: 10px;
-    background: var(--surface-2); border: 1px solid var(--border);
-    color: var(--text-2); font-size: 18px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-  }
+  .br-crop-toolbar { padding: 10px 14px; display: flex; gap: 8px; justify-content: center; border-top: 1px solid var(--border); background: var(--surface); flex-wrap: wrap; }
+  .br-tool-btn { width: 42px; height: 42px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .br-tool-btn:hover { background: var(--surface-hover); color: var(--primary); }
-  .br-crop-footer {
-    padding: 14px 18px; display: flex; gap: 10px;
-    border-top: 1px solid var(--border); background: var(--surface);
-  }
+  .br-crop-footer { padding: 14px 18px; display: flex; gap: 10px; border-top: 1px solid var(--border); background: var(--surface); }
   .br-crop-footer .btn { flex: 1; }
 
   @media (max-width: 480px) {
@@ -1031,11 +1017,6 @@ window.EXTRA_TOOL_INITS['background-remover'] = () => {
       brLoadFile(e.dataTransfer.files[0]);
     }
   });
-
-  // Preload AI library
-  brLoadLibrary().then(ok => {
-    if (ok) console.log('%c✅ AI library preloaded', 'color:#10b981');
-  });
 };
 
-console.log('%c✅ Background Remover loaded', 'color:#ec4899;font-weight:bold');
+console.log('%c✅ Background Remover v5 loaded', 'color:#ec4899;font-weight:bold');
