@@ -44,21 +44,21 @@ const CATEGORIES = [
     desc: 'Unit, Case, Currency converters',
     gradient: 'linear-gradient(135deg,#ec4899,#8b5cf6)'
   },
-    {
+  {
     id: 'utilities',
     name: 'Utilities',
     icon: '🛠️',
     desc: 'Word Counter, Image Tools & more',
     gradient: 'linear-gradient(135deg,#14b8a6,#06b6d4)'
   },
-    {
+  {
     id: 'pdf',
     name: 'PDF Tools',
     icon: '📄',
     desc: 'Merge, split, compress & more',
     gradient: 'linear-gradient(135deg,#ec4899,#ef4444)'
   },
-    {
+  {
     id: 'digital-studio',
     name: 'Digital Studio',
     icon: '📸',
@@ -321,7 +321,7 @@ const EXTRA_TOOLS = [
     howto: 'Enter savings, monthly amount, target. Click Calculate Timeline.',
     kw: ['marriage', 'baby', 'planning', 'savings', 'goal']
   },
-    {
+  {
     id: 'production-yield-calculator',
     name: 'Production Yield Calculator',
     cat: 'calculators',
@@ -330,7 +330,7 @@ const EXTRA_TOOLS = [
     howto: 'Enter total quantity and achieved quantity. Click Calculate to get yield rate percentage.',
     kw: ['yield', 'yield rate', 'production', 'quality', 'achieved', 'total quantity']
   },
-    {
+  {
     id: 'pdf-merger',
     name: 'PDF Merger',
     cat: 'pdf',
@@ -339,7 +339,7 @@ const EXTRA_TOOLS = [
     howto: 'PDF files select karo ya drag karo. ↑↓ buttons ya drag se order change karo. Merge PDFs click karo.',
     kw: ['pdf', 'merge', 'merger', 'combine', 'join', 'pdf merge', 'pdf merger', 'pdf combine']
   },
-    {
+  {
     id: 'pdf-splitter',
     name: 'PDF Splitter',
     cat: 'pdf',
@@ -348,7 +348,7 @@ const EXTRA_TOOLS = [
     howto: 'PDF upload karo. Split mode choose karo (range, every page, every N). Split click karo. ZIP download hoga.',
     kw: ['pdf', 'split', 'splitter', 'cut', 'extract', 'pages', 'range', 'separate']
   },
-    {
+  {
     id: 'jpg-to-pdf',
     name: 'JPG to PDF',
     cat: 'pdf',
@@ -357,7 +357,7 @@ const EXTRA_TOOLS = [
     howto: 'Images drag ya select karo. Reorder karo. Page size, orientation, margin choose karo. Create PDF click karo.',
     kw: ['jpg', 'jpeg', 'png', 'image', 'to pdf', 'jpg to pdf', 'png to pdf', 'images to pdf', 'convert']
   },
-    {
+  {
     id: 'pdf-to-jpg',
     name: 'PDF to JPG',
     cat: 'pdf',
@@ -366,7 +366,7 @@ const EXTRA_TOOLS = [
     howto: 'PDF upload karo. Quality aur format choose karo. Pages select karo. Convert click karo.',
     kw: ['pdf', 'to jpg', 'to png', 'pdf to jpg', 'pdf to image', 'pdf to png', 'convert', 'extract images']
   },
-    {
+  {
     id: 'image-resizer',
     name: 'Image Resizer',
     cat: 'digital-studio',
@@ -375,7 +375,7 @@ const EXTRA_TOOLS = [
     howto: 'Images drag ya select karo. Resize mode choose karo (pixels/percent/preset). Dimensions set karo. Resize All click karo.',
     kw: ['image', 'resize', 'resizer', 'scale', 'dimensions', 'compress', 'bulk resize', 'photo resize']
   },
-    {
+  {
     id: 'image-compressor',
     name: 'Image Compressor',
     cat: 'digital-studio',
@@ -384,7 +384,7 @@ const EXTRA_TOOLS = [
     howto: 'Images add karo. Quality mode ya Target Size mode choose karo. Compress All click karo. Download as ZIP.',
     kw: ['image', 'compress', 'compressor', 'reduce size', '20kb', '50kb', '100kb', 'photo compressor', 'govt form', 'aadhaar', 'pan', 'ssc']
   },
-    {
+  {
     id: 'passport-photo',
     name: 'Passport Photo Maker',
     cat: 'digital-studio',
@@ -393,7 +393,7 @@ const EXTRA_TOOLS = [
     howto: 'Photo upload karo. Face crop karo. Size choose karo (Passport/Stamp/Visa). Background color set karo. A4 sheet automatically generate hoga. Download JPG/PDF ya Print.',
     kw: ['passport photo', 'passport size photo', 'id photo', 'photo maker', 'a4 sheet', 'stamp size', 'visa photo', '35x45mm', 'passport photo online']
   },
-    {
+  {
     id: 'format-converter',
     name: 'Image Format Converter',
     cat: 'digital-studio',
@@ -402,7 +402,7 @@ const EXTRA_TOOLS = [
     howto: 'Images add karo. Target format choose karo (JPG/PNG/WebP). Quality set karo. Convert All click karo. Download as ZIP.',
     kw: ['jpg to png', 'png to jpg', 'webp converter', 'image format', 'convert image', 'jpg to webp', 'png to webp', 'image converter']
   },
-    {
+  {
     id: 'image-cropper',
     name: 'Image Cropper',
     cat: 'digital-studio',
@@ -411,7 +411,7 @@ const EXTRA_TOOLS = [
     howto: 'Images add karo. Aspect ratio choose karo (1:1, 16:9, Passport, etc). Zoom, rotate, flip karo. Apply Crop click. Download.',
     kw: ['crop', 'cropper', 'image crop', 'photo crop', 'cut image', 'aspect ratio', 'resize crop', 'passport crop']
   },
-    {
+  {
     id: 'signature-cropper',
     name: 'Signature Cropper',
     cat: 'digital-studio',
@@ -421,25 +421,24 @@ const EXTRA_TOOLS = [
     kw: ['signature', 'signature cropper', 'signature maker', 'pan signature', 'aadhaar signature', 'signature clean', 'signature crop', 'signature background remover']
   },
   {
-  id: 'image-enhancer',
-  name: 'Image Enhancer',
-  cat: 'digital-studio',
-  icon: '🎨',
-  desc: 'Enhance photos with auto-fix, filters, sharpen, denoise & before/after comparison.',
-  howto: 'Upload one or more images, tweak brightness, contrast, saturation, sharpen, or pick a filter. Use the before/after slider to compare. Download individually or all as ZIP.',
-  kw: ['enhance', 'photo', 'brightness', 'contrast', 'saturation', 'sharpen', 'denoise', 'filter', 'grayscale', 'sepia', 'vintage', 'image', 'edit'],
-},
-{
-  id: 'background-remover',
-  name: 'Background Remover',
-  cat: 'digital-studio',
-  icon: '🎨',
-  desc: 'Remove image background with AI — change color, gradient, custom bg, brush edit',
-  howto: 'Image upload karo. Remove Background click. AI background hata dega. Background change karo (color/gradient/custom). Brush se edit karo. Download karo.',
-  kw: ['background remover', 'remove background', 'bg remover', 'transparent background', 'background change', 'bg color change', 'ai background remover', 'photo background']
-},
-,
- {
+    id: 'image-enhancer',
+    name: 'Image Enhancer',
+    cat: 'digital-studio',
+    icon: '🎨',
+    desc: 'Enhance photos with auto-fix, filters, sharpen, denoise & before/after comparison.',
+    howto: 'Upload one or more images, tweak brightness, contrast, saturation, sharpen, or pick a filter. Use the before/after slider to compare. Download individually or all as ZIP.',
+    kw: ['enhance', 'photo', 'brightness', 'contrast', 'saturation', 'sharpen', 'denoise', 'filter', 'grayscale', 'sepia', 'vintage', 'image', 'edit']
+  },
+  {
+    id: 'background-remover',
+    name: 'Background Remover',
+    cat: 'digital-studio',
+    icon: '🎨',
+    desc: 'Remove image background with AI — change color, gradient, custom bg, brush edit',
+    howto: 'Image upload karo. Remove Background click. AI background hata dega. Background change karo (color/gradient/custom). Brush se edit karo. Download karo.',
+    kw: ['background remover', 'remove background', 'bg remover', 'transparent background', 'background change', 'bg color change', 'ai background remover', 'photo background']
+  },
+  {
     id: 'ai-tool',
     name: 'AI Assistant',
     cat: 'ai',
@@ -497,6 +496,18 @@ window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
 window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
 
 window.openExtraTool = function(toolId) {
+  // 👇 AI Tool special case — full-screen workspace kholo
+  if (toolId === 'ai-tool') {
+    if (window.QunverioAI && typeof window.QunverioAI.open === 'function') {
+      window.QunverioAI.open();
+      if (typeof addRecent === 'function') addRecent(toolId);
+    } else {
+      if (typeof toast === 'function') toast('AI Tool loading… refresh karo', 'error');
+      console.warn('QunverioAI not ready — ai-tool.js may not be loaded');
+    }
+    return;
+  }
+
   const tool = EXTRA_TOOLS.find(t => t.id === toolId);
   if (!tool) { if (typeof toast === 'function') toast('Tool not found', 'error'); return; }
 
@@ -543,10 +554,7 @@ window.openExtraTool = function(toolId) {
    HELPER: Fix colors for PDF/Image export (LIGHT BACKGROUND)
    ============================================================ */
 function extraFixColorsForExport(clone) {
-  // 1. Remove buttons, no-print sections
   clone.querySelectorAll('.btn-group, .export-btns, .how-to-use, .no-print').forEach(n => n.remove());
-
-  // 2. Base styling
   clone.style.background = '#ffffff';
   clone.style.color = '#111111';
   clone.style.padding = '40px';
@@ -554,7 +562,6 @@ function extraFixColorsForExport(clone) {
   clone.style.boxSizing = 'border-box';
   clone.style.fontFamily = 'Arial, sans-serif';
 
-  // 3. Fix result-main (gradient text) — make it solid purple
   clone.querySelectorAll('.result-main').forEach(e => {
     e.style.background = 'none';
     e.style.webkitTextFillColor = '#4f46e5';
@@ -563,7 +570,6 @@ function extraFixColorsForExport(clone) {
     e.style.fontWeight = '900';
   });
 
-  // 4. Fix all transparent text
   clone.querySelectorAll('*').forEach(e => {
     const cs = window.getComputedStyle(e);
     if (cs.webkitTextFillColor === 'transparent' || cs.color === 'rgba(0, 0, 0, 0)') {
@@ -573,7 +579,6 @@ function extraFixColorsForExport(clone) {
     }
   });
 
-  // 5. FIX: Boxes with var(--surface-2) background → LIGHT background + DARK text
   clone.querySelectorAll('[style*="var(--surface-2)"]').forEach(row => {
     row.style.background = '#f5f5f7';
     row.style.border = '1px solid #e0e0e5';
@@ -583,19 +588,16 @@ function extraFixColorsForExport(clone) {
     });
   });
 
-  // 6. Fix labels and sub-texts
   clone.querySelectorAll('.k, .result-sub, .result-title, .card-title').forEach(e => {
     if (e.closest('[style*="var(--surface-2)"]')) return;
     e.style.color = '#555555';
   });
 
-  // 7. Fix values
   clone.querySelectorAll('.v').forEach(e => {
     if (e.closest('[style*="var(--surface-2)"]')) return;
     e.style.color = '#111111';
   });
 
-  // 8. Fix inline color:#fff spans (jo var(--surface-2) box ke andar hain)
   clone.querySelectorAll('span[style*="color:#fff"], span[style*="color: #fff"]').forEach(el => {
     el.style.color = '#111111';
     el.style.webkitTextFillColor = '#111111';
