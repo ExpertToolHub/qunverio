@@ -1,7 +1,6 @@
 /* ============================================================
    QUNVERIO — AI TOOL (tools/ai-tool.js)
    Full-screen AI workspace: text + image + PDF + tool execution
-   Loaded by index.html via <script src="tools/ai-tool.js">
    ============================================================ */
 
 console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
@@ -21,7 +20,7 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
 
   const state = {
     messages: [],
-    currentFile: null,
+    currentFile: null,       // { kind:'image'|'pdf', ... }
     history: [],
     isOpen: false,
     isBusy: false,
@@ -229,7 +228,27 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
       state.isOpen = true;
       if (!dom._bound) { bindListeners(); dom._bound = true; }
       if (state.messages.length === 0) {
-        addAIMessage('Namaste! Main Qunverio AI hoon. Image ya PDF upload karo, ya kuch bhi pucho.\n\nExamples:\n• "Resize this to 500x500"\n• "Convert this to webp"\n• "Compress under 300 KB"\n• "What is in this image?"\n• "Summarize this PDF"');
+        addAIMessage(
+`Namaste! Main Qunverio AI hoon 🤖
+
+📷 IMAGE
+• "What is in this image?" / "Summarize this image"
+• "Read the text in this image"
+• "Resize to 500x500" / "Compress under 200 KB"
+• "Convert to webp" / "Rotate 90" / "Flip horizontal"
+
+📄 PDF (sirf text-based PDFs)
+• "Summarize this PDF"
+• "What is on page 2?"
+• "Key points nikaalo"
+
+💬 TEXT
+• General chat, writing, translate, coding help
+
+⚡ MULTI-STEP
+• "Resize to 800x800 and convert to webp"
+
+Kuch bhi try karo! 😊`);
       }
     },
     close: function () {
@@ -316,19 +335,21 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
         state.currentFile = { kind: 'image', ...img, name: file.name, size: file.size };
         dom.thumb.innerHTML = `<img src="${img.dataUrl}" alt="preview">`;
         dom.fileInfo.textContent = `${file.name} · ${img.width}×${img.height} · ${Math.round(file.size / 1024)} KB`;
+        addSystemMessage(`🖼️ ${file.name} uploaded`);
       } else {
         setStatus('Extracting PDF text…', true);
         const pdf = await processPDFFile(file);
         state.currentFile = { kind: 'pdf', ...pdf, name: file.name, size: file.size };
         dom.thumb.innerHTML = `<span>📄</span>`;
-        dom.fileInfo.textContent = `${file.name} · ${pdf.pageCount} pages · ${Math.round(file.size / 1024)} KB`;
+        dom.fileInfo.textContent = `${file.name} · ${pdf.pageCount} pages · ${pdf.pagesWithText || 0} with text · ${Math.round(file.size / 1024)} KB`;
+        addSystemMessage(`📄 ${file.name} uploaded — ${pdf.pagesWithText || 0}/${pdf.pageCount} pages readable`);
       }
       setStatus('Ready');
-      addSystemMessage(`📎 ${file.name} uploaded`);
     } catch (err) {
       addSystemMessage('❌ ' + err.message);
       setStatus('');
       dom.file.value = '';
+      state.currentFile = null;
     }
   }
 
@@ -360,36 +381,69 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
     });
   }
 
+  async function ensurePDFJS() {
+    if (!window.pdfjsLib) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('PDF.js failed to load'));
+        document.head.appendChild(s);
+      });
+    }
+    // ✅ ALWAYS set worker (whether already loaded or not)
+    if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  }
+
   async function processPDFFile(file) {
     await ensurePDFJS();
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const pageCount = pdf.numPages;
     const maxPages = Math.min(pageCount, 50);
+
     let fullText = '';
+    let pagesWithText = 0;
+    let pagesWithoutText = 0;
+
     for (let i = 1; i <= maxPages; i++) {
       setStatus(`Extracting PDF page ${i}/${maxPages}…`, true);
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items.map(it => it.str).join(' ');
-      fullText += `\n--- Page ${i} ---\n${pageText}\n`;
-    }
-    if (pageCount > 50) fullText += `\n[... ${pageCount - 50} more pages truncated ...]`;
-    return { text: fullText.trim(), pageCount, truncated: pageCount > 50 };
-  }
+      try {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map(item => item.str || '')
+          .filter(str => str.trim().length > 0)
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
 
-  async function ensurePDFJS() {
-    if (window.pdfjsLib) return;
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-      s.onload = () => {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        resolve();
-      };
-      s.onerror = () => reject(new Error('PDF.js failed to load'));
-      document.head.appendChild(s);
-    });
+        if (pageText.length > 5) {
+          pagesWithText++;
+          fullText += `\n--- Page ${i} ---\n${pageText}\n`;
+        } else {
+          pagesWithoutText++;
+          fullText += `\n--- Page ${i} (no extractable text) ---\n`;
+        }
+      } catch (err) {
+        console.error(`Page ${i} error:`, err);
+        fullText += `\n--- Page ${i} (error) ---\n`;
+      }
+    }
+
+    if (pageCount > maxPages) {
+      fullText += `\n[... ${pageCount - maxPages} more pages not extracted ...]`;
+    }
+
+    console.log(`PDF extraction: ${pagesWithText} with text, ${pagesWithoutText} without, total ${pageCount}`);
+
+    if (pagesWithText === 0) {
+      throw new Error(`Ye scanned/image-based PDF hai — ${pageCount} pages mein kisi bhi page pe text nahi mila. Iska text extract nahi ho sakta. Aap PDF page ka screenshot lekar image upload kar sakte ho, ya manually text copy-paste kar sakte ho.`);
+    }
+
+    return { text: fullText.trim(), pageCount, pagesWithText, pagesWithoutText, truncated: pageCount > maxPages };
   }
 
   // ============================================================
@@ -401,27 +455,59 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
       return `- ${k}: ${v.description}\n    required: ${req}\n    needs: ${v.requiresFile}`;
     }).join('\n');
 
-    return `You are Qunverio AI — the intelligence layer of Qunverio.
+    return `You are Qunverio AI — the intelligent assistant of Qunverio, a multi-tool website.
 
-Your job: understand the user's request and respond with STRICT VALID JSON.
+YOUR ABILITIES:
+
+1. GENERAL CONVERSATION
+   - Answer any question, explain concepts, write content, translate, summarize, brainstorm, solve problems
+   - Reply in user's language (English / Hindi / Hinglish)
+
+2. IMAGE ANALYSIS (when user uploaded an image)
+   - Describe what is in the image
+   - Summarize the image in 2-3 lines
+   - Read text (OCR)
+   - Identify objects, people, scenes, diagrams
+
+3. IMAGE EDITING (real tools — execute locally)
+   - Resize, compress, convert (jpg/png/webp), rotate, flip, crop
+
+4. PDF READING (when user uploaded a PDF with extractable text)
+   - Summarize content, answer questions, extract key points
+   - If PDF has no text (scanned), say honestly: "Ye scanned PDF hai, iska text extract nahi ho sakta"
+
+5. MULTI-STEP TASKS
+   - Chain multiple image actions: "resize to 800x800 and convert to webp"
+
+WHAT YOU CANNOT DO (be honest, don't fake):
+- Generate QR codes (suggest: use Qunverio QR Generator tool)
+- Edit PDF content / delete PDF pages
+- Remove image backgrounds (suggest: Background Remover tool)
+- Create passport photos (suggest: Passport Photo tool)
+- Process videos, generate images from text, access the internet
 
 Available image tools:
 ${toolList}
 
-RESPONSE SHAPES (return ONLY one of these, no markdown, no backticks):
-1. Normal answer: {"type":"answer","message":"<answer>"}
-2. Tool action(s): {"type":"action","actions":[{"tool":"<name>","parameters":{...}}]}
-3. Need clarification: {"type":"clarification","message":"<question>"}
-4. Unsupported: {"type":"unsupported","message":"<explanation>"}
+RESPONSE SHAPES (return ONLY valid JSON, no markdown, no backticks):
+
+1. {"type":"answer","message":"<answer>"}
+
+2. {"type":"action","actions":[{"tool":"<name>","parameters":{...}}]}
+
+3. {"type":"clarification","message":"<question>"}
+
+4. {"type":"unsupported","message":"<honest explanation + suggest Qunverio tool if applicable>"}
 
 RULES:
 - Use ONLY tools listed above. Never invent.
-- General questions → type "answer".
-- Image processing requests → type "action". If no image is uploaded, use "clarification".
-- Extract parameters: "resize to 800x600" → {"width":800,"height":600}; "convert to webp" → {"format":"webp"}; "compress under 300 KB" → {"maxSizeKB":300}; "rotate 90" → {"degrees":90}.
-- Multi-step: multiple actions in array, in order.
-- Never claim you did something. The app will execute and show real result.
-- If user uploaded a PDF, use its extracted text to answer questions.`;
+- General questions → "answer" (in user's language).
+- Image processing → "action". If no image uploaded → "clarification".
+- Extract params: "resize to 800x600" → {"width":800,"height":600}; "convert to webp" → {"format":"webp"}; "compress under 300 KB" → {"maxSizeKB":300}; "rotate 90" → {"degrees":90}.
+- Multi-step → array of actions.
+- NEVER claim you did something. The app executes and shows the real result.
+- If user uploaded a PDF, use its extracted text to answer. If PDF had no text, be honest.
+- Do NOT trigger image edit actions unless the user explicitly asked for an image edit (resize/compress/convert/crop/rotate/flip). If user is only asking about the image (describe/summarize/read text), use "answer" type, not "action".`;
   }
 
   // ============================================================
@@ -444,7 +530,7 @@ RULES:
         generationConfig: {
           temperature: 0.3,
           topP: 0.9,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 1024,
           responseMimeType: 'application/json'
         }
       })
@@ -453,7 +539,7 @@ RULES:
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     const text = data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
-    return { text, model: data.model, raw: data };
+    return { text, model: data.model, tried: data.tried, raw: data };
   }
 
   // ============================================================
@@ -488,15 +574,20 @@ RULES:
           parts.push({ text: `[User uploaded image: ${state.currentFile.name}, ${state.currentFile.width}x${state.currentFile.height}]` });
           parts.push({ inline_data: { mime_type: state.currentFile.mime, data: state.currentFile.base64 } });
         } else if (state.currentFile.kind === 'pdf') {
-          parts.push({ text: `[User uploaded PDF: ${state.currentFile.name}, ${state.currentFile.pageCount} pages. Extracted text below.]\n\n${state.currentFile.text}` });
+          if (!state.currentFile.text || state.currentFile.text.trim().length < 10) {
+            addAIMessage('❌ Is PDF mein koi extractable text nahi mila. Ye scanned/image-based PDF hai. Kripya PDF page ka screenshot lekar image upload karo, ya manually text copy-paste karke pucho.');
+            setStatus('');
+            return;
+          }
+          parts.push({ text: `[User uploaded PDF: ${state.currentFile.name}, ${state.currentFile.pageCount} pages, ${state.currentFile.pagesWithText || 0} with text. Extracted text below.]\n\n${state.currentFile.text}` });
         }
       }
 
       setStatus('Thinking…', true);
-      const { text, model, raw } = await callAI(parts);
+      const { text, model, tried, raw } = await callAI(parts);
 
       if (state.debug) {
-        dom.debugPre.textContent = JSON.stringify({ model, rawText: text, raw }, null, 2);
+        dom.debugPre.textContent = JSON.stringify({ model, tried, rawText: text, raw }, null, 2);
       }
 
       const parsed = parseAIJSON(text);
@@ -531,8 +622,19 @@ RULES:
   // ============================================================
   async function executeActions(actions) {
     if (!actions.length) return;
+
+    // 🔒 PDF ke saath image editing actions nahi chalayenge
     if (!state.currentFile || state.currentFile.kind !== 'image') {
-      addAIMessage('📎 Please upload an image first.');
+      addAIMessage('📎 Ye image editing ka kaam hai. Pehle image upload karo (PDF nahi).');
+      return;
+    }
+
+    // 🔒 SAFETY: User ne explicitly image edit nahi maanga to mat chalao
+    const lastUserMsg = [...state.messages].reverse().find(m => m.role === 'user')?.content?.toLowerCase() || '';
+    const isEditRequest = /(resize|compress|convert|crop|rotate|flip|edit|chhota|bada|convert|kar do|bana do)/i.test(lastUserMsg);
+
+    if (!isEditRequest) {
+      addAIMessage('📷 Main image edit kar sakta hoon — resize, compress, convert, rotate, flip, crop. Aap exact command do, jaise "Resize to 500x500" ya "Convert to webp".');
       return;
     }
 
@@ -633,9 +735,7 @@ RULES:
     const c = document.createElement('canvas');
     c.width = img.width; c.height = img.height;
     const cx = c.getContext('2d');
-    if (fmt === 'jpg') {
-      cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height);
-    }
+    if (fmt === 'jpg') { cx.fillStyle = '#fff'; cx.fillRect(0, 0, c.width, c.height); }
     cx.drawImage(img, 0, 0);
     const mime = { jpg: 'image/jpeg', png: 'image/png', webp: 'image/webp' }[fmt];
     const dataUrl = c.toDataURL(mime, 0.92);
