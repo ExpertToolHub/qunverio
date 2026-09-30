@@ -1,6 +1,6 @@
 /* ============================================================
    QUNVERIO — AI TOOL (tools/ai-tool.js)
-   Full-screen AI workspace: text + image + PDF + tool execution
+   Full-screen AI workspace: text + image + PDF (with OCR) + tools
    ============================================================ */
 
 console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
@@ -8,19 +8,19 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
 (function () {
   'use strict';
 
-  // ============================================================
-  // CONFIG
-  // ============================================================
   const CONFIG = {
     API_ENDPOINT: '/api/ai',
     MAX_IMAGE_DIM: 1600,
     HISTORY_LIMIT: 50,
-    DEBUG: false
+    DEBUG: false,
+    OCR_MAX_PAGES: 10,        // OCR slow hai — 10 pages tak
+    OCR_ENABLED: true,        // false karo to OCR skip ho jayega
+    OCR_LANG: 'eng+hin'       // English + Hindi
   };
 
   const state = {
     messages: [],
-    currentFile: null,       // { kind:'image'|'pdf', ... }
+    currentFile: null,
     history: [],
     isOpen: false,
     isBusy: false,
@@ -28,58 +28,22 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
   };
 
   // ============================================================
-  // IMAGE TOOL REGISTRY
+  // IMAGE TOOL REGISTRY (same as before)
   // ============================================================
   const IMAGE_TOOL_REGISTRY = {
-    image_resize: {
-      name: 'Resize Image',
-      description: 'Resize image to specific width x height in pixels.',
-      required: ['width', 'height'],
-      requiresFile: 'image',
-      execute: async (p, ctx) => await imageResize(p, ctx)
-    },
-    image_compress: {
-      name: 'Compress Image',
-      description: 'Compress image to a target maximum size in KB.',
-      required: ['maxSizeKB'],
-      requiresFile: 'image',
-      execute: async (p, ctx) => await imageCompress(p, ctx)
-    },
-    image_convert: {
-      name: 'Convert Image Format',
-      description: 'Convert image to jpg, png, or webp.',
-      required: ['format'],
-      requiresFile: 'image',
-      execute: async (p, ctx) => await imageConvert(p, ctx)
-    },
-    image_crop: {
-      name: 'Crop Image',
-      description: 'Crop image to a square or rectangle (center crop).',
-      required: ['width', 'height'],
-      requiresFile: 'image',
-      execute: async (p, ctx) => await imageCrop(p, ctx)
-    },
-    image_rotate: {
-      name: 'Rotate Image',
-      description: 'Rotate image by 90, 180, or 270 degrees.',
-      required: ['degrees'],
-      requiresFile: 'image',
-      execute: async (p, ctx) => await imageRotate(p, ctx)
-    },
-    image_flip: {
-      name: 'Flip Image',
-      description: 'Flip image horizontally or vertically.',
-      required: ['direction'],
-      requiresFile: 'image',
-      execute: async (p, ctx) => await imageFlip(p, ctx)
-    }
+    image_resize: { name: 'Resize Image', description: 'Resize image to specific width x height in pixels.', required: ['width', 'height'], requiresFile: 'image', execute: async (p, c) => await imageResize(p, c) },
+    image_compress: { name: 'Compress Image', description: 'Compress image to a target maximum size in KB.', required: ['maxSizeKB'], requiresFile: 'image', execute: async (p, c) => await imageCompress(p, c) },
+    image_convert: { name: 'Convert Image Format', description: 'Convert image to jpg, png, or webp.', required: ['format'], requiresFile: 'image', execute: async (p, c) => await imageConvert(p, c) },
+    image_crop: { name: 'Crop Image', description: 'Crop image to a square or rectangle (center crop).', required: ['width', 'height'], requiresFile: 'image', execute: async (p, c) => await imageCrop(p, c) },
+    image_rotate: { name: 'Rotate Image', description: 'Rotate image by 90, 180, or 270 degrees.', required: ['degrees'], requiresFile: 'image', execute: async (p, c) => await imageRotate(p, c) },
+    image_flip: { name: 'Flip Image', description: 'Flip image horizontally or vertically.', required: ['direction'], requiresFile: 'image', execute: async (p, c) => await imageFlip(p, c) }
   };
 
-  // ============================================================
-  // DOM
-  // ============================================================
   let dom = null;
 
+  // ============================================================
+  // STYLES
+  // ============================================================
   function injectStyles() {
     if (document.getElementById('qai-styles')) return;
     const css = `
@@ -136,6 +100,8 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
       .qai-hist-meta b { color: #c7d3e6; font-size: .78rem; }
       .qai-prop { display: flex; justify-content: space-between; padding: 6px 0; font-size: .8rem; border-bottom: 1px solid #1e2738; }
       .qai-prop span { color: #6b7a91; }
+      .qai-progress-bar { width: 100%; height: 4px; background: #1e2738; border-radius: 2px; overflow: hidden; margin-top: 6px; }
+      .qai-progress-fill { height: 100%; background: linear-gradient(90deg,#6366f1,#ec4899); width: 0%; transition: width 0.3s; }
     `;
     const style = document.createElement('style');
     style.id = 'qai-styles';
@@ -200,7 +166,6 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
       </div>
     `;
     document.body.appendChild(wrap);
-
     dom = {
       wrap,
       chat: document.getElementById('qai-chat'),
@@ -237,7 +202,7 @@ console.log('%cQunverio AI Tool Loading...', 'color:#8b5cf6;font-weight:bold');
 • "Resize to 500x500" / "Compress under 200 KB"
 • "Convert to webp" / "Rotate 90" / "Flip horizontal"
 
-📄 PDF (sirf text-based PDFs)
+📄 PDF (text-based ya scanned — dono chalenge)
 • "Summarize this PDF"
 • "What is on page 2?"
 • "Key points nikaalo"
@@ -336,15 +301,18 @@ Kuch bhi try karo! 😊`);
         dom.thumb.innerHTML = `<img src="${img.dataUrl}" alt="preview">`;
         dom.fileInfo.textContent = `${file.name} · ${img.width}×${img.height} · ${Math.round(file.size / 1024)} KB`;
         addSystemMessage(`🖼️ ${file.name} uploaded`);
+        setStatus('Ready');
       } else {
-        setStatus('Extracting PDF text…', true);
+        // PDF — text extraction + OCR
+        setStatus('Reading PDF…', true);
+        addSystemMessage(`📄 ${file.name} — padh raha hoon, thoda time lagega…`);
         const pdf = await processPDFFile(file);
         state.currentFile = { kind: 'pdf', ...pdf, name: file.name, size: file.size };
         dom.thumb.innerHTML = `<span>📄</span>`;
-        dom.fileInfo.textContent = `${file.name} · ${pdf.pageCount} pages · ${pdf.pagesWithText || 0} with text · ${Math.round(file.size / 1024)} KB`;
-        addSystemMessage(`📄 ${file.name} uploaded — ${pdf.pagesWithText || 0}/${pdf.pageCount} pages readable`);
+        dom.fileInfo.textContent = `${file.name} · ${pdf.pageCount} pages · ${Math.round(file.size / 1024)} KB`;
+        addSystemMessage(`✅ PDF ready — ${pdf.pageCount} pages${pdf.usedOCR ? ' (OCR used)' : ''}`);
+        setStatus('Ready');
       }
-      setStatus('Ready');
     } catch (err) {
       addSystemMessage('❌ ' + err.message);
       setStatus('');
@@ -381,69 +349,126 @@ Kuch bhi try karo! 😊`);
     });
   }
 
+  // ============================================================
+  // PDF.JS + TESSERACT LOADERS
+  // ============================================================
   async function ensurePDFJS() {
     if (!window.pdfjsLib) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
         s.onload = resolve;
-        s.onerror = () => reject(new Error('PDF.js failed to load'));
+        s.onerror = () => reject(new Error('PDF.js load failed'));
         document.head.appendChild(s);
       });
     }
-    // ✅ ALWAYS set worker (whether already loaded or not)
     if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
       window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
   }
 
+  async function ensureTesseract() {
+    if (window.Tesseract) return;
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Tesseract load failed'));
+      document.head.appendChild(s);
+    });
+  }
+
+  // ============================================================
+  // PDF PROCESSING — text extract + OCR fallback
+  // ============================================================
   async function processPDFFile(file) {
     await ensurePDFJS();
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const pageCount = pdf.numPages;
-    const maxPages = Math.min(pageCount, 50);
+    const maxPages = Math.min(pageCount, CONFIG.OCR_MAX_PAGES);
 
     let fullText = '';
     let pagesWithText = 0;
-    let pagesWithoutText = 0;
+    let pagesWithOCR = 0;
+    let usedOCR = false;
 
+    // Step 1: try text extraction for all pages
     for (let i = 1; i <= maxPages; i++) {
-      setStatus(`Extracting PDF page ${i}/${maxPages}…`, true);
+      setStatus(`Page ${i}/${maxPages} — text check…`, true);
       try {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items
-          .map(item => item.str || '')
-          .filter(str => str.trim().length > 0)
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
+        const pageText = textContent.items.map(it => it.str || '').filter(s => s.trim()).join(' ').replace(/\s+/g, ' ').trim();
 
-        if (pageText.length > 5) {
+        if (pageText.length > 20) {
           pagesWithText++;
           fullText += `\n--- Page ${i} ---\n${pageText}\n`;
         } else {
-          pagesWithoutText++;
-          fullText += `\n--- Page ${i} (no extractable text) ---\n`;
+          fullText += `\n--- Page ${i} (needs OCR) ---\n`;
         }
       } catch (err) {
-        console.error(`Page ${i} error:`, err);
-        fullText += `\n--- Page ${i} (error) ---\n`;
+        console.error(`Page ${i} text error:`, err);
+      }
+    }
+
+    // Step 2: agar koi bhi page pe text nahi mila, OCR chalao
+    if (pagesWithText === 0 && CONFIG.OCR_ENABLED) {
+      addSystemMessage('🔍 Scanned PDF detected — OCR chala raha hoon (thoda time lagega)…');
+      await ensureTesseract();
+      usedOCR = true;
+
+      for (let i = 1; i <= maxPages; i++) {
+        setStatus(`OCR page ${i}/${maxPages} — please wait…`, true);
+        try {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 2.0 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          // Progress update
+          const result = await Tesseract.recognize(canvas, CONFIG.OCR_LANG, {
+            logger: m => {
+              if (m.status === 'recognizing text') {
+                const pct = Math.round(m.progress * 100);
+                setStatus(`OCR page ${i}/${maxPages} — ${pct}%`, true);
+              }
+            }
+          });
+
+          const ocrText = (result.data.text || '').replace(/\s+/g, ' ').trim();
+          if (ocrText.length > 5) {
+            pagesWithOCR++;
+            fullText += `\n--- Page ${i} (OCR) ---\n${ocrText}\n`;
+          } else {
+            fullText += `\n--- Page ${i} (OCR found nothing) ---\n`;
+          }
+        } catch (err) {
+          console.error(`OCR page ${i} error:`, err);
+          fullText += `\n--- Page ${i} (OCR error) ---\n`;
+        }
       }
     }
 
     if (pageCount > maxPages) {
-      fullText += `\n[... ${pageCount - maxPages} more pages not extracted ...]`;
+      fullText += `\n[... ${pageCount - maxPages} more pages not processed (limit ${maxPages}) ...]`;
     }
 
-    console.log(`PDF extraction: ${pagesWithText} with text, ${pagesWithoutText} without, total ${pageCount}`);
-
-    if (pagesWithText === 0) {
-      throw new Error(`Ye scanned/image-based PDF hai — ${pageCount} pages mein kisi bhi page pe text nahi mila. Iska text extract nahi ho sakta. Aap PDF page ka screenshot lekar image upload kar sakte ho, ya manually text copy-paste kar sakte ho.`);
+    const finalLength = fullText.replace(/---.*?---/g, '').trim().length;
+    if (finalLength < 10) {
+      throw new Error('Is PDF se koi bhi text nahi nikal paya — na text layer thi na OCR kaam kiya. Kripya page ka screenshot lekar image upload karo.');
     }
 
-    return { text: fullText.trim(), pageCount, pagesWithText, pagesWithoutText, truncated: pageCount > maxPages };
+    return {
+      text: fullText.trim(),
+      pageCount,
+      pagesWithText,
+      pagesWithOCR,
+      usedOCR
+    };
   }
 
   // ============================================================
@@ -455,64 +480,42 @@ Kuch bhi try karo! 😊`);
       return `- ${k}: ${v.description}\n    required: ${req}\n    needs: ${v.requiresFile}`;
     }).join('\n');
 
-    return `You are Qunverio AI — the intelligent assistant of Qunverio, a multi-tool website.
+    return `You are Qunverio AI — the intelligent assistant of Qunverio.
 
 YOUR ABILITIES:
+1. General conversation, writing, translation, summarization, coding help.
+2. Image analysis (describe, summarize, read text, identify objects).
+3. Image editing (resize, compress, convert, rotate, flip, crop) — real browser tools.
+4. PDF reading (text-based or OCR'd scanned PDFs) — summarize, answer questions.
+5. Multi-step tasks.
 
-1. GENERAL CONVERSATION
-   - Answer any question, explain concepts, write content, translate, summarize, brainstorm, solve problems
-   - Reply in user's language (English / Hindi / Hinglish)
-
-2. IMAGE ANALYSIS (when user uploaded an image)
-   - Describe what is in the image
-   - Summarize the image in 2-3 lines
-   - Read text (OCR)
-   - Identify objects, people, scenes, diagrams
-
-3. IMAGE EDITING (real tools — execute locally)
-   - Resize, compress, convert (jpg/png/webp), rotate, flip, crop
-
-4. PDF READING (when user uploaded a PDF with extractable text)
-   - Summarize content, answer questions, extract key points
-   - If PDF has no text (scanned), say honestly: "Ye scanned PDF hai, iska text extract nahi ho sakta"
-
-5. MULTI-STEP TASKS
-   - Chain multiple image actions: "resize to 800x800 and convert to webp"
-
-WHAT YOU CANNOT DO (be honest, don't fake):
-- Generate QR codes (suggest: use Qunverio QR Generator tool)
+WHAT YOU CANNOT DO (be honest):
+- Generate QR codes (suggest Qunverio QR Generator tool)
 - Edit PDF content / delete PDF pages
-- Remove image backgrounds (suggest: Background Remover tool)
-- Create passport photos (suggest: Passport Photo tool)
+- Remove image backgrounds (suggest Background Remover tool)
+- Create passport photos (suggest Passport Photo tool)
 - Process videos, generate images from text, access the internet
 
 Available image tools:
 ${toolList}
 
 RESPONSE SHAPES (return ONLY valid JSON, no markdown, no backticks):
-
 1. {"type":"answer","message":"<answer>"}
-
 2. {"type":"action","actions":[{"tool":"<name>","parameters":{...}}]}
-
 3. {"type":"clarification","message":"<question>"}
-
-4. {"type":"unsupported","message":"<honest explanation + suggest Qunverio tool if applicable>"}
+4. {"type":"unsupported","message":"<explanation>"}
 
 RULES:
 - Use ONLY tools listed above. Never invent.
-- General questions → "answer" (in user's language).
+- General questions → "answer" (in user's language — Hindi/Hinglish/English).
 - Image processing → "action". If no image uploaded → "clarification".
 - Extract params: "resize to 800x600" → {"width":800,"height":600}; "convert to webp" → {"format":"webp"}; "compress under 300 KB" → {"maxSizeKB":300}; "rotate 90" → {"degrees":90}.
 - Multi-step → array of actions.
-- NEVER claim you did something. The app executes and shows the real result.
-- If user uploaded a PDF, use its extracted text to answer. If PDF had no text, be honest.
-- Do NOT trigger image edit actions unless the user explicitly asked for an image edit (resize/compress/convert/crop/rotate/flip). If user is only asking about the image (describe/summarize/read text), use "answer" type, not "action".`;
+- NEVER claim you did something. The app will execute.
+- If user uploaded a PDF, use its extracted text to answer.
+- Do NOT trigger image edit actions unless user explicitly asked for an edit. If user is asking about an image (describe/summarize/read), use "answer" type.`;
   }
 
-  // ============================================================
-  // AI CALL
-  // ============================================================
   async function callAI(userParts) {
     const contents = [];
     const recent = state.messages.slice(-6);
@@ -542,9 +545,6 @@ RULES:
     return { text, model: data.model, tried: data.tried, raw: data };
   }
 
-  // ============================================================
-  // PARSE AI JSON
-  // ============================================================
   function parseAIJSON(raw) {
     if (!raw) return null;
     let s = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
@@ -574,12 +574,7 @@ RULES:
           parts.push({ text: `[User uploaded image: ${state.currentFile.name}, ${state.currentFile.width}x${state.currentFile.height}]` });
           parts.push({ inline_data: { mime_type: state.currentFile.mime, data: state.currentFile.base64 } });
         } else if (state.currentFile.kind === 'pdf') {
-          if (!state.currentFile.text || state.currentFile.text.trim().length < 10) {
-            addAIMessage('❌ Is PDF mein koi extractable text nahi mila. Ye scanned/image-based PDF hai. Kripya PDF page ka screenshot lekar image upload karo, ya manually text copy-paste karke pucho.');
-            setStatus('');
-            return;
-          }
-          parts.push({ text: `[User uploaded PDF: ${state.currentFile.name}, ${state.currentFile.pageCount} pages, ${state.currentFile.pagesWithText || 0} with text. Extracted text below.]\n\n${state.currentFile.text}` });
+          parts.push({ text: `[User uploaded PDF: ${state.currentFile.name}, ${state.currentFile.pageCount} pages. Extracted content below.]\n\n${state.currentFile.text}` });
         }
       }
 
@@ -623,18 +618,16 @@ RULES:
   async function executeActions(actions) {
     if (!actions.length) return;
 
-    // 🔒 PDF ke saath image editing actions nahi chalayenge
     if (!state.currentFile || state.currentFile.kind !== 'image') {
       addAIMessage('📎 Ye image editing ka kaam hai. Pehle image upload karo (PDF nahi).');
       return;
     }
 
-    // 🔒 SAFETY: User ne explicitly image edit nahi maanga to mat chalao
     const lastUserMsg = [...state.messages].reverse().find(m => m.role === 'user')?.content?.toLowerCase() || '';
-    const isEditRequest = /(resize|compress|convert|crop|rotate|flip|edit|chhota|bada|convert|kar do|bana do)/i.test(lastUserMsg);
+    const isEditRequest = /(resize|compress|convert|crop|rotate|flip|edit|chhota|bada|bana do|kar do)/i.test(lastUserMsg);
 
     if (!isEditRequest) {
-      addAIMessage('📷 Main image edit kar sakta hoon — resize, compress, convert, rotate, flip, crop. Aap exact command do, jaise "Resize to 500x500" ya "Convert to webp".');
+      addAIMessage('📷 Main image edit kar sakta hoon — resize, compress, convert, rotate, flip, crop. Exact command do, jaise "Resize to 500x500".');
       return;
     }
 
@@ -683,7 +676,6 @@ RULES:
       img.src = src;
     });
   }
-
   async function blobFromDataUrl(dataUrl) {
     const [meta, b64] = dataUrl.split(',');
     const mime = (meta.match(/data:([^;]+)/) || [])[1] || 'image/png';
@@ -692,7 +684,6 @@ RULES:
     for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
     return new Blob([arr], { type: mime });
   }
-
   async function imageResize(p, ctx) {
     const w = parseInt(p.width), h = parseInt(p.height);
     if (!w || !h || w < 1 || h < 1 || w > 8000 || h > 8000) throw new Error('Invalid dimensions');
@@ -706,7 +697,6 @@ RULES:
     const dataUrl = c.toDataURL(mime, 0.92);
     return { dataUrl, mime, width: w, height: h, blob: await blobFromDataUrl(dataUrl), fileName: 'resized.' + (mime === 'image/png' ? 'png' : 'jpg') };
   }
-
   async function imageCompress(p, ctx) {
     const targetKB = parseInt(p.maxSizeKB);
     if (!targetKB || targetKB < 1) throw new Error('Invalid target size');
@@ -727,7 +717,6 @@ RULES:
     }
     return { dataUrl, mime: 'image/jpeg', width: img.width, height: img.height, blob, fileName: 'compressed.jpg' };
   }
-
   async function imageConvert(p, ctx) {
     const fmt = String(p.format || '').toLowerCase().replace('jpeg', 'jpg');
     if (!['jpg', 'png', 'webp'].includes(fmt)) throw new Error('Format must be jpg/png/webp');
@@ -741,7 +730,6 @@ RULES:
     const dataUrl = c.toDataURL(mime, 0.92);
     return { dataUrl, mime, width: img.width, height: img.height, blob: await blobFromDataUrl(dataUrl), fileName: 'converted.' + fmt };
   }
-
   async function imageCrop(p, ctx) {
     const w = parseInt(p.width), h = parseInt(p.height);
     if (!w || !h) throw new Error('Invalid crop dimensions');
@@ -758,7 +746,6 @@ RULES:
     const dataUrl = c.toDataURL(mime, 0.92);
     return { dataUrl, mime, width: w, height: h, blob: await blobFromDataUrl(dataUrl), fileName: 'cropped.' + (mime === 'image/png' ? 'png' : 'jpg') };
   }
-
   async function imageRotate(p, ctx) {
     const deg = parseInt(p.degrees);
     if (![90, 180, 270].includes(deg)) throw new Error('Degrees must be 90/180/270');
@@ -776,7 +763,6 @@ RULES:
     const dataUrl = c.toDataURL(mime, 0.92);
     return { dataUrl, mime, width: c.width, height: c.height, blob: await blobFromDataUrl(dataUrl), fileName: 'rotated.' + (mime === 'image/png' ? 'png' : 'jpg') };
   }
-
   async function imageFlip(p, ctx) {
     const dir = String(p.direction || '').toLowerCase();
     if (!['horizontal', 'vertical'].includes(dir)) throw new Error('Direction must be horizontal/vertical');
@@ -795,9 +781,6 @@ RULES:
     return { dataUrl, mime, width: img.width, height: img.height, blob: await blobFromDataUrl(dataUrl), fileName: 'flipped.' + (mime === 'image/png' ? 'png' : 'jpg') };
   }
 
-  // ============================================================
-  // PREVIEW
-  // ============================================================
   function showPreview(result) {
     const url = URL.createObjectURL(result.blob);
     dom.preview.innerHTML = `
@@ -817,28 +800,15 @@ RULES:
     `;
   }
 
-  // ============================================================
-  // HISTORY
-  // ============================================================
   function addHistory(tool, params, result) {
-    const item = {
-      tool, params,
-      fileName: result.fileName,
-      size: result.blob.size,
-      ts: Date.now(),
-      thumbDataUrl: result.dataUrl
-    };
+    const item = { tool, params, fileName: result.fileName, size: result.blob.size, ts: Date.now(), thumbDataUrl: result.dataUrl };
     state.history.unshift(item);
     if (state.history.length > CONFIG.HISTORY_LIMIT) state.history.pop();
     renderHistory();
   }
-
   function renderHistory() {
     if (!dom.historyList) return;
-    if (!state.history.length) {
-      dom.historyList.innerHTML = '<div class="qai-empty">No activity yet</div>';
-      return;
-    }
+    if (!state.history.length) { dom.historyList.innerHTML = '<div class="qai-empty">No activity yet</div>'; return; }
     dom.historyList.innerHTML = state.history.map(h => `
       <div class="qai-hist-item">
         <img src="${h.thumbDataUrl}" alt="">
