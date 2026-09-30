@@ -23,11 +23,13 @@ export default async function handler(req, res) {
   const { contents, systemInstruction, generationConfig } = req.body || {};
   if (!contents) return res.status(400).json({ error: 'Missing "contents"' });
 
+  // ✅ UPDATED model list — 2.5-flash hata diya, 3.8-flash top pe
   const MODELS = [
-    'gemini-3.5-flash',
     'gemini-3.8-flash',
-    'gemini-flash-latest',
-    'gemini-2.5-flash'
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-flash-latest'
   ];
 
   const body = {
