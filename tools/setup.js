@@ -437,7 +437,17 @@ const EXTRA_TOOLS = [
   desc: 'Remove image background with AI — change color, gradient, custom bg, brush edit',
   howto: 'Image upload karo. Remove Background click. AI background hata dega. Background change karo (color/gradient/custom). Brush se edit karo. Download karo.',
   kw: ['background remover', 'remove background', 'bg remover', 'transparent background', 'background change', 'bg color change', 'ai background remover', 'photo background']
-}
+},
+,
+ {
+    id: 'ai-tool',
+    name: 'AI Assistant',
+    cat: 'ai',
+    icon: '✨',
+    desc: 'Ask anything, analyze images, resize/compress/convert, read PDFs',
+    howto: 'Type your question or upload an image/PDF. AI will understand and perform the action.',
+    kw: ['ai', 'assistant', 'chat', 'gpt', 'gemini', 'ask', 'image', 'analyze']
+  }
 ];
 
 /* ============================================================
