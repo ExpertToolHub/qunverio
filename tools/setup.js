@@ -58,12 +58,19 @@ const CATEGORIES = [
     desc: 'Merge, split, compress & more',
     gradient: 'linear-gradient(135deg,#ec4899,#ef4444)'
   },
-  {
+    {
     id: 'digital-studio',
     name: 'Digital Studio',
     icon: '📸',
     desc: 'Image tools for photo studios & print shops',
     gradient: 'linear-gradient(135deg,#8b5cf6,#ec4899)'
+  },
+  {
+    id: 'ai',
+    name: 'AI Tool',
+    icon: '✨',
+    desc: 'AI assistant — ask anything, edit images with AI',
+    gradient: 'linear-gradient(135deg,#6366f1,#ec4899)'
   }
 ];
 
