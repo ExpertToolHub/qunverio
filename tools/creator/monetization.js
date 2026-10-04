@@ -1,7 +1,7 @@
 /* ============================================================
-   QUNVERIO — MONETIZATION LAB
+   QUNVERIO — MONETIZATION LAB (v1.1)
    Path: tools/creator/monetization.js
-   6 client-side calculators (no API needed)
+   6 client-side calculators + premium dark print/PDF + HD PNG
    ============================================================ */
 
 (function () {
@@ -24,16 +24,12 @@
     n = Number(n) || 0;
     return '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 2 });
   }
-  function fmtUSD(n) {
-    n = Number(n) || 0;
-    return '$' + n.toLocaleString('en-US', { maximumFractionDigits: 2 });
-  }
   function fmtNum(n, d) {
     return (Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: d || 2 });
   }
 
   /* ============================================================
-     STYLES (scoped, injected once)
+     STYLES
      ============================================================ */
   const CSS = `
     .qvhm-tabs {
@@ -92,9 +88,7 @@
       border-color: #10b981;
       box-shadow: 0 0 0 3px rgba(16,185,129,.15);
     }
-    .qvhm-row2 {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    }
+    .qvhm-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 420px) { .qvhm-row2 { grid-template-columns: 1fr; } }
 
     .qvhm-btn {
@@ -148,22 +142,25 @@
     .qvhm-line.highlight .v { color: #10b981; }
 
     .qvhm-actions {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
       margin-top: 14px; padding-top: 14px;
       border-top: 1px solid var(--border, rgba(255,255,255,0.08));
     }
+    @media (max-width: 380px) { .qvhm-actions { grid-template-columns: repeat(2, 1fr); } }
     .qvhm-action {
       display: flex; flex-direction: column; align-items: center; gap: 3px;
-      padding: 10px 6px; border-radius: 10px;
+      padding: 10px 4px; border-radius: 10px;
       background: var(--surface-2, #1c2250);
       border: 1px solid var(--border-strong, rgba(255,255,255,0.14));
-      font-size: 11.5px; font-weight: 700;
+      font-size: 11px; font-weight: 700;
       color: var(--text, #eef1ff);
       cursor: pointer; transition: all .15s;
     }
     .qvhm-action:hover { background: var(--surface-hover, #232a5e); }
     .qvhm-action:active { transform: scale(.96); }
-    .qvhm-action .qvh-a-icon { font-size: 16px; }
+    .qvhm-action .qvh-a-icon { font-size: 15px; }
+    .qvhm-action[data-act="png"] { border-color: rgba(139,92,246,.5); }
+    .qvhm-action[data-act="png"]:hover { background: rgba(139,92,246,.15); }
 
     .qvhm-note {
       font-size: 11.5px; color: var(--text-3, #6b74a0);
@@ -183,7 +180,7 @@
   }
 
   /* ============================================================
-     RENDER — the whole tool
+     RENDER
      ============================================================ */
   function render(container) {
     injectCSS();
@@ -215,7 +212,6 @@
       </div>
     `;
 
-    // Build all sections
     document.getElementById('qvhmSections').innerHTML = `
       ${sectionRevenue()}
       ${sectionCPM()}
@@ -229,9 +225,18 @@
     wireCalculators();
   }
 
-  /* ============================================================
-     SECTION: Revenue Calculator
-     ============================================================ */
+  /* ── Helper: actions block for each result ── */
+  function actionsBlock(boxId, title, file) {
+    return `
+      <div class="qvhm-actions">
+        <button class="qvhm-action" data-act="copy" data-box="${boxId}"><span class="qvh-a-icon">📋</span>Copy</button>
+        <button class="qvhm-action" data-act="print" data-box="${boxId}" data-title="${title}"><span class="qvh-a-icon">🖨️</span>Print</button>
+        <button class="qvhm-action" data-act="pdf" data-box="${boxId}" data-file="${file}"><span class="qvh-a-icon">📄</span>PDF</button>
+        <button class="qvhm-action" data-act="png" data-box="${boxId}" data-file="${file}"><span class="qvh-a-icon">🖼️</span>HD PNG</button>
+      </div>
+    `;
+  }
+
   function sectionRevenue() {
     return `
       <div class="qvhm-section active" data-section="revenue">
@@ -253,25 +258,17 @@
           </div>
           <button class="qvhm-btn qvhm-btn-primary" id="rv-calc">💰 Calculate Revenue</button>
         </div>
-
         <div class="qvhm-result" id="rv-result">
           <div class="qvhm-result-title">Estimated Revenue</div>
           <div class="qvhm-main" id="rv-main">₹0</div>
           <div class="qvhm-sub" id="rv-sub"></div>
           <div id="rv-breakdown"></div>
-          <div class="qvhm-actions">
-            <button class="qvhm-action" data-act="copy" data-box="rv-result"><span class="qvh-a-icon">📋</span>Copy</button>
-            <button class="qvhm-action" data-act="print" data-box="rv-result" data-title="YouTube Revenue Report"><span class="qvh-a-icon">🖨️</span>Print</button>
-            <button class="qvhm-action" data-act="pdf" data-box="rv-result" data-file="qunverio-youtube-revenue"><span class="qvh-a-icon">📄</span>PDF</button>
-          </div>
+          ${actionsBlock('rv-result', 'YouTube Revenue Report', 'qunverio-youtube-revenue')}
         </div>
       </div>
     `;
   }
 
-  /* ============================================================
-     SECTION: CPM Calculator
-     ============================================================ */
   function sectionCPM() {
     return `
       <div class="qvhm-section" data-section="cpm">
@@ -282,33 +279,23 @@
             <input type="number" id="cp-rev" placeholder="e.g. 5000" min="0" step="0.01" inputmode="decimal" />
           </div>
           <div class="qvhm-field">
-            <label>Total Ad Impressions (thousands)</label>
+            <label>Total Ad Impressions (in thousands)</label>
             <input type="number" id="cp-imp" placeholder="e.g. 100 (for 100,000 impressions)" min="0" step="0.01" inputmode="decimal" />
-            <div style="font-size:11px;color:var(--text-3);margin-top:4px">
-              CPM = Revenue ÷ (Impressions ÷ 1000). Agar 100,000 impressions hain toh 100 likho.
-            </div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:4px">CPM = Revenue ÷ (Impressions ÷ 1000). Agar 100,000 impressions hain toh 100 likho.</div>
           </div>
           <button class="qvhm-btn qvhm-btn-primary" id="cp-calc">📊 Calculate CPM</button>
         </div>
-
         <div class="qvhm-result" id="cp-result">
           <div class="qvhm-result-title">Calculated CPM</div>
           <div class="qvhm-main" id="cp-main">₹0</div>
           <div class="qvhm-sub">Cost per 1,000 impressions</div>
           <div id="cp-breakdown"></div>
-          <div class="qvhm-actions">
-            <button class="qvhm-action" data-act="copy" data-box="cp-result"><span class="qvh-a-icon">📋</span>Copy</button>
-            <button class="qvhm-action" data-act="print" data-box="cp-result" data-title="CPM Report"><span class="qvh-a-icon">🖨️</span>Print</button>
-            <button class="qvhm-action" data-act="pdf" data-box="cp-result" data-file="qunverio-cpm"><span class="qvh-a-icon">📄</span>PDF</button>
-          </div>
+          ${actionsBlock('cp-result', 'CPM Report', 'qunverio-cpm')}
         </div>
       </div>
     `;
   }
 
-  /* ============================================================
-     SECTION: RPM Calculator
-     ============================================================ */
   function sectionRPM() {
     return `
       <div class="qvhm-section" data-section="rpm">
@@ -319,33 +306,23 @@
             <input type="number" id="rp-rev" placeholder="e.g. 5000" min="0" step="0.01" inputmode="decimal" />
           </div>
           <div class="qvhm-field">
-            <label>Total Views (thousands)</label>
+            <label>Total Views (in thousands)</label>
             <input type="number" id="rp-views" placeholder="e.g. 200 (for 200,000 views)" min="0" step="0.01" inputmode="decimal" />
-            <div style="font-size:11px;color:var(--text-3);margin-top:4px">
-              RPM = Revenue ÷ (Views ÷ 1000). RPM includes ads + memberships + Super Chat.
-            </div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:4px">RPM = Revenue ÷ (Views ÷ 1000). RPM includes ads + memberships + Super Chat.</div>
           </div>
           <button class="qvhm-btn qvhm-btn-primary" id="rp-calc">📈 Calculate RPM</button>
         </div>
-
         <div class="qvhm-result" id="rp-result">
           <div class="qvhm-result-title">Calculated RPM</div>
           <div class="qvhm-main" id="rp-main">₹0</div>
           <div class="qvhm-sub">Revenue per 1,000 total views</div>
           <div id="rp-breakdown"></div>
-          <div class="qvhm-actions">
-            <button class="qvhm-action" data-act="copy" data-box="rp-result"><span class="qvh-a-icon">📋</span>Copy</button>
-            <button class="qvhm-action" data-act="print" data-box="rp-result" data-title="RPM Report"><span class="qvh-a-icon">🖨️</span>Print</button>
-            <button class="qvhm-action" data-act="pdf" data-box="rp-result" data-file="qunverio-rpm"><span class="qvh-a-icon">📄</span>PDF</button>
-          </div>
+          ${actionsBlock('rp-result', 'RPM Report', 'qunverio-rpm')}
         </div>
       </div>
     `;
   }
 
-  /* ============================================================
-     SECTION: Sponsorship Rate Estimator
-     ============================================================ */
   function sectionSponsor() {
     return `
       <div class="qvhm-section" data-section="sponsor">
@@ -370,33 +347,25 @@
           <div class="qvhm-field">
             <label>Negotiation Multiplier</label>
             <select id="sp-mult">
-              <option value="0.7">Beginner (0.7x) — smaller channel</option>
+              <option value="0.7">Beginner (0.7x)</option>
               <option value="1.0" selected>Standard (1.0x)</option>
-              <option value="1.3">Established (1.3x) — good brand fit</option>
-              <option value="1.6">Premium (1.6x) — high engagement</option>
+              <option value="1.3">Established (1.3x)</option>
+              <option value="1.6">Premium (1.6x)</option>
             </select>
           </div>
           <button class="qvhm-btn qvhm-btn-primary" id="sp-calc">🤝 Estimate Sponsorship Rate</button>
         </div>
-
         <div class="qvhm-result" id="sp-result">
           <div class="qvhm-result-title">Estimated Sponsorship Rate</div>
           <div class="qvhm-main" id="sp-main">₹0</div>
           <div class="qvhm-sub">Approximate range per sponsored video</div>
           <div id="sp-breakdown"></div>
-          <div class="qvhm-actions">
-            <button class="qvhm-action" data-act="copy" data-box="sp-result"><span class="qvh-a-icon">📋</span>Copy</button>
-            <button class="qvhm-action" data-act="print" data-box="sp-result" data-title="Sponsorship Rate Report"><span class="qvh-a-icon">🖨️</span>Print</button>
-            <button class="qvhm-action" data-act="pdf" data-box="sp-result" data-file="qunverio-sponsorship"><span class="qvh-a-icon">📄</span>PDF</button>
-          </div>
+          ${actionsBlock('sp-result', 'Sponsorship Rate Report', 'qunverio-sponsorship')}
         </div>
       </div>
     `;
   }
 
-  /* ============================================================
-     SECTION: Monthly Income Projection
-     ============================================================ */
   function sectionMonthly() {
     return `
       <div class="qvhm-section" data-section="monthly">
@@ -428,25 +397,17 @@
           </div>
           <button class="qvhm-btn qvhm-btn-primary" id="mo-calc">📅 Project Income</button>
         </div>
-
         <div class="qvhm-result" id="mo-result">
           <div class="qvhm-result-title">Monthly Income Projection</div>
           <div class="qvhm-main" id="mo-main">₹0</div>
           <div class="qvhm-sub">Total estimated monthly income</div>
           <div id="mo-breakdown"></div>
-          <div class="qvhm-actions">
-            <button class="qvhm-action" data-act="copy" data-box="mo-result"><span class="qvh-a-icon">📋</span>Copy</button>
-            <button class="qvhm-action" data-act="print" data-box="mo-result" data-title="Monthly Income Projection"><span class="qvh-a-icon">🖨️</span>Print</button>
-            <button class="qvhm-action" data-act="pdf" data-box="mo-result" data-file="qunverio-monthly-income"><span class="qvh-a-icon">📄</span>PDF</button>
-          </div>
+          ${actionsBlock('mo-result', 'Monthly Income Projection', 'qunverio-monthly-income')}
         </div>
       </div>
     `;
   }
 
-  /* ============================================================
-     SECTION: Goal Calculator
-     ============================================================ */
   function sectionGoal() {
     return `
       <div class="qvhm-section" data-section="goal">
@@ -468,25 +429,17 @@
           </div>
           <button class="qvhm-btn qvhm-btn-primary" id="gl-calc">🎯 Calculate Required Views</button>
         </div>
-
         <div class="qvhm-result" id="gl-result">
           <div class="qvhm-result-title">Required Monthly Views</div>
           <div class="qvhm-main" id="gl-main">0</div>
           <div class="qvhm-sub">Estimated views needed to hit your goal</div>
           <div id="gl-breakdown"></div>
-          <div class="qvhm-actions">
-            <button class="qvhm-action" data-act="copy" data-box="gl-result"><span class="qvh-a-icon">📋</span>Copy</button>
-            <button class="qvhm-action" data-act="print" data-box="gl-result" data-title="Goal Calculator Report"><span class="qvh-a-icon">🖨️</span>Print</button>
-            <button class="qvhm-action" data-act="pdf" data-box="gl-result" data-file="qunverio-goal"><span class="qvh-a-icon">📄</span>PDF</button>
-          </div>
+          ${actionsBlock('gl-result', 'Goal Calculator Report', 'qunverio-goal')}
         </div>
       </div>
     `;
   }
 
-  /* ============================================================
-     WIRE TABS
-     ============================================================ */
   function wireTabs(container) {
     container.querySelectorAll('.qvhm-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -500,13 +453,13 @@
     });
   }
 
-  /* ============================================================
-     WIRE CALCULATORS + ACTIONS
-     ============================================================ */
   function wireCalculators() {
-    // Revenue
-    const rv = document.getElementById('rv-calc');
-    if (rv) rv.addEventListener('click', () => {
+    const bind = (id, fn) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', fn);
+    };
+
+    bind('rv-calc', () => {
       const views = parseFloat(document.getElementById('rv-views').value) || 0;
       const cpm = parseFloat(document.getElementById('rv-cpm').value) || 0;
       const mpr = parseFloat(document.getElementById('rv-mpr').value) || 55;
@@ -527,9 +480,7 @@
       });
     });
 
-    // CPM
-    const cp = document.getElementById('cp-calc');
-    if (cp) cp.addEventListener('click', () => {
+    bind('cp-calc', () => {
       const rev = parseFloat(document.getElementById('cp-rev').value) || 0;
       const impK = parseFloat(document.getElementById('cp-imp').value) || 0;
       if (!rev || !impK) { QVH.toast('Revenue aur impressions daalo', 'error'); return; }
@@ -545,9 +496,7 @@
       });
     });
 
-    // RPM
-    const rp = document.getElementById('rp-calc');
-    if (rp) rp.addEventListener('click', () => {
+    bind('rp-calc', () => {
       const rev = parseFloat(document.getElementById('rp-rev').value) || 0;
       const viewsK = parseFloat(document.getElementById('rp-views').value) || 0;
       if (!rev || !viewsK) { QVH.toast('Revenue aur views daalo', 'error'); return; }
@@ -563,9 +512,7 @@
       });
     });
 
-    // Sponsor
-    const sp = document.getElementById('sp-calc');
-    if (sp) sp.addEventListener('click', () => {
+    bind('sp-calc', () => {
       const views = parseFloat(document.getElementById('sp-views').value) || 0;
       const niche = parseFloat(document.getElementById('sp-niche').value) || 0.025;
       const mult = parseFloat(document.getElementById('sp-mult').value) || 1;
@@ -587,9 +534,7 @@
       });
     });
 
-    // Monthly
-    const mo = document.getElementById('mo-calc');
-    if (mo) mo.addEventListener('click', () => {
+    bind('mo-calc', () => {
       const views = parseFloat(document.getElementById('mo-views').value) || 0;
       const cpm = parseFloat(document.getElementById('mo-cpm').value) || 60;
       const mpr = parseFloat(document.getElementById('mo-mpr').value) || 55;
@@ -613,9 +558,7 @@
       });
     });
 
-    // Goal
-    const gl = document.getElementById('gl-calc');
-    if (gl) gl.addEventListener('click', () => {
+    bind('gl-calc', () => {
       const target = parseFloat(document.getElementById('gl-target').value) || 0;
       const cpm = parseFloat(document.getElementById('gl-cpm').value) || 60;
       const mpr = parseFloat(document.getElementById('gl-mpr').value) || 55;
@@ -637,21 +580,17 @@
       });
     });
 
-    // Action buttons (Copy / Print / PDF)
     document.querySelectorAll('.qvhm-action').forEach(btn => {
       btn.addEventListener('click', () => handleAction(btn));
     });
   }
 
-  /* ============================================================
-     SHOW RESULT
-     ============================================================ */
   function showResult(id, opts) {
     const box = document.getElementById(id);
     if (!box) return;
     const mainEl = box.querySelector('.qvhm-main');
     const subEl = box.querySelector('.qvhm-sub');
-    const breakdown = box.querySelector('.qvhm-breakdown') || box.querySelector('div[id$="-breakdown"]');
+    const breakdown = box.querySelector('div[id$="-breakdown"]');
     if (mainEl) mainEl.textContent = opts.main;
     if (subEl) subEl.textContent = opts.sub || '';
     if (breakdown) {
@@ -667,7 +606,7 @@
   }
 
   /* ============================================================
-     ACTION HANDLER (Copy / Print / PDF)
+     ACTION HANDLER
      ============================================================ */
   function handleAction(btn) {
     const act = btn.dataset.act;
@@ -678,39 +617,398 @@
     }
 
     if (act === 'copy') {
-      const text = box.innerText.trim();
+      const text = box.innerText.replace(/\s+/g, ' ').trim();
       if (navigator.clipboard) {
         navigator.clipboard.writeText(text).then(() => QVH.toast('Copied! 📋', 'success'))
           .catch(() => QVH.toast('Copy failed', 'error'));
-      } else {
-        QVH.toast('Copy not supported', 'error');
       }
       return;
     }
 
     if (act === 'print') {
-      if (typeof window.extraPrint === 'function') {
-        window.extraPrint(boxId, btn.dataset.title || 'Qunverio Report');
-      } else {
-        QVH.toast('Print not available', 'error');
-      }
+      printDark(boxId, btn.dataset.title || 'Qunverio Report');
       return;
     }
 
     if (act === 'pdf') {
-      if (typeof window.extraDownloadPDF === 'function') {
-        window.extraDownloadPDF(boxId, btn.dataset.file || 'qunverio-report');
-      } else {
-        QVH.toast('PDF export not available', 'error');
-      }
+      pdfDark(boxId, btn.dataset.file || 'qunverio-report', btn.dataset.title || 'Qunverio Report');
+      return;
+    }
+
+    if (act === 'png') {
+      pngHD(boxId, btn.dataset.file || 'qunverio-report');
       return;
     }
   }
 
   /* ============================================================
-     REGISTER WITH CREATOR HUB
+     BUILD REPORT HTML (dark theme, full branded)
+     ============================================================ */
+  function buildReportHTML(sourceEl, title) {
+    const clone = sourceEl.cloneNode(true);
+    // Remove action buttons row
+    clone.querySelectorAll('.qvhm-actions').forEach(n => n.remove());
+
+    const main = clone.querySelector('.qvhm-main')?.textContent || '';
+    const sub  = clone.querySelector('.qvhm-sub')?.textContent || '';
+    const titleText = clone.querySelector('.qvhm-result-title')?.textContent || '';
+    const rows = [];
+    clone.querySelectorAll('.qvhm-line').forEach(line => {
+      const k = line.querySelector('.k')?.textContent || '';
+      const v = line.querySelector('.v')?.textContent || '';
+      const hi = line.classList.contains('highlight');
+      rows.push({ k, v, hi });
+    });
+
+    const now = new Date().toLocaleString('en-IN');
+
+    return `<!DOCTYPE html>
+<html><head><meta charset="utf-8" />
+<title>Qunverio — ${title}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0a0e27;
+    color: #eef1ff;
+    padding: 40px 32px;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .brand {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 18px;
+    border-bottom: 3px solid #6366f1;
+    margin-bottom: 26px;
+  }
+  .brand-logo { display: flex; align-items: center; gap: 10px; }
+  .brand-icon {
+    width: 40px; height: 40px; border-radius: 11px;
+    background: linear-gradient(135deg,#6366f1,#ec4899);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .brand-name {
+    font-size: 22px; font-weight: 900;
+    background: linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent; -webkit-text-fill-color: transparent;
+  }
+  .brand-meta { font-size: 12px; color: #a8b0d8; text-align: right; }
+  .doc-title {
+    font-size: 12px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: #6b74a0; margin-bottom: 16px;
+  }
+  .headline {
+    font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .08em;
+    color: #6b74a0; margin-bottom: 10px;
+  }
+  .big {
+    font-size: 46px; font-weight: 900;
+    line-height: 1.1; margin-bottom: 6px;
+    background: linear-gradient(135deg,#22c55e,#10b981);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent; -webkit-text-fill-color: transparent;
+    word-break: break-word;
+  }
+  .sub { font-size: 14px; color: #a8b0d8; margin-bottom: 26px; }
+  .rows {
+    background: rgba(21,26,61,0.85);
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 20px 22px;
+  }
+  .line {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 13px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    font-size: 14.5px; gap: 14px;
+  }
+  .line:last-child { border-bottom: none; }
+  .line .k { color: #a8b0d8; font-weight: 500; }
+  .line .v { font-weight: 700; text-align: right; color: #eef1ff; }
+  .line.hi {
+    background: rgba(16,185,129,0.12);
+    margin: 6px -12px;
+    padding: 13px 12px;
+    border-radius: 10px;
+    border: none;
+  }
+  .line.hi .v { color: #10b981; font-size: 16px; font-weight: 800; }
+  .footer {
+    margin-top: 30px; padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    text-align: center;
+    font-size: 11.5px; color: #6b74a0;
+  }
+  .footer strong { color: #a8b0d8; }
+  .note {
+    margin-top: 18px; padding: 12px 14px;
+    background: rgba(245,158,11,0.1);
+    border-left: 3px solid #f59e0b;
+    border-radius: 8px;
+    font-size: 11.5px; color: #a8b0d8; line-height: 1.6;
+  }
+  @media print {
+    body { background: #0a0e27 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 20px 16px; }
+    .wrap { max-width: 100%; }
+    .big { font-size: 34px; }
+    .rows { padding: 16px; }
+  }
+  @page { margin: 14mm; size: A4; }
+</style>
+</head><body>
+  <div class="wrap">
+    <div class="brand">
+      <div class="brand-logo">
+        <div class="brand-icon">⚡</div>
+        <div class="brand-name">Qunverio</div>
+      </div>
+      <div class="brand-meta">
+        Creator Hub<br>
+        ${now}
+      </div>
+    </div>
+
+    <div class="doc-title">${title}</div>
+    <div class="headline">${titleText}</div>
+    <div class="big">${main}</div>
+    <div class="sub">${sub}</div>
+
+    <div class="rows">
+      ${rows.map(r => `
+        <div class="line ${r.hi ? 'hi' : ''}">
+          <span class="k">${r.k}</span>
+          <span class="v">${r.v}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="note">
+      ⚠️ <strong>Note:</strong> Ye results estimates hain. Actual YouTube earnings CPM, audience geography, content type, season aur YouTube policies pe depend karti hain. Qunverio is not affiliated with YouTube.
+    </div>
+
+    <div class="footer">
+      Generated by <strong>Qunverio Creator Hub</strong> • qunverio.vercel.app
+    </div>
+  </div>
+</body></html>`;
+  }
+
+  /* ============================================================
+     PRINT — dark premium
+     ============================================================ */
+  function printDark(boxId, title) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    const html = buildReportHTML(box, title);
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+
+    setTimeout(() => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (e) { console.error(e); }
+      setTimeout(() => {
+        if (iframe.parentNode) document.body.removeChild(iframe);
+      }, 1500);
+    }, 700);
+  }
+
+  /* ============================================================
+     PDF — dark premium via jsPDF (html2canvas fallback to image)
+     ============================================================ */
+  async function pdfDark(boxId, file, title) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    QVH.toast('Generating PDF...', '');
+
+    const html = buildReportHTML(box, title);
+
+    // Use iframe + html2canvas via foreignObject trick — simpler: load html-to-image on iframe body
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-99999px;top:0;width:820px;height:1200px;border:0;';
+    document.body.appendChild(iframe);
+    const doc = iframe.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+
+    // Wait for fonts + layout
+    setTimeout(async () => {
+      try {
+        const target = doc.body;
+
+        // Ensure html-to-image is loaded
+        if (!window.htmlToImage) {
+          QVH.toast('PDF library missing', 'error');
+          document.body.removeChild(iframe);
+          return;
+        }
+
+        const dataUrl = await window.htmlToImage.toPng(target, {
+          quality: 1,
+          pixelRatio: 3,
+          backgroundColor: '#0a0e27',
+          width: target.scrollWidth,
+          height: target.scrollHeight
+        });
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pw = pdf.internal.pageSize.getWidth();
+        const ph = pdf.internal.pageSize.getHeight();
+
+        const img = new Image();
+        img.onload = () => {
+          // Cover entire page (dark background)
+          pdf.setFillColor(10, 14, 39);
+          pdf.rect(0, 0, pw, ph, 'F');
+
+          const ratio = img.width / img.height;
+          let w = pw;
+          let h = w / ratio;
+          if (h > ph) { h = ph; w = h * ratio; }
+          const x = (pw - w) / 2;
+          const y = (ph - h) / 2;
+          pdf.addImage(dataUrl, 'PNG', x, y, w, h, undefined, 'FAST');
+          pdf.save((file || 'qunverio-report') + '.pdf');
+          QVH.toast('PDF downloaded ✅', 'success');
+        };
+        img.src = dataUrl;
+      } catch (e) {
+        console.error(e);
+        QVH.toast('PDF failed', 'error');
+      } finally {
+        if (iframe.parentNode) document.body.removeChild(iframe);
+      }
+    }, 900);
+  }
+
+  /* ============================================================
+     HD PNG — only the result box (with header), premium quality
+     ============================================================ */
+  async function pngHD(boxId, file) {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    QVH.toast('Generating HD PNG...', '');
+
+    // Build a compact version: brand header + result content (no actions)
+    const clone = box.cloneNode(true);
+    clone.querySelectorAll('.qvhm-actions').forEach(n => n.remove());
+
+    const main = clone.querySelector('.qvhm-main')?.textContent || '';
+    const sub  = clone.querySelector('.qvhm-sub')?.textContent || '';
+    const titleText = clone.querySelector('.qvhm-result-title')?.textContent || '';
+    const rows = [];
+    clone.querySelectorAll('.qvhm-line').forEach(line => {
+      rows.push({
+        k: line.querySelector('.k')?.textContent || '',
+        v: line.querySelector('.v')?.textContent || '',
+        hi: line.classList.contains('highlight')
+      });
+    });
+
+    // Use actual computed theme colors
+    const cs = getComputedStyle(document.body);
+    const bg = cs.getPropertyValue('--bg').trim() || '#0a0e27';
+    const surface = cs.getPropertyValue('--surface').trim() || '#151a3d';
+    const border = cs.getPropertyValue('--border-strong').trim() || 'rgba(255,255,255,0.14)';
+    const text = cs.getPropertyValue('--text').trim() || '#eef1ff';
+    const text2 = cs.getPropertyValue('--text-2').trim() || '#a8b0d8';
+    const text3 = cs.getPropertyValue('--text-3').trim() || '#6b74a0';
+
+    const now = new Date().toLocaleString('en-IN');
+
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = `
+      position: fixed; left: -99999px; top: 0;
+      width: 720px;
+      padding: 32px 28px 26px;
+      background: ${bg};
+      color: ${text};
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      border-radius: 20px;
+      box-sizing: border-box;
+    `;
+    wrapper.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:3px solid #6366f1;margin-bottom:22px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#6366f1,#ec4899);display:flex;align-items:center;justify-content:center;font-size:20px;">⚡</div>
+          <div style="font-size:22px;font-weight:900;background:linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;">Qunverio</div>
+        </div>
+        <div style="font-size:12px;color:${text2};text-align:right;line-height:1.4;">
+          Creator Hub<br>${now}
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:${text3};margin-bottom:14px;">
+        ${titleText}
+      </div>
+      <div style="font-size:46px;font-weight:900;line-height:1.1;margin-bottom:6px;background:linear-gradient(135deg,#22c55e,#10b981);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;word-break:break-word;">
+        ${main}
+      </div>
+      <div style="font-size:14px;color:${text2};margin-bottom:22px;">${sub}</div>
+
+      <div style="background:${surface};border:1.5px solid ${border};border-radius:16px;padding:18px 20px;">
+        ${rows.map(r => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid ${border};font-size:14.5px;gap:14px;${r.hi ? 'background:rgba(16,185,129,0.12);margin:6px -12px;padding:12px;border-radius:10px;border:none;' : ''}">
+            <span style="color:${text2};font-weight:500;">${r.k}</span>
+            <span style="font-weight:700;text-align:right;color:${r.hi ? '#10b981' : text};font-size:${r.hi ? '16px' : '14.5px'};">${r.v}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      <div style="margin-top:18px;padding:12px 14px;background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:8px;font-size:11.5px;color:${text2};line-height:1.6;">
+        ⚠️ <strong style="color:${text};">Note:</strong> Ye results estimates hain. Actual YouTube earnings CPM, audience geography, content type, season aur YouTube policies pe depend karti hain.
+      </div>
+
+      <div style="margin-top:22px;padding-top:16px;border-top:1px solid ${border};text-align:center;font-size:11.5px;color:${text3};">
+        Generated by <strong style="color:${text2};">Qunverio Creator Hub</strong> • qunverio.vercel.app
+      </div>
+    `;
+    document.body.appendChild(wrapper);
+
+    // Wait a tick for layout
+    await new Promise(r => setTimeout(r, 300));
+
+    if (!window.htmlToImage) {
+      QVH.toast('PNG library missing', 'error');
+      document.body.removeChild(wrapper);
+      return;
+    }
+
+    try {
+      const dataUrl = await window.htmlToImage.toPng(wrapper, {
+        quality: 1,
+        pixelRatio: 4, // Ultra HD
+        backgroundColor: bg,
+        width: wrapper.scrollWidth,
+        height: wrapper.scrollHeight
+      });
+      const a = document.createElement('a');
+      a.download = (file || 'qunverio-report') + '.png';
+      a.href = dataUrl;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      QVH.toast('HD PNG downloaded ✅', 'success');
+    } catch (e) {
+      console.error(e);
+      QVH.toast('PNG failed', 'error');
+    } finally {
+      document.body.removeChild(wrapper);
+    }
+  }
+
+  /* ============================================================
+     REGISTER
      ============================================================ */
   QVH.registerRenderer('money', render);
 
-  console.log('%c✅ Monetization Lab registered', 'color:#10b981;font-weight:bold');
+  console.log('%c✅ Monetization Lab registered (v1.1)', 'color:#10b981;font-weight:bold');
 })();
