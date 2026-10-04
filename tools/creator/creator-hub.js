@@ -1,8 +1,8 @@
 /* ============================================================
-   QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js) v1.3
+   QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js) v1.4
    YouTube Creator Dashboard — full-screen overlay
    Namespace: window.QVH
-   v1.3: + QVH.openCategory public API + 100dvh scroll fix
+   v1.4: Vivid distinct module colors + scroll fix + openCategory API
    ============================================================ */
 
 (function () {
@@ -12,7 +12,7 @@
 
   const QVH = window.QVH || {};
   QVH._loaded = true;
-  QVH._version = '1.3.0';
+  QVH._version = '1.4.0';
 
   /* ============================================================
      CSS
@@ -22,7 +22,8 @@
       position: fixed; inset: 0; z-index: 9999;
       background: var(--bg, #0a0e27);
       color: var(--text, #eef1ff);
-      display: none; flex-direction: column;
+      display: none;
+      flex-direction: column;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
@@ -39,7 +40,8 @@
       padding: 12px 14px;
       background: var(--surface, #151a3d);
       border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
-      flex-shrink: 0; position: relative; z-index: 5;
+      flex-shrink: 0;
+      position: relative; z-index: 5;
     }
     .qvh-back {
       width: 38px; height: 38px; border-radius: 10px;
@@ -123,7 +125,7 @@
       cursor: pointer; display: flex; flex-direction: column; gap: 9px;
       position: relative; overflow: hidden;
       transition: transform .22s cubic-bezier(.34,1.4,.64,1), box-shadow .22s, border-color .22s;
-      min-height: 138px; text-align: left;
+      min-height: 148px; text-align: left;
     }
     .qvh-card::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
@@ -138,15 +140,15 @@
     .qvh-card:hover::before { opacity: 1; }
     .qvh-card:active { transform: scale(.98); }
     .qvh-card-icon {
-      width: 44px; height: 44px; border-radius: 12px;
+      width: 46px; height: 46px; border-radius: 13px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 21px; color: #fff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      font-size: 22px; color: #fff;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
       flex-shrink: 0;
       background: var(--qvh-card-grad, linear-gradient(135deg,#6366f1,#8b5cf6));
     }
     .qvh-card-name {
-      font-size: 13.5px; font-weight: 800; line-height: 1.25;
+      font-size: 14px; font-weight: 800; line-height: 1.25;
       color: var(--text, #eef1ff);
     }
     .qvh-card-desc {
@@ -215,7 +217,7 @@
     }
     .qvh-bottom-nav::-webkit-scrollbar { display: none; }
     .qvh-bn-item {
-      flex: 1 0 auto; min-width: 68px;
+      flex: 1 0 auto; min-width: 62px;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 3px; padding: 6px 8px;
       border-radius: 10px;
@@ -237,7 +239,8 @@
         width: 240px; flex-shrink: 0;
         background: var(--surface, #151a3d);
         border-right: 1px solid var(--border, rgba(255,255,255,0.08));
-        padding: 14px 10px; overflow-y: auto;
+        padding: 14px 10px;
+        overflow-y: auto;
         height: 100%;
       }
       .qvh-sidebar .qvh-sb-brand {
@@ -269,7 +272,14 @@
         color: var(--text, #eef1ff);
       }
       .qvh-sb-item .qvh-sb-icon { font-size: 17px; width: 22px; text-align: center; }
-      .qvh-main { flex: 1 1 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+      .qvh-main {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+        height: 100%;
+      }
     }
 
     .qvh-toast {
@@ -297,22 +307,22 @@
   }
 
   /* ============================================================
-     CATEGORIES
+     CATEGORIES — Vivid distinct colors
      ============================================================ */
   const QVH_CATEGORIES = [
-    { id: 'idea',      icon: '💡', name: 'Idea Lab',      desc: 'Video ideas, viral topics, series planner', grad: 'linear-gradient(135deg,#f59e0b,#f97316)', ready: true },
-    { id: 'title',     icon: '📝', name: 'Title Lab',     desc: 'AI titles, CTR score, A/B variations',       grad: 'linear-gradient(135deg,#8b5cf6,#6366f1)', ready: true },
-    { id: 'thumbnail', icon: '🖼️', name: 'Thumbnail Lab', desc: 'Text ideas, analyzer, mobile preview',       grad: 'linear-gradient(135deg,#ec4899,#ef4444)', ready: true },
-    { id: 'script',    icon: '🎬', name: 'Script Lab',    desc: 'Hooks, full scripts, story structure',       grad: 'linear-gradient(135deg,#6366f1,#8b5cf6)', ready: true },
-    { id: 'seo',       icon: '🔍', name: 'SEO Lab',       desc: 'Description, tags, hashtags, chapters',      grad: 'linear-gradient(135deg,#10b981,#059669)', ready: true },
-    { id: 'analytics', icon: '📊', name: 'Analytics',     desc: 'Channel, video & competitor analysis',       grad: 'linear-gradient(135deg,#06b6d4,#3b82f6)', ready: true },
-    { id: 'coach',     icon: '🤖', name: 'AI Coach',      desc: 'Ask anything about your channel',            grad: 'linear-gradient(135deg,#6366f1,#ec4899)', ready: true },
-    { id: 'community', icon: '💬', name: 'Community',     desc: 'Posts, polls, replies, comments',            grad: 'linear-gradient(135deg,#14b8a6,#06b6d4)', ready: true },
-    { id: 'money',     icon: '💰', name: 'Monetization',  desc: 'Revenue, CPM, RPM, sponsorship rates',       grad: 'linear-gradient(135deg,#22c55e,#10b981)', ready: true },
-    { id: 'workspace', icon: '📁', name: 'Workspace',     desc: 'Idea vault, script vault, calendar',         grad: 'linear-gradient(135deg,#3b82f6,#6366f1)', ready: true },
-    { id: 'roadmap',   icon: '🗺️', name: 'Roadmap',       desc: 'Beginner to pro YouTube journey',            grad: 'linear-gradient(135deg,#a0522d,#c47b4a)', ready: true },
-    { id: 'checklist', icon: '✅', name: 'Checklists',    desc: 'Upload, SEO, thumbnail & channel setup',     grad: 'linear-gradient(135deg,#f59e0b,#ec4899)', ready: true },
-    { id: 'coming',    icon: '🚀', name: 'Coming Soon',   desc: 'Instagram, TikTok, Facebook, X',             grad: 'linear-gradient(135deg,#6b74a0,#4b5563)', ready: false, tag: 'Soon' }
+    { id: 'idea',      icon: '💡', name: 'Idea Lab',      desc: 'Video ideas, viral topics, series planner', grad: 'linear-gradient(135deg,#fbbf24,#f59e0b)', ready: true },
+    { id: 'title',     icon: '📝', name: 'Title Lab',     desc: 'AI titles, CTR score, A/B variations',       grad: 'linear-gradient(135deg,#a78bfa,#7c3aed)', ready: true },
+    { id: 'thumbnail', icon: '🖼️', name: 'Thumbnail Lab', desc: 'Text ideas, analyzer, mobile preview',       grad: 'linear-gradient(135deg,#f472b6,#db2777)', ready: true },
+    { id: 'script',    icon: '🎬', name: 'Script Lab',    desc: 'Hooks, full scripts, story structure',       grad: 'linear-gradient(135deg,#818cf8,#4f46e5)', ready: true },
+    { id: 'seo',       icon: '🔍', name: 'SEO Lab',       desc: 'Description, tags, hashtags, chapters',      grad: 'linear-gradient(135deg,#34d399,#059669)', ready: true },
+    { id: 'analytics', icon: '📊', name: 'Analytics',     desc: 'Channel, video & competitor analysis',       grad: 'linear-gradient(135deg,#22d3ee,#0284c7)', ready: true },
+    { id: 'coach',     icon: '🤖', name: 'AI Coach',      desc: 'Ask anything about your channel',            grad: 'linear-gradient(135deg,#f472b6,#8b5cf6)', ready: true },
+    { id: 'community', icon: '💬', name: 'Community',     desc: 'Posts, polls, replies, comments',            grad: 'linear-gradient(135deg,#2dd4bf,#0891b2)', ready: true },
+    { id: 'money',     icon: '💰', name: 'Monetization',  desc: 'Revenue, CPM, RPM, sponsorship rates',       grad: 'linear-gradient(135deg,#4ade80,#16a34a)', ready: true },
+    { id: 'workspace', icon: '📁', name: 'Workspace',     desc: 'Idea vault, script vault, calendar',         grad: 'linear-gradient(135deg,#60a5fa,#2563eb)', ready: true },
+    { id: 'roadmap',   icon: '🗺️', name: 'Roadmap',       desc: 'Beginner to pro YouTube journey',            grad: 'linear-gradient(135deg,#fb923c,#c2410c)', ready: true },
+    { id: 'checklist', icon: '✅', name: 'Checklists',    desc: 'Upload, SEO, thumbnail & channel setup',     grad: 'linear-gradient(135deg,#facc15,#eab308)', ready: true },
+    { id: 'coming',    icon: '🚀', name: 'Coming Soon',   desc: 'Instagram, TikTok, Facebook, X',             grad: 'linear-gradient(135deg,#94a3b8,#475569)', ready: false, tag: 'Soon' }
   ];
 
   const state = { open: false, currentCategory: null };
@@ -497,7 +507,6 @@
     state.open = false;
   };
 
-  /* 👇 NEW: Allow opening a specific category from outside */
   QVH.openCategory = function (catId) {
     openCategory(catId);
   };
