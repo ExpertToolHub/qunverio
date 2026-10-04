@@ -1,8 +1,7 @@
 /* ============================================================
-   QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js) v1.4
+   QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js) v1.5
    YouTube Creator Dashboard — full-screen overlay
-   Namespace: window.QVH
-   v1.4: Vivid distinct module colors + scroll fix + openCategory API
+   v1.5: SCROLL FIX — absolute positioning (100% reliable)
    ============================================================ */
 
 (function () {
@@ -12,18 +11,20 @@
 
   const QVH = window.QVH || {};
   QVH._loaded = true;
-  QVH._version = '1.4.0';
+  QVH._version = '1.5.0';
 
   /* ============================================================
-     CSS
+     CSS — Uses ABSOLUTE positioning for guaranteed scroll
      ============================================================ */
   const QVH_CSS = `
+    /* ── ROOT: Full screen container ── */
     .qvh-root {
-      position: fixed; inset: 0; z-index: 9999;
+      position: fixed !important;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 9999;
       background: var(--bg, #0a0e27);
       color: var(--text, #eef1ff);
       display: none;
-      flex-direction: column;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
@@ -32,16 +33,20 @@
       width: 100vw;
       width: 100dvw;
     }
-    .qvh-root.open { display: flex; animation: qvh-fade-in .25s ease; }
+    .qvh-root.open { display: block !important; animation: qvh-fade-in .25s ease; }
     @keyframes qvh-fade-in { from { opacity: 0 } to { opacity: 1 } }
 
+    /* ── HEADER: Pinned to top ── */
     .qvh-header {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 62px;
       display: flex; align-items: center; gap: 10px;
       padding: 12px 14px;
       background: var(--surface, #151a3d);
       border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
-      flex-shrink: 0;
-      position: relative; z-index: 5;
+      z-index: 10;
+      box-sizing: border-box;
     }
     .qvh-back {
       width: 38px; height: 38px; border-radius: 10px;
@@ -56,7 +61,6 @@
     .qvh-header-title h2 {
       font-size: 15px; font-weight: 800; margin: 0;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      display: flex; align-items: center; gap: 6px;
     }
     .qvh-header-title p {
       font-size: 11.5px; color: var(--text-3, #6b74a0); margin: 2px 0 0;
@@ -69,18 +73,49 @@
       letter-spacing: .04em; flex-shrink: 0;
     }
 
+    /* ── BODY: Pinned between header and nav, scrolls independently ── */
     .qvh-body {
-      flex: 1 1 0;
-      min-height: 0;
+      position: absolute;
+      top: 62px;
+      left: 0; right: 0;
+      bottom: 0;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 18px 16px 100px;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
-      touch-action: pan-y;
+      padding: 18px 16px 100px;
+      box-sizing: border-box;
     }
-    @media (min-width: 900px) { .qvh-body { padding-bottom: 40px; } }
 
+    /* ── BOTTOM NAV: Pinned to bottom ── */
+    .qvh-bottom-nav {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
+      background: var(--surface, #151a3d);
+      border-top: 1px solid var(--border, rgba(255,255,255,0.08));
+      padding: 8px 4px;
+      padding-bottom: calc(8px + env(safe-area-inset-bottom));
+      z-index: 10;
+      overflow-x: auto;
+      scrollbar-width: none;
+      box-sizing: border-box;
+    }
+    .qvh-bottom-nav::-webkit-scrollbar { display: none; }
+    .qvh-bn-item {
+      flex: 1 0 auto; min-width: 62px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 10px; font-weight: 700;
+      color: var(--text-3, #6b74a0);
+      cursor: pointer; background: none; border: none;
+      transition: color .2s;
+    }
+    .qvh-bn-item .qvh-bn-icon { font-size: 17px; line-height: 1; }
+    .qvh-bn-item.active { color: var(--primary, #6366f1); }
+
+    /* ── HERO ── */
     .qvh-hero { text-align: center; padding: 8px 0 20px; }
     .qvh-hero-icon {
       width: 68px; height: 68px; border-radius: 20px;
@@ -111,6 +146,7 @@
       margin: 18px 0 10px;
     }
 
+    /* ── GRID & CARDS ── */
     .qvh-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
       gap: 11px;
@@ -189,7 +225,6 @@
     .qvh-tool-header p {
       font-size: 12px; color: var(--text-3, #6b74a0); margin: 0; line-height: 1.4;
     }
-
     .qvh-placeholder {
       text-align: center; padding: 44px 22px;
       background: var(--surface, #151a3d);
@@ -205,43 +240,20 @@
       font-size: 14.5px; margin-bottom: 4px;
     }
 
-    .qvh-bottom-nav {
-      display: flex; position: absolute; bottom: 0; left: 0; right: 0;
-      background: color-mix(in srgb, var(--surface, #151a3d) 96%, transparent);
-      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      border-top: 1px solid var(--border, rgba(255,255,255,0.08));
-      padding: 8px 4px;
-      padding-bottom: calc(8px + env(safe-area-inset-bottom));
-      z-index: 10; overflow-x: auto; scrollbar-width: none;
-      flex-shrink: 0;
-    }
-    .qvh-bottom-nav::-webkit-scrollbar { display: none; }
-    .qvh-bn-item {
-      flex: 1 0 auto; min-width: 62px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 3px; padding: 6px 8px;
-      border-radius: 10px;
-      font-size: 10px; font-weight: 700;
-      color: var(--text-3, #6b74a0);
-      cursor: pointer; background: none; border: none;
-      transition: color .2s;
-    }
-    .qvh-bn-item .qvh-bn-icon { font-size: 17px; line-height: 1; }
-    .qvh-bn-item.active { color: var(--primary, #6366f1); }
-    .qvh-bn-item.active .qvh-bn-icon { transform: scale(1.05); }
-    @media (min-width: 900px) { .qvh-bottom-nav { display: none; } }
-
+    /* ── DESKTOP: Sidebar + Shifted content ── */
     .qvh-sidebar { display: none; }
     @media (min-width: 900px) {
-      .qvh-root { flex-direction: row; }
       .qvh-sidebar {
         display: flex; flex-direction: column;
-        width: 240px; flex-shrink: 0;
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 240px;
         background: var(--surface, #151a3d);
         border-right: 1px solid var(--border, rgba(255,255,255,0.08));
         padding: 14px 10px;
         overflow-y: auto;
-        height: 100%;
+        z-index: 20;
+        box-sizing: border-box;
       }
       .qvh-sidebar .qvh-sb-brand {
         display: flex; align-items: center; gap: 9px;
@@ -272,16 +284,14 @@
         color: var(--text, #eef1ff);
       }
       .qvh-sb-item .qvh-sb-icon { font-size: 17px; width: 22px; text-align: center; }
-      .qvh-main {
-        flex: 1 1 0;
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-        min-height: 0;
-        height: 100%;
-      }
+
+      /* Shift header, body, nav right by sidebar width */
+      .qvh-header { left: 240px; }
+      .qvh-body   { left: 240px; padding-bottom: 40px; }
+      .qvh-bottom-nav { display: none; }
     }
 
+    /* ── TOAST ── */
     .qvh-toast {
       position: fixed; bottom: 100px; left: 50%;
       transform: translateX(-50%) translateY(120px);
@@ -343,17 +353,15 @@
         </div>
         <div id="qvhSbItems"></div>
       </aside>
-      <div class="qvh-main">
-        <header class="qvh-header">
-          <button class="qvh-back" id="qvhBackBtn" aria-label="Back">←</button>
-          <div class="qvh-header-title">
-            <h2 id="qvhHeaderTitle">YouTube Creator Hub</h2>
-            <p id="qvhHeaderSub">Your YouTube command center</p>
-          </div>
-          <span class="qvh-header-badge">BETA</span>
-        </header>
-        <div class="qvh-body" id="qvhBody"></div>
-      </div>
+      <header class="qvh-header">
+        <button class="qvh-back" id="qvhBackBtn" aria-label="Back">←</button>
+        <div class="qvh-header-title">
+          <h2 id="qvhHeaderTitle">YouTube Creator Hub</h2>
+          <p id="qvhHeaderSub">Your YouTube command center</p>
+        </div>
+        <span class="qvh-header-badge">BETA</span>
+      </header>
+      <div class="qvh-body" id="qvhBody"></div>
       <nav class="qvh-bottom-nav" id="qvhBottomNav"></nav>
     `;
     document.body.appendChild(rootEl);
