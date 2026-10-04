@@ -1,7 +1,7 @@
 /* ============================================================
-   QUNVERIO — MONETIZATION LAB (v1.1)
+   QUNVERIO — MONETIZATION LAB (v1.2)
    Path: tools/creator/monetization.js
-   6 client-side calculators + premium dark print/PDF + HD PNG
+   Fix: HD PNG white screen (computed colors, on-screen render)
    ============================================================ */
 
 (function () {
@@ -26,6 +26,33 @@
   }
   function fmtNum(n, d) {
     return (Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: d || 2 });
+  }
+
+  /* ============================================================
+     Get computed colors from current theme — returns HEX/RGB,
+     so html-to-image can render without CSS vars
+     ============================================================ */
+  function themeColors() {
+    const cs = getComputedStyle(document.body);
+    function get(v, fallback) {
+      const val = cs.getPropertyValue(v).trim();
+      return val || fallback;
+    }
+    // Fallback: agar var value bhi var hai to ek safe fallback dete hain
+    function safe(v, fallback) {
+      let val = get(v, '');
+      if (!val || val.startsWith('var(') || val.length > 60) return fallback;
+      return val;
+    }
+    return {
+      bg:       safe('--bg', '#0a0e27'),
+      surface:  safe('--surface', '#151a3d'),
+      surface2: safe('--surface-2', '#1c2250'),
+      border:   safe('--border-strong', 'rgba(255,255,255,0.14)'),
+      text:     safe('--text', '#eef1ff'),
+      text2:    safe('--text-2', '#a8b0d8'),
+      text3:    safe('--text-3', '#6b74a0')
+    };
   }
 
   /* ============================================================
@@ -184,7 +211,6 @@
      ============================================================ */
   function render(container) {
     injectCSS();
-
     container.innerHTML = `
       <div class="qvh-tool-wrap">
         <div class="qvh-tool-header" style="--qvh-card-grad:linear-gradient(135deg,#22c55e,#10b981)">
@@ -194,7 +220,6 @@
             <p>YouTube revenue, CPM, RPM, sponsorship & income projections</p>
           </div>
         </div>
-
         <div class="qvhm-tabs" id="qvhmTabs">
           <button class="qvhm-tab active" data-tab="revenue">💵 Revenue</button>
           <button class="qvhm-tab" data-tab="cpm">📊 CPM</button>
@@ -203,9 +228,7 @@
           <button class="qvhm-tab" data-tab="monthly">📅 Monthly</button>
           <button class="qvhm-tab" data-tab="goal">🎯 Goal</button>
         </div>
-
         <div id="qvhmSections"></div>
-
         <div class="qvhm-note">
           ⚠️ <strong>Note:</strong> Ye sab results <strong>estimates</strong> hain. Actual YouTube earnings CPM, audience geography, content type, season aur YouTube ke policies pe depend karti hain.
         </div>
@@ -225,7 +248,6 @@
     wireCalculators();
   }
 
-  /* ── Helper: actions block for each result ── */
   function actionsBlock(boxId, title, file) {
     return `
       <div class="qvhm-actions">
@@ -308,7 +330,7 @@
           <div class="qvhm-field">
             <label>Total Views (in thousands)</label>
             <input type="number" id="rp-views" placeholder="e.g. 200 (for 200,000 views)" min="0" step="0.01" inputmode="decimal" />
-            <div style="font-size:11px;color:var(--text-3);margin-top:4px">RPM = Revenue ÷ (Views ÷ 1000). RPM includes ads + memberships + Super Chat.</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:4px">RPM = Revenue ÷ (Views ÷ 1000).</div>
           </div>
           <button class="qvhm-btn qvhm-btn-primary" id="rp-calc">📈 Calculate RPM</button>
         </div>
@@ -625,28 +647,17 @@
       return;
     }
 
-    if (act === 'print') {
-      printDark(boxId, btn.dataset.title || 'Qunverio Report');
-      return;
-    }
-
-    if (act === 'pdf') {
-      pdfDark(boxId, btn.dataset.file || 'qunverio-report', btn.dataset.title || 'Qunverio Report');
-      return;
-    }
-
-    if (act === 'png') {
-      pngHD(boxId, btn.dataset.file || 'qunverio-report');
-      return;
-    }
+    if (act === 'print') { printDark(boxId, btn.dataset.title || 'Qunverio Report'); return; }
+    if (act === 'pdf')   { pdfDark(boxId, btn.dataset.file || 'qunverio-report', btn.dataset.title || 'Qunverio Report'); return; }
+    if (act === 'png')   { pngHD(boxId, btn.dataset.file || 'qunverio-report'); return; }
   }
 
   /* ============================================================
-     BUILD REPORT HTML (dark theme, full branded)
+     BUILD REPORT HTML (for print & PDF — uses raw colors)
      ============================================================ */
   function buildReportHTML(sourceEl, title) {
+    const c = themeColors();
     const clone = sourceEl.cloneNode(true);
-    // Remove action buttons row
     clone.querySelectorAll('.qvhm-actions').forEach(n => n.remove());
 
     const main = clone.querySelector('.qvhm-main')?.textContent || '';
@@ -654,10 +665,11 @@
     const titleText = clone.querySelector('.qvhm-result-title')?.textContent || '';
     const rows = [];
     clone.querySelectorAll('.qvhm-line').forEach(line => {
-      const k = line.querySelector('.k')?.textContent || '';
-      const v = line.querySelector('.v')?.textContent || '';
-      const hi = line.classList.contains('highlight');
-      rows.push({ k, v, hi });
+      rows.push({
+        k: line.querySelector('.k')?.textContent || '',
+        v: line.querySelector('.v')?.textContent || '',
+        hi: line.classList.contains('highlight')
+      });
     });
 
     const now = new Date().toLocaleString('en-IN');
@@ -666,14 +678,15 @@
 <html><head><meta charset="utf-8" />
 <title>Qunverio — ${title}</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #0a0e27;
-    color: #eef1ff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+    background: ${c.bg};
+    color: ${c.text};
     padding: 40px 32px;
     min-height: 100vh;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .wrap { max-width: 720px; margin: 0 auto; }
   .brand {
@@ -695,16 +708,16 @@
     -webkit-background-clip: text; background-clip: text;
     color: transparent; -webkit-text-fill-color: transparent;
   }
-  .brand-meta { font-size: 12px; color: #a8b0d8; text-align: right; }
+  .brand-meta { font-size: 12px; color: ${c.text2}; text-align: right; }
   .doc-title {
     font-size: 12px; font-weight: 800;
     text-transform: uppercase; letter-spacing: .1em;
-    color: #6b74a0; margin-bottom: 16px;
+    color: ${c.text3}; margin-bottom: 16px;
   }
   .headline {
     font-size: 13px; font-weight: 700;
     text-transform: uppercase; letter-spacing: .08em;
-    color: #6b74a0; margin-bottom: 10px;
+    color: ${c.text3}; margin-bottom: 10px;
   }
   .big {
     font-size: 46px; font-weight: 900;
@@ -714,22 +727,22 @@
     color: transparent; -webkit-text-fill-color: transparent;
     word-break: break-word;
   }
-  .sub { font-size: 14px; color: #a8b0d8; margin-bottom: 26px; }
+  .sub { font-size: 14px; color: ${c.text2}; margin-bottom: 26px; }
   .rows {
-    background: rgba(21,26,61,0.85);
-    border: 1.5px solid rgba(255,255,255,0.12);
+    background: ${c.surface};
+    border: 1.5px solid ${c.border};
     border-radius: 16px;
     padding: 20px 22px;
   }
   .line {
     display: flex; justify-content: space-between; align-items: center;
     padding: 13px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
+    border-bottom: 1px solid ${c.border};
     font-size: 14.5px; gap: 14px;
   }
   .line:last-child { border-bottom: none; }
-  .line .k { color: #a8b0d8; font-weight: 500; }
-  .line .v { font-weight: 700; text-align: right; color: #eef1ff; }
+  .line .k { color: ${c.text2}; font-weight: 500; }
+  .line .v { font-weight: 700; text-align: right; color: ${c.text}; }
   .line.hi {
     background: rgba(16,185,129,0.12);
     margin: 6px -12px;
@@ -740,20 +753,20 @@
   .line.hi .v { color: #10b981; font-size: 16px; font-weight: 800; }
   .footer {
     margin-top: 30px; padding-top: 20px;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid ${c.border};
     text-align: center;
-    font-size: 11.5px; color: #6b74a0;
+    font-size: 11.5px; color: ${c.text3};
   }
-  .footer strong { color: #a8b0d8; }
+  .footer strong { color: ${c.text2}; }
   .note {
     margin-top: 18px; padding: 12px 14px;
     background: rgba(245,158,11,0.1);
     border-left: 3px solid #f59e0b;
     border-radius: 8px;
-    font-size: 11.5px; color: #a8b0d8; line-height: 1.6;
+    font-size: 11.5px; color: ${c.text2}; line-height: 1.6;
   }
   @media print {
-    body { background: #0a0e27 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 20px 16px; }
+    body { background: ${c.bg} !important; padding: 20px 16px; }
     .wrap { max-width: 100%; }
     .big { font-size: 34px; }
     .rows { padding: 16px; }
@@ -767,17 +780,12 @@
         <div class="brand-icon">⚡</div>
         <div class="brand-name">Qunverio</div>
       </div>
-      <div class="brand-meta">
-        Creator Hub<br>
-        ${now}
-      </div>
+      <div class="brand-meta">Creator Hub<br>${now}</div>
     </div>
-
     <div class="doc-title">${title}</div>
     <div class="headline">${titleText}</div>
     <div class="big">${main}</div>
     <div class="sub">${sub}</div>
-
     <div class="rows">
       ${rows.map(r => `
         <div class="line ${r.hi ? 'hi' : ''}">
@@ -786,11 +794,9 @@
         </div>
       `).join('')}
     </div>
-
     <div class="note">
       ⚠️ <strong>Note:</strong> Ye results estimates hain. Actual YouTube earnings CPM, audience geography, content type, season aur YouTube policies pe depend karti hain. Qunverio is not affiliated with YouTube.
     </div>
-
     <div class="footer">
       Generated by <strong>Qunverio Creator Hub</strong> • qunverio.vercel.app
     </div>
@@ -799,65 +805,51 @@
   }
 
   /* ============================================================
-     PRINT — dark premium
+     PRINT
      ============================================================ */
   function printDark(boxId, title) {
     const box = document.getElementById(boxId);
     if (!box) return;
     const html = buildReportHTML(box, title);
-
     const iframe = document.createElement('iframe');
     iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;';
     document.body.appendChild(iframe);
     const doc = iframe.contentWindow.document;
     doc.open(); doc.write(html); doc.close();
-
     setTimeout(() => {
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } catch (e) { console.error(e); }
-      setTimeout(() => {
-        if (iframe.parentNode) document.body.removeChild(iframe);
-      }, 1500);
+      try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch (e) { console.error(e); }
+      setTimeout(() => { if (iframe.parentNode) document.body.removeChild(iframe); }, 1500);
     }, 700);
   }
 
   /* ============================================================
-     PDF — dark premium via jsPDF (html2canvas fallback to image)
+     PDF (dark premium via html-to-image on iframe body)
      ============================================================ */
   async function pdfDark(boxId, file, title) {
     const box = document.getElementById(boxId);
     if (!box) return;
     QVH.toast('Generating PDF...', '');
-
     const html = buildReportHTML(box, title);
 
-    // Use iframe + html2canvas via foreignObject trick — simpler: load html-to-image on iframe body
     const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;left:-99999px;top:0;width:820px;height:1200px;border:0;';
+    iframe.style.cssText = 'position:fixed;left:0;top:0;width:820px;height:1200px;border:0;opacity:0;pointer-events:none;z-index:-1;';
     document.body.appendChild(iframe);
     const doc = iframe.contentWindow.document;
     doc.open(); doc.write(html); doc.close();
 
-    // Wait for fonts + layout
     setTimeout(async () => {
       try {
         const target = doc.body;
+        if (!window.htmlToImage) { QVH.toast('PDF library missing', 'error'); document.body.removeChild(iframe); return; }
 
-        // Ensure html-to-image is loaded
-        if (!window.htmlToImage) {
-          QVH.toast('PDF library missing', 'error');
-          document.body.removeChild(iframe);
-          return;
-        }
-
+        const c = themeColors();
         const dataUrl = await window.htmlToImage.toPng(target, {
           quality: 1,
-          pixelRatio: 3,
-          backgroundColor: '#0a0e27',
+          pixelRatio: 2.5,
+          backgroundColor: c.bg,
           width: target.scrollWidth,
-          height: target.scrollHeight
+          height: target.scrollHeight,
+          cacheBust: true
         });
 
         const { jsPDF } = window.jspdf;
@@ -867,14 +859,13 @@
 
         const img = new Image();
         img.onload = () => {
-          // Cover entire page (dark background)
+          // dark background page
           pdf.setFillColor(10, 14, 39);
           pdf.rect(0, 0, pw, ph, 'F');
-
           const ratio = img.width / img.height;
-          let w = pw;
+          let w = pw - 12;
           let h = w / ratio;
-          if (h > ph) { h = ph; w = h * ratio; }
+          if (h > ph - 12) { h = ph - 12; w = h * ratio; }
           const x = (pw - w) / 2;
           const y = (ph - h) / 2;
           pdf.addImage(dataUrl, 'PNG', x, y, w, h, undefined, 'FAST');
@@ -892,22 +883,22 @@
   }
 
   /* ============================================================
-     HD PNG — only the result box (with header), premium quality
+     HD PNG — render OFF-SCREEN wrapper (not -99999px)
+     Uses computed colors, invisible via opacity/z-index
      ============================================================ */
   async function pngHD(boxId, file) {
     const box = document.getElementById(boxId);
     if (!box) return;
     QVH.toast('Generating HD PNG...', '');
 
-    // Build a compact version: brand header + result content (no actions)
-    const clone = box.cloneNode(true);
-    clone.querySelectorAll('.qvhm-actions').forEach(n => n.remove());
+    const c = themeColors();
 
-    const main = clone.querySelector('.qvhm-main')?.textContent || '';
-    const sub  = clone.querySelector('.qvhm-sub')?.textContent || '';
-    const titleText = clone.querySelector('.qvhm-result-title')?.textContent || '';
+    // Extract data
+    const main = box.querySelector('.qvhm-main')?.textContent || '';
+    const sub  = box.querySelector('.qvhm-sub')?.textContent || '';
+    const titleText = box.querySelector('.qvhm-result-title')?.textContent || '';
     const rows = [];
-    clone.querySelectorAll('.qvhm-line').forEach(line => {
+    box.querySelectorAll('.qvhm-line').forEach(line => {
       rows.push({
         k: line.querySelector('.k')?.textContent || '',
         v: line.querySelector('.v')?.textContent || '',
@@ -915,68 +906,68 @@
       });
     });
 
-    // Use actual computed theme colors
-    const cs = getComputedStyle(document.body);
-    const bg = cs.getPropertyValue('--bg').trim() || '#0a0e27';
-    const surface = cs.getPropertyValue('--surface').trim() || '#151a3d';
-    const border = cs.getPropertyValue('--border-strong').trim() || 'rgba(255,255,255,0.14)';
-    const text = cs.getPropertyValue('--text').trim() || '#eef1ff';
-    const text2 = cs.getPropertyValue('--text-2').trim() || '#a8b0d8';
-    const text3 = cs.getPropertyValue('--text-3').trim() || '#6b74a0';
-
     const now = new Date().toLocaleString('en-IN');
 
+    // Build wrapper — WILL be visible in DOM but hidden via opacity + z-index
+    // (html-to-image needs the element to be laid out, not display:none or off-screen)
     const wrapper = document.createElement('div');
     wrapper.style.cssText = `
-      position: fixed; left: -99999px; top: 0;
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 720px;
       padding: 32px 28px 26px;
-      background: ${bg};
-      color: ${text};
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: ${c.bg};
+      color: ${c.text};
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
       border-radius: 20px;
       box-sizing: border-box;
+      opacity: 0;
+      z-index: -1;
+      pointer-events: none;
     `;
+
     wrapper.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:3px solid #6366f1;margin-bottom:22px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,#6366f1,#ec4899);display:flex;align-items:center;justify-content:center;font-size:20px;">⚡</div>
-          <div style="font-size:22px;font-weight:900;background:linear-gradient(135deg,#6366f1,#8b5cf6,#ec4899);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;">Qunverio</div>
+          <div style="font-size:22px;font-weight:900;color:#8b5cf6;">Qunverio</div>
         </div>
-        <div style="font-size:12px;color:${text2};text-align:right;line-height:1.4;">
+        <div style="font-size:12px;color:${c.text2};text-align:right;line-height:1.4;">
           Creator Hub<br>${now}
         </div>
       </div>
 
-      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:${text3};margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:${c.text3};margin-bottom:14px;">
         ${titleText}
       </div>
-      <div style="font-size:46px;font-weight:900;line-height:1.1;margin-bottom:6px;background:linear-gradient(135deg,#22c55e,#10b981);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;word-break:break-word;">
+      <div style="font-size:46px;font-weight:900;line-height:1.1;margin-bottom:6px;color:#10b981;word-break:break-word;">
         ${main}
       </div>
-      <div style="font-size:14px;color:${text2};margin-bottom:22px;">${sub}</div>
+      <div style="font-size:14px;color:${c.text2};margin-bottom:22px;">${sub}</div>
 
-      <div style="background:${surface};border:1.5px solid ${border};border-radius:16px;padding:18px 20px;">
+      <div style="background:${c.surface};border:1.5px solid ${c.border};border-radius:16px;padding:18px 20px;">
         ${rows.map(r => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid ${border};font-size:14.5px;gap:14px;${r.hi ? 'background:rgba(16,185,129,0.12);margin:6px -12px;padding:12px;border-radius:10px;border:none;' : ''}">
-            <span style="color:${text2};font-weight:500;">${r.k}</span>
-            <span style="font-weight:700;text-align:right;color:${r.hi ? '#10b981' : text};font-size:${r.hi ? '16px' : '14.5px'};">${r.v}</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid ${c.border};font-size:14.5px;gap:14px;${r.hi ? 'background:rgba(16,185,129,0.12);margin:6px -12px;padding:12px;border-radius:10px;border:none;' : ''}">
+            <span style="color:${c.text2};font-weight:500;">${r.k}</span>
+            <span style="font-weight:700;text-align:right;color:${r.hi ? '#10b981' : c.text};font-size:${r.hi ? '16px' : '14.5px'};">${r.v}</span>
           </div>
         `).join('')}
       </div>
 
-      <div style="margin-top:18px;padding:12px 14px;background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:8px;font-size:11.5px;color:${text2};line-height:1.6;">
-        ⚠️ <strong style="color:${text};">Note:</strong> Ye results estimates hain. Actual YouTube earnings CPM, audience geography, content type, season aur YouTube policies pe depend karti hain.
+      <div style="margin-top:18px;padding:12px 14px;background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:8px;font-size:11.5px;color:${c.text2};line-height:1.6;">
+        ⚠️ <strong style="color:${c.text};">Note:</strong> Ye results estimates hain. Actual YouTube earnings CPM, audience geography, content type, season aur YouTube policies pe depend karti hain.
       </div>
 
-      <div style="margin-top:22px;padding-top:16px;border-top:1px solid ${border};text-align:center;font-size:11.5px;color:${text3};">
-        Generated by <strong style="color:${text2};">Qunverio Creator Hub</strong> • qunverio.vercel.app
+      <div style="margin-top:22px;padding-top:16px;border-top:1px solid ${c.border};text-align:center;font-size:11.5px;color:${c.text3};">
+        Generated by <strong style="color:${c.text2};">Qunverio Creator Hub</strong> • qunverio.vercel.app
       </div>
     `;
+
     document.body.appendChild(wrapper);
 
-    // Wait a tick for layout
-    await new Promise(r => setTimeout(r, 300));
+    // Wait for layout & fonts
+    await new Promise(r => setTimeout(r, 500));
 
     if (!window.htmlToImage) {
       QVH.toast('PNG library missing', 'error');
@@ -987,10 +978,12 @@
     try {
       const dataUrl = await window.htmlToImage.toPng(wrapper, {
         quality: 1,
-        pixelRatio: 4, // Ultra HD
-        backgroundColor: bg,
+        pixelRatio: 4,
+        backgroundColor: c.bg,
         width: wrapper.scrollWidth,
-        height: wrapper.scrollHeight
+        height: wrapper.scrollHeight,
+        cacheBust: true,
+        skipFonts: false
       });
       const a = document.createElement('a');
       a.download = (file || 'qunverio-report') + '.png';
@@ -999,16 +992,12 @@
       QVH.toast('HD PNG downloaded ✅', 'success');
     } catch (e) {
       console.error(e);
-      QVH.toast('PNG failed', 'error');
+      QVH.toast('PNG failed: ' + (e.message || 'unknown'), 'error');
     } finally {
-      document.body.removeChild(wrapper);
+      if (wrapper.parentNode) document.body.removeChild(wrapper);
     }
   }
 
-  /* ============================================================
-     REGISTER
-     ============================================================ */
   QVH.registerRenderer('money', render);
-
-  console.log('%c✅ Monetization Lab registered (v1.1)', 'color:#10b981;font-weight:bold');
+  console.log('%c✅ Monetization Lab registered (v1.2)', 'color:#10b981;font-weight:bold');
 })();
