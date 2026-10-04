@@ -455,124 +455,16 @@ const EXTRA_TOOLS = [
     kw: ['ai', 'assistant', 'chat', 'gpt', 'gemini', 'ask', 'image', 'analyze']
   },
   /* ══════════════════════════════════════════════════════
-     CREATOR HUB — YouTube Creator Suite (13 entries)
+     CREATOR HUB — ONE entry only (opens full dashboard)
      ══════════════════════════════════════════════════════ */
   {
     id: 'creator-hub',
     name: 'YouTube Creator Hub',
     cat: 'creator',
     icon: '🎬',
-    desc: 'Complete YouTube toolkit — ideas, titles, thumbnails, scripts, SEO, analytics & AI coach',
-    howto: 'Click to open your full-screen YouTube Creator Dashboard. Saare tools ek jagah.',
-    kw: ['youtube', 'creator', 'video', 'seo', 'title', 'thumbnail', 'script', 'analytics', 'coach', 'youtuber', 'channel', 'viral', 'content']
-  },
-  {
-    id: 'creator-title-lab',
-    name: 'Title Lab',
-    cat: 'creator',
-    icon: '📝',
-    desc: 'AI titles, CTR score, length checker, A/B variations',
-    howto: 'Creator Hub ke andar Title Lab kholo. AI titles generate karo, score dekho, workspace me save karo.',
-    kw: ['title', 'youtube title', 'ctr', 'ai title', 'title generator', 'a/b test']
-  },
-  {
-    id: 'creator-idea-lab',
-    name: 'Idea Lab',
-    cat: 'creator',
-    icon: '💡',
-    desc: 'AI video ideas, viral topics, series planner, 30-day plan',
-    howto: 'Creator Hub me Idea Lab kholo. Topic daalo, AI 10 ideas degi.',
-    kw: ['idea', 'video idea', 'viral topic', 'content plan', 'youtube ideas']
-  },
-  {
-    id: 'creator-seo-lab',
-    name: 'SEO Lab',
-    cat: 'creator',
-    icon: '🔍',
-    desc: 'AI description, tags, hashtags, keywords, chapters',
-    howto: 'Creator Hub me SEO Lab kholo. Video title daalo, poora SEO content milega.',
-    kw: ['seo', 'youtube seo', 'tags', 'hashtags', 'description', 'keywords', 'chapters']
-  },
-  {
-    id: 'creator-script-lab',
-    name: 'Script Lab',
-    cat: 'creator',
-    icon: '🎬',
-    desc: 'AI full scripts, hooks, shorts, story structure, CTA',
-    howto: 'Creator Hub me Script Lab kholo. Video topic daalo, poora script milega.',
-    kw: ['script', 'video script', 'hook', 'shorts script', 'storytelling', 'cta']
-  },
-  {
-    id: 'creator-analytics',
-    name: 'Analytics',
-    cat: 'creator',
-    icon: '📊',
-    desc: 'Channel, video & competitor analysis with AI',
-    howto: 'Creator Hub me Analytics kholo. Channel/video URL daalo, AI analysis milegi.',
-    kw: ['analytics', 'channel analysis', 'video analysis', 'competitor', 'youtube data']
-  },
-  {
-    id: 'creator-ai-coach',
-    name: 'AI Coach',
-    cat: 'creator',
-    icon: '🤖',
-    desc: 'Chat with AI about your channel, content & growth',
-    howto: 'Creator Hub me AI Coach kholo. Kuch bhi poochho — AI jawab dega.',
-    kw: ['ai coach', 'youtube coach', 'chat', 'ask ai', 'growth advice']
-  },
-  {
-    id: 'creator-community',
-    name: 'Community Lab',
-    cat: 'creator',
-    icon: '💬',
-    desc: 'AI community posts, polls, Q&A, comment replies',
-    howto: 'Creator Hub me Community Lab kholo. Post, poll, reply generate karo.',
-    kw: ['community', 'community post', 'poll', 'comment reply', 'q&a', 'hate comment']
-  },
-  {
-    id: 'creator-thumbnail-lab',
-    name: 'Thumbnail Lab',
-    cat: 'creator',
-    icon: '🖼️',
-    desc: 'AI thumbnail ideas, text, roast + preview & dimension check',
-    howto: 'Creator Hub me Thumbnail Lab kholo. Video title daalo, ideas milein.',
-    kw: ['thumbnail', 'thumbnail idea', 'thumbnail text', 'thumbnail roast', 'thumbnail preview']
-  },
-  {
-    id: 'creator-monetization',
-    name: 'Monetization Lab',
-    cat: 'creator',
-    icon: '💰',
-    desc: 'YouTube revenue, CPM, RPM, sponsorship & income calculators',
-    howto: 'Creator Hub me Monetization kholo. 6 calculators — revenue, CPM, RPM, sponsorship, monthly, goal.',
-    kw: ['revenue', 'cpm', 'rpm', 'youtube earnings', 'sponsorship', 'monetization calculator']
-  },
-  {
-    id: 'creator-workspace',
-    name: 'Creator Workspace',
-    cat: 'creator',
-    icon: '📁',
-    desc: 'Idea Vault, Title Vault, Script Vault (localStorage)',
-    howto: 'Creator Hub me Workspace kholo. Ideas, titles, scripts save karo.',
-    kw: ['workspace', 'idea vault', 'title vault', 'script vault', 'save', 'notes']
-  },
-  {
-    id: 'creator-roadmap',
-    name: 'YouTube Roadmap',
-    cat: 'creator',
-    icon: '🗺️',
-    desc: 'Zero se full-time creator tak — step-by-step journey',
-    howto: 'Creator Hub me Roadmap kholo. 12 milestones ke saath progress track karo.',
-    kw: ['roadmap', 'youtube journey', 'beginner guide', 'milestones', 'checklist journey']
-  },
-  {
-    id: 'creator-checklists',
-    name: 'Creator Checklists',
-    cat: 'creator',
-    icon: '✅',
-    desc: 'Upload, SEO, thumbnail, channel, recording, editing, monetization',
-    howto: 'Creator Hub me Checklists kholo. 7 ready-made checklists — tick karo, print karo.',
-    kw: ['checklist', 'upload checklist', 'seo checklist', 'thumbnail checklist', 'youtube checklist']
+    desc: 'Complete YouTube toolkit — 13 modules: Ideas, Titles, Thumbnails, Scripts, SEO, Analytics, AI Coach & more',
+    howto: 'Click to open your full-screen YouTube Creator Dashboard with all 13 tools — Idea Lab, Title Lab, Thumbnail Lab, Script Lab, SEO Lab, Analytics, AI Coach, Community, Monetization, Workspace, Roadmap, Checklists.',
+    kw: ['youtube', 'creator', 'video', 'seo', 'title', 'thumbnail', 'script', 'analytics', 'coach', 'youtuber', 'channel', 'viral', 'content', 'creator hub', 'youtube tools']
   }
 ];
 
@@ -623,7 +515,7 @@ window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
 window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
 
 window.openExtraTool = function(toolId) {
-  // 👇 AI Tool special case
+  // AI Tool special case
   if (toolId === 'ai-tool') {
     if (window.QunverioAI && typeof window.QunverioAI.open === 'function') {
       window.QunverioAI.open();
@@ -634,39 +526,10 @@ window.openExtraTool = function(toolId) {
     return;
   }
 
-  // 👇 Creator Hub main card
+  // Creator Hub special case
   if (toolId === 'creator-hub') {
     if (window.QVH && typeof window.QVH.openHub === 'function') {
       window.QVH.openHub();
-      if (typeof addRecent === 'function') addRecent(toolId);
-    } else {
-      if (typeof toast === 'function') toast('Creator Hub loading… refresh karo', 'error');
-    }
-    return;
-  }
-
-  // 👇 Any creator-* tool → open Creator Hub + navigate to that category
-  if (toolId.startsWith('creator-')) {
-    if (window.QVH && typeof window.QVH.openHub === 'function') {
-      window.QVH.openHub();
-      const catMap = {
-        'creator-title-lab': 'title',
-        'creator-idea-lab': 'idea',
-        'creator-seo-lab': 'seo',
-        'creator-script-lab': 'script',
-        'creator-analytics': 'analytics',
-        'creator-ai-coach': 'coach',
-        'creator-community': 'community',
-        'creator-thumbnail-lab': 'thumbnail',
-        'creator-monetization': 'money',
-        'creator-workspace': 'workspace',
-        'creator-roadmap': 'roadmap',
-        'creator-checklists': 'checklist'
-      };
-      const catId = catMap[toolId];
-      if (catId && typeof window.QVH.openCategory === 'function') {
-        setTimeout(() => window.QVH.openCategory(catId), 300);
-      }
       if (typeof addRecent === 'function') addRecent(toolId);
     } else {
       if (typeof toast === 'function') toast('Creator Hub loading… refresh karo', 'error');
