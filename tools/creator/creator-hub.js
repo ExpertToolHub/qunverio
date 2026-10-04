@@ -1,7 +1,8 @@
 /* ============================================================
    QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js) v1.3
-   Scroll fix: absolute positioning (100% reliable on mobile)
-   Home: module names added as text
+   YouTube Creator Dashboard — full-screen overlay
+   Namespace: window.QVH
+   v1.3: + QVH.openCategory public API + 100dvh scroll fix
    ============================================================ */
 
 (function () {
@@ -21,25 +22,24 @@
       position: fixed; inset: 0; z-index: 9999;
       background: var(--bg, #0a0e27);
       color: var(--text, #eef1ff);
-      display: none;
+      display: none; flex-direction: column;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
+      height: 100vh;
+      height: 100dvh;
+      width: 100vw;
+      width: 100dvw;
     }
-    .qvh-root.open { display: block; animation: qvh-fade-in .25s ease; }
+    .qvh-root.open { display: flex; animation: qvh-fade-in .25s ease; }
     @keyframes qvh-fade-in { from { opacity: 0 } to { opacity: 1 } }
 
-    /* ── Header — fixed at top ── */
     .qvh-header {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 62px;
       display: flex; align-items: center; gap: 10px;
       padding: 12px 14px;
       background: var(--surface, #151a3d);
       border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
-      z-index: 10;
-      box-sizing: border-box;
+      flex-shrink: 0; position: relative; z-index: 5;
     }
     .qvh-back {
       width: 38px; height: 38px; border-radius: 10px;
@@ -54,6 +54,7 @@
     .qvh-header-title h2 {
       font-size: 15px; font-weight: 800; margin: 0;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      display: flex; align-items: center; gap: 6px;
     }
     .qvh-header-title p {
       font-size: 11.5px; color: var(--text-3, #6b74a0); margin: 2px 0 0;
@@ -66,50 +67,18 @@
       letter-spacing: .04em; flex-shrink: 0;
     }
 
-    /* ── Body — absolute positioned between header & nav ── */
     .qvh-body {
-      position: absolute;
-      top: 62px;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      flex: 1 1 0;
+      min-height: 0;
       overflow-y: auto;
       overflow-x: hidden;
+      padding: 18px 16px 100px;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
-      padding: 18px 16px 100px;
-      box-sizing: border-box;
+      touch-action: pan-y;
     }
+    @media (min-width: 900px) { .qvh-body { padding-bottom: 40px; } }
 
-    /* ── Bottom nav — absolute at bottom ── */
-    .qvh-bottom-nav {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      display: flex;
-      background: var(--surface, #151a3d);
-      border-top: 1px solid var(--border, rgba(255,255,255,0.08));
-      padding: 8px 4px;
-      padding-bottom: calc(8px + env(safe-area-inset-bottom));
-      z-index: 10;
-      overflow-x: auto;
-      scrollbar-width: none;
-      box-sizing: border-box;
-    }
-    .qvh-bottom-nav::-webkit-scrollbar { display: none; }
-    .qvh-bn-item {
-      flex: 1 0 auto; min-width: 62px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 3px; padding: 6px 8px;
-      border-radius: 10px;
-      font-size: 10px; font-weight: 700;
-      color: var(--text-3, #6b74a0);
-      cursor: pointer; background: none; border: none;
-      transition: color .2s;
-    }
-    .qvh-bn-item .qvh-bn-icon { font-size: 17px; line-height: 1; }
-    .qvh-bn-item.active { color: var(--primary, #6366f1); }
-
-    /* ── Hero ── */
     .qvh-hero { text-align: center; padding: 8px 0 20px; }
     .qvh-hero-icon {
       width: 68px; height: 68px; border-radius: 20px;
@@ -140,7 +109,6 @@
       margin: 18px 0 10px;
     }
 
-    /* ── Home module cards (with name + desc) ── */
     .qvh-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
       gap: 11px;
@@ -152,10 +120,10 @@
       background: var(--surface, #151a3d);
       border: 1px solid var(--border, rgba(255,255,255,0.08));
       border-radius: 16px; padding: 15px;
-      cursor: pointer; display: flex; flex-direction: column; gap: 8px;
+      cursor: pointer; display: flex; flex-direction: column; gap: 9px;
       position: relative; overflow: hidden;
       transition: transform .22s cubic-bezier(.34,1.4,.64,1), box-shadow .22s, border-color .22s;
-      min-height: 148px; text-align: left;
+      min-height: 138px; text-align: left;
     }
     .qvh-card::before {
       content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
@@ -178,7 +146,7 @@
       background: var(--qvh-card-grad, linear-gradient(135deg,#6366f1,#8b5cf6));
     }
     .qvh-card-name {
-      font-size: 14px; font-weight: 800; line-height: 1.25;
+      font-size: 13.5px; font-weight: 800; line-height: 1.25;
       color: var(--text, #eef1ff);
     }
     .qvh-card-desc {
@@ -198,7 +166,6 @@
     .qvh-card-tag.ready { background: rgba(16,185,129,0.15); color: #10b981; }
     .qvh-card-tag.soon { background: rgba(245,158,11,0.15); color: #f59e0b; }
 
-    /* ── Tool wrapper (inside module) ── */
     .qvh-tool-wrap { max-width: 720px; margin: 0 auto; }
     .qvh-tool-header {
       display: flex; align-items: center; gap: 11px;
@@ -220,6 +187,7 @@
     .qvh-tool-header p {
       font-size: 12px; color: var(--text-3, #6b74a0); margin: 0; line-height: 1.4;
     }
+
     .qvh-placeholder {
       text-align: center; padding: 44px 22px;
       background: var(--surface, #151a3d);
@@ -235,20 +203,42 @@
       font-size: 14.5px; margin-bottom: 4px;
     }
 
-    /* ── Desktop: sidebar replaces bottom nav ── */
+    .qvh-bottom-nav {
+      display: flex; position: absolute; bottom: 0; left: 0; right: 0;
+      background: color-mix(in srgb, var(--surface, #151a3d) 96%, transparent);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border, rgba(255,255,255,0.08));
+      padding: 8px 4px;
+      padding-bottom: calc(8px + env(safe-area-inset-bottom));
+      z-index: 10; overflow-x: auto; scrollbar-width: none;
+      flex-shrink: 0;
+    }
+    .qvh-bottom-nav::-webkit-scrollbar { display: none; }
+    .qvh-bn-item {
+      flex: 1 0 auto; min-width: 68px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 10px; font-weight: 700;
+      color: var(--text-3, #6b74a0);
+      cursor: pointer; background: none; border: none;
+      transition: color .2s;
+    }
+    .qvh-bn-item .qvh-bn-icon { font-size: 17px; line-height: 1; }
+    .qvh-bn-item.active { color: var(--primary, #6366f1); }
+    .qvh-bn-item.active .qvh-bn-icon { transform: scale(1.05); }
+    @media (min-width: 900px) { .qvh-bottom-nav { display: none; } }
+
     .qvh-sidebar { display: none; }
     @media (min-width: 900px) {
+      .qvh-root { flex-direction: row; }
       .qvh-sidebar {
         display: flex; flex-direction: column;
-        position: absolute;
-        top: 0; left: 0; bottom: 0;
-        width: 240px;
+        width: 240px; flex-shrink: 0;
         background: var(--surface, #151a3d);
         border-right: 1px solid var(--border, rgba(255,255,255,0.08));
-        padding: 14px 10px;
-        overflow-y: auto;
-        z-index: 20;
-        box-sizing: border-box;
+        padding: 14px 10px; overflow-y: auto;
+        height: 100%;
       }
       .qvh-sidebar .qvh-sb-brand {
         display: flex; align-items: center; gap: 9px;
@@ -279,11 +269,7 @@
         color: var(--text, #eef1ff);
       }
       .qvh-sb-item .qvh-sb-icon { font-size: 17px; width: 22px; text-align: center; }
-
-      /* Shift header + body right by sidebar width */
-      .qvh-header { left: 240px; }
-      .qvh-body   { left: 240px; }
-      .qvh-bottom-nav { display: none; }
+      .qvh-main { flex: 1 1 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
     }
 
     .qvh-toast {
@@ -314,18 +300,18 @@
      CATEGORIES
      ============================================================ */
   const QVH_CATEGORIES = [
-    { id: 'idea',      icon: '💡', name: 'Idea Lab',      desc: 'Video ideas, viral topics, series planner', grad: 'linear-gradient(135deg,#f59e0b,#f97316)', ready: false },
-    { id: 'title',     icon: '📝', name: 'Title Lab',     desc: 'AI titles, CTR score, A/B variations',       grad: 'linear-gradient(135deg,#8b5cf6,#6366f1)', ready: false },
-    { id: 'thumbnail', icon: '🖼️', name: 'Thumbnail Lab', desc: 'Text ideas, analyzer, mobile preview',       grad: 'linear-gradient(135deg,#ec4899,#ef4444)', ready: false },
-    { id: 'script',    icon: '🎬', name: 'Script Lab',    desc: 'Hooks, full scripts, story structure',       grad: 'linear-gradient(135deg,#6366f1,#8b5cf6)', ready: false },
-    { id: 'seo',       icon: '🔍', name: 'SEO Lab',       desc: 'Description, tags, hashtags, chapters',      grad: 'linear-gradient(135deg,#10b981,#059669)', ready: false },
-    { id: 'analytics', icon: '📊', name: 'Analytics',     desc: 'Channel, video & competitor analysis',       grad: 'linear-gradient(135deg,#06b6d4,#3b82f6)', ready: false },
-    { id: 'coach',     icon: '🤖', name: 'AI Coach',      desc: 'Ask anything about your channel',            grad: 'linear-gradient(135deg,#6366f1,#ec4899)', ready: false },
-    { id: 'community', icon: '💬', name: 'Community',     desc: 'Posts, polls, replies, comments',            grad: 'linear-gradient(135deg,#14b8a6,#06b6d4)', ready: false },
-    { id: 'money',     icon: '💰', name: 'Monetization',  desc: 'Revenue, CPM, RPM, sponsorship rates',       grad: 'linear-gradient(135deg,#22c55e,#10b981)', ready: true  },
-    { id: 'workspace', icon: '📁', name: 'Workspace',     desc: 'Idea vault, script vault, calendar',         grad: 'linear-gradient(135deg,#3b82f6,#6366f1)', ready: false },
-    { id: 'roadmap',   icon: '🗺️', name: 'Roadmap',       desc: 'Beginner to pro YouTube journey',            grad: 'linear-gradient(135deg,#a0522d,#c47b4a)', ready: false },
-    { id: 'checklist', icon: '✅', name: 'Checklists',    desc: 'Upload, SEO, thumbnail & channel setup',     grad: 'linear-gradient(135deg,#f59e0b,#ec4899)', ready: false },
+    { id: 'idea',      icon: '💡', name: 'Idea Lab',      desc: 'Video ideas, viral topics, series planner', grad: 'linear-gradient(135deg,#f59e0b,#f97316)', ready: true },
+    { id: 'title',     icon: '📝', name: 'Title Lab',     desc: 'AI titles, CTR score, A/B variations',       grad: 'linear-gradient(135deg,#8b5cf6,#6366f1)', ready: true },
+    { id: 'thumbnail', icon: '🖼️', name: 'Thumbnail Lab', desc: 'Text ideas, analyzer, mobile preview',       grad: 'linear-gradient(135deg,#ec4899,#ef4444)', ready: true },
+    { id: 'script',    icon: '🎬', name: 'Script Lab',    desc: 'Hooks, full scripts, story structure',       grad: 'linear-gradient(135deg,#6366f1,#8b5cf6)', ready: true },
+    { id: 'seo',       icon: '🔍', name: 'SEO Lab',       desc: 'Description, tags, hashtags, chapters',      grad: 'linear-gradient(135deg,#10b981,#059669)', ready: true },
+    { id: 'analytics', icon: '📊', name: 'Analytics',     desc: 'Channel, video & competitor analysis',       grad: 'linear-gradient(135deg,#06b6d4,#3b82f6)', ready: true },
+    { id: 'coach',     icon: '🤖', name: 'AI Coach',      desc: 'Ask anything about your channel',            grad: 'linear-gradient(135deg,#6366f1,#ec4899)', ready: true },
+    { id: 'community', icon: '💬', name: 'Community',     desc: 'Posts, polls, replies, comments',            grad: 'linear-gradient(135deg,#14b8a6,#06b6d4)', ready: true },
+    { id: 'money',     icon: '💰', name: 'Monetization',  desc: 'Revenue, CPM, RPM, sponsorship rates',       grad: 'linear-gradient(135deg,#22c55e,#10b981)', ready: true },
+    { id: 'workspace', icon: '📁', name: 'Workspace',     desc: 'Idea vault, script vault, calendar',         grad: 'linear-gradient(135deg,#3b82f6,#6366f1)', ready: true },
+    { id: 'roadmap',   icon: '🗺️', name: 'Roadmap',       desc: 'Beginner to pro YouTube journey',            grad: 'linear-gradient(135deg,#a0522d,#c47b4a)', ready: true },
+    { id: 'checklist', icon: '✅', name: 'Checklists',    desc: 'Upload, SEO, thumbnail & channel setup',     grad: 'linear-gradient(135deg,#f59e0b,#ec4899)', ready: true },
     { id: 'coming',    icon: '🚀', name: 'Coming Soon',   desc: 'Instagram, TikTok, Facebook, X',             grad: 'linear-gradient(135deg,#6b74a0,#4b5563)', ready: false, tag: 'Soon' }
   ];
 
@@ -347,15 +333,17 @@
         </div>
         <div id="qvhSbItems"></div>
       </aside>
-      <header class="qvh-header">
-        <button class="qvh-back" id="qvhBackBtn" aria-label="Back">←</button>
-        <div class="qvh-header-title">
-          <h2 id="qvhHeaderTitle">YouTube Creator Hub</h2>
-          <p id="qvhHeaderSub">Your YouTube command center</p>
-        </div>
-        <span class="qvh-header-badge">BETA</span>
-      </header>
-      <div class="qvh-body" id="qvhBody"></div>
+      <div class="qvh-main">
+        <header class="qvh-header">
+          <button class="qvh-back" id="qvhBackBtn" aria-label="Back">←</button>
+          <div class="qvh-header-title">
+            <h2 id="qvhHeaderTitle">YouTube Creator Hub</h2>
+            <p id="qvhHeaderSub">Your YouTube command center</p>
+          </div>
+          <span class="qvh-header-badge">BETA</span>
+        </header>
+        <div class="qvh-body" id="qvhBody"></div>
+      </div>
       <nav class="qvh-bottom-nav" id="qvhBottomNav"></nav>
     `;
     document.body.appendChild(rootEl);
@@ -488,6 +476,9 @@
     if (s) s.textContent = sub || '';
   }
 
+  /* ============================================================
+     PUBLIC API
+     ============================================================ */
   QVH.openHub = function () {
     injectCSS();
     buildShell();
@@ -504,6 +495,11 @@
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
     state.open = false;
+  };
+
+  /* 👇 NEW: Allow opening a specific category from outside */
+  QVH.openCategory = function (catId) {
+    openCategory(catId);
   };
 
   document.addEventListener('click', (e) => {
