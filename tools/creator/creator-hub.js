@@ -1,7 +1,8 @@
 /* ============================================================
-   QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js)
-   YouTube Creator Dashboard — full-screen overlay within Qunverio
+   QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js) v1.1
+   YouTube Creator Dashboard — full-screen overlay
    Namespace: window.QVH (Qunverio Creator Hub)
+   v1.1: scroll fix (100dvh), min-height:0, overscroll-behavior
    ============================================================ */
 
 (function () {
@@ -11,7 +12,7 @@
 
   const QVH = window.QVH || {};
   QVH._loaded = true;
-  QVH._version = '1.0.0';
+  QVH._version = '1.1.0';
 
   /* ============================================================
      CSS — scoped with qvh- prefix
@@ -21,12 +22,18 @@
       position: fixed; inset: 0; z-index: 9999;
       background: var(--bg, #0a0e27);
       color: var(--text, #eef1ff);
-      display: none; flex-direction: column; overflow: hidden;
+      display: none; flex-direction: column;
+      overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
+      height: 100vh;
+      height: 100dvh;
+      width: 100vw;
+      width: 100dvw;
     }
     .qvh-root.open { display: flex; animation: qvh-fade-in .25s ease; }
     @keyframes qvh-fade-in { from { opacity: 0 } to { opacity: 1 } }
+
     .qvh-header {
       display: flex; align-items: center; gap: 10px;
       padding: 12px 14px;
@@ -59,12 +66,19 @@
       color: #fff; font-size: 10.5px; font-weight: 800;
       letter-spacing: .04em; flex-shrink: 0;
     }
+
+    /* ── SCROLL FIX: min-height:0 + flex:1 1 0 ── */
     .qvh-body {
-      flex: 1; overflow-y: auto; overflow-x: hidden;
+      flex: 1 1 0;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
       padding: 18px 16px 100px;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
     @media (min-width: 900px) { .qvh-body { padding-bottom: 40px; } }
+
     .qvh-hero { text-align: center; padding: 8px 0 20px; }
     .qvh-hero-icon {
       width: 68px; height: 68px; border-radius: 20px;
@@ -87,18 +101,21 @@
       color: var(--text-2, #a8b0d8); font-size: 13px;
       max-width: 480px; margin: 0 auto 4px; line-height: 1.55;
     }
+
     .qvh-section-title {
       font-size: 12px; font-weight: 800;
       text-transform: uppercase; letter-spacing: .08em;
       color: var(--text-3, #6b74a0);
       margin: 18px 0 10px;
     }
+
     .qvh-grid {
       display: grid; grid-template-columns: repeat(2, 1fr);
       gap: 11px;
     }
     @media (min-width: 560px) { .qvh-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (min-width: 900px) { .qvh-grid { grid-template-columns: repeat(4, 1fr); } }
+
     .qvh-card {
       background: var(--surface, #151a3d);
       border: 1px solid var(--border, rgba(255,255,255,0.08));
@@ -148,6 +165,7 @@
     }
     .qvh-card-tag.ready { background: rgba(16,185,129,0.15); color: #10b981; }
     .qvh-card-tag.soon { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
     .qvh-tool-wrap { max-width: 720px; margin: 0 auto; }
     .qvh-tool-header {
       display: flex; align-items: center; gap: 11px;
@@ -169,6 +187,7 @@
     .qvh-tool-header p {
       font-size: 12px; color: var(--text-3, #6b74a0); margin: 0; line-height: 1.4;
     }
+
     .qvh-placeholder {
       text-align: center; padding: 44px 22px;
       background: var(--surface, #151a3d);
@@ -183,6 +202,7 @@
       display: block; color: var(--text-2, #a8b0d8);
       font-size: 14.5px; margin-bottom: 4px;
     }
+
     .qvh-bottom-nav {
       display: flex; position: absolute; bottom: 0; left: 0; right: 0;
       background: color-mix(in srgb, var(--surface, #151a3d) 96%, transparent);
@@ -191,6 +211,7 @@
       padding: 8px 4px;
       padding-bottom: calc(8px + env(safe-area-inset-bottom));
       z-index: 10; overflow-x: auto; scrollbar-width: none;
+      flex-shrink: 0;
     }
     .qvh-bottom-nav::-webkit-scrollbar { display: none; }
     .qvh-bn-item {
@@ -207,6 +228,7 @@
     .qvh-bn-item.active { color: var(--primary, #6366f1); }
     .qvh-bn-item.active .qvh-bn-icon { transform: scale(1.05); }
     @media (min-width: 900px) { .qvh-bottom-nav { display: none; } }
+
     .qvh-sidebar { display: none; }
     @media (min-width: 900px) {
       .qvh-root { flex-direction: row; }
@@ -216,6 +238,7 @@
         background: var(--surface, #151a3d);
         border-right: 1px solid var(--border, rgba(255,255,255,0.08));
         padding: 14px 10px; overflow-y: auto;
+        height: 100%;
       }
       .qvh-sidebar .qvh-sb-brand {
         display: flex; align-items: center; gap: 9px;
@@ -246,8 +269,9 @@
         color: var(--text, #eef1ff);
       }
       .qvh-sb-item .qvh-sb-icon { font-size: 17px; width: 22px; text-align: center; }
-      .qvh-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+      .qvh-main { flex: 1 1 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
     }
+
     .qvh-toast {
       position: fixed; bottom: 100px; left: 50%;
       transform: translateX(-50%) translateY(120px);
@@ -284,7 +308,7 @@
     { id: 'analytics', icon: '📊', name: 'Analytics',     desc: 'Channel, video & competitor analysis',       grad: 'linear-gradient(135deg,#06b6d4,#3b82f6)', ready: false },
     { id: 'coach',     icon: '🤖', name: 'AI Coach',      desc: 'Ask anything about your channel',            grad: 'linear-gradient(135deg,#6366f1,#ec4899)', ready: false },
     { id: 'community', icon: '💬', name: 'Community',     desc: 'Posts, polls, replies, comments',            grad: 'linear-gradient(135deg,#14b8a6,#06b6d4)', ready: false },
-    { id: 'money',     icon: '💰', name: 'Monetization',  desc: 'Revenue, CPM, RPM, sponsorship rates',       grad: 'linear-gradient(135deg,#22c55e,#10b981)', ready: false },
+    { id: 'money',     icon: '💰', name: 'Monetization',  desc: 'Revenue, CPM, RPM, sponsorship rates',       grad: 'linear-gradient(135deg,#22c55e,#10b981)', ready: true  },
     { id: 'workspace', icon: '📁', name: 'Workspace',     desc: 'Idea vault, script vault, calendar',         grad: 'linear-gradient(135deg,#3b82f6,#6366f1)', ready: false },
     { id: 'roadmap',   icon: '🗺️', name: 'Roadmap',       desc: 'Beginner to pro YouTube journey',            grad: 'linear-gradient(135deg,#a0522d,#c47b4a)', ready: false },
     { id: 'checklist', icon: '✅', name: 'Checklists',    desc: 'Upload, SEO, thumbnail & channel setup',     grad: 'linear-gradient(135deg,#f59e0b,#ec4899)', ready: false },
@@ -418,6 +442,8 @@
     else renderPlaceholder(cat);
     renderBottomNav();
     renderSidebar();
+    const body = document.getElementById('qvhBody');
+    if (body) body.scrollTop = 0;
   }
 
   function renderPlaceholder(cat) {
