@@ -71,6 +71,13 @@ const CATEGORIES = [
     icon: '✨',
     desc: 'AI assistant — ask anything, edit images with AI',
     gradient: 'linear-gradient(135deg,#6366f1,#ec4899)'
+  },
+  {
+    id: 'creator',
+    name: 'Creator Hub',
+    icon: '🎬',
+    desc: 'YouTube tools — AI coach, analytics & growth',
+    gradient: 'linear-gradient(135deg,#ff0000,#ec4899)'
   }
 ];
 
@@ -446,6 +453,18 @@ const EXTRA_TOOLS = [
     desc: 'Ask anything, analyze images, resize/compress/convert, read PDFs',
     howto: 'Type your question or upload an image/PDF. AI will understand and perform the action.',
     kw: ['ai', 'assistant', 'chat', 'gpt', 'gemini', 'ask', 'image', 'analyze']
+  },
+  /* ══════════════════════════════════════════════════════
+     CREATOR HUB — YouTube Creator Suite
+     ══════════════════════════════════════════════════════ */
+  {
+    id: 'creator-hub',
+    name: 'YouTube Creator Hub',
+    cat: 'creator',
+    icon: '🎬',
+    desc: 'Complete YouTube toolkit — ideas, titles, thumbnails, scripts, SEO, analytics & AI coach',
+    howto: 'Click to open your full-screen YouTube Creator Dashboard. Saare tools ek jagah — Idea Lab, Title Lab, Thumbnail Lab, Script Lab, SEO Lab, Channel Analyzer, AI Coach aur bahut kuch.',
+    kw: ['youtube', 'creator', 'video', 'seo', 'title', 'thumbnail', 'script', 'analytics', 'coach', 'youtuber', 'channel', 'viral', 'content']
   }
 ];
 
@@ -504,6 +523,20 @@ window.openExtraTool = function(toolId) {
     } else {
       if (typeof toast === 'function') toast('AI Tool loading… refresh karo', 'error');
       console.warn('QunverioAI not ready — ai-tool.js may not be loaded');
+    }
+    return;
+  }
+
+  // 👇 Creator Hub special case — full-screen YouTube dashboard kholo
+  if (toolId === 'creator-hub') {
+    if (window.QVH && typeof window.QVH.openHub === 'function') {
+      window.QVH.openHub();
+      if (typeof addRecent === 'function') addRecent(toolId);
+    } else {
+      if (typeof toast === 'function') {
+        toast('Creator Hub is being set up 🚧 — coming soon!', 'success');
+      }
+      console.warn('QVH not ready — creator-hub.js may not be loaded yet');
     }
     return;
   }
