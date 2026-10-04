@@ -1,7 +1,7 @@
 /* ============================================================
-   QUNVERIO — MONETIZATION LAB (v1.2)
+   QUNVERIO — MONETIZATION LAB (v1.3)
    Path: tools/creator/monetization.js
-   Fix: HD PNG white screen (computed colors, on-screen render)
+   Fixes: HD PNG white screen (on-screen render + 1s wait)
    ============================================================ */
 
 (function () {
@@ -29,18 +29,12 @@
   }
 
   /* ============================================================
-     Get computed colors from current theme — returns HEX/RGB,
-     so html-to-image can render without CSS vars
+     Get computed colors — returns HEX/RGB (not var())
      ============================================================ */
   function themeColors() {
     const cs = getComputedStyle(document.body);
-    function get(v, fallback) {
-      const val = cs.getPropertyValue(v).trim();
-      return val || fallback;
-    }
-    // Fallback: agar var value bhi var hai to ek safe fallback dete hain
     function safe(v, fallback) {
-      let val = get(v, '');
+      let val = (cs.getPropertyValue(v) || '').trim();
       if (!val || val.startsWith('var(') || val.length > 60) return fallback;
       return val;
     }
@@ -110,6 +104,7 @@
       font-size: 14px; outline: none;
       color: var(--text, #eef1ff);
       transition: border-color .18s, box-shadow .18s;
+      box-sizing: border-box;
     }
     .qvhm-field input:focus, .qvhm-field select:focus {
       border-color: #10b981;
@@ -653,7 +648,7 @@
   }
 
   /* ============================================================
-     BUILD REPORT HTML (for print & PDF — uses raw colors)
+     BUILD REPORT HTML (print & PDF — computed colors)
      ============================================================ */
   function buildReportHTML(sourceEl, title) {
     const c = themeColors();
@@ -823,7 +818,7 @@
   }
 
   /* ============================================================
-     PDF (dark premium via html-to-image on iframe body)
+     PDF
      ============================================================ */
   async function pdfDark(boxId, file, title) {
     const box = document.getElementById(boxId);
@@ -832,7 +827,7 @@
     const html = buildReportHTML(box, title);
 
     const iframe = document.createElement('iframe');
-    iframe.style.cssText = 'position:fixed;left:0;top:0;width:820px;height:1200px;border:0;opacity:0;pointer-events:none;z-index:-1;';
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:820px;height:1200px;border:0;opacity:0;pointer-events:none;z-index:-1;';
     document.body.appendChild(iframe);
     const doc = iframe.contentWindow.document;
     doc.open(); doc.write(html); doc.close();
@@ -859,7 +854,6 @@
 
         const img = new Image();
         img.onload = () => {
-          // dark background page
           pdf.setFillColor(10, 14, 39);
           pdf.rect(0, 0, pw, ph, 'F');
           const ratio = img.width / img.height;
@@ -883,8 +877,7 @@
   }
 
   /* ============================================================
-     HD PNG — render OFF-SCREEN wrapper (not -99999px)
-     Uses computed colors, invisible via opacity/z-index
+     HD PNG — ON-SCREEN render (z-index:-1), 1s wait
      ============================================================ */
   async function pngHD(boxId, file) {
     const box = document.getElementById(boxId);
@@ -893,7 +886,6 @@
 
     const c = themeColors();
 
-    // Extract data
     const main = box.querySelector('.qvhm-main')?.textContent || '';
     const sub  = box.querySelector('.qvhm-sub')?.textContent || '';
     const titleText = box.querySelector('.qvhm-result-title')?.textContent || '';
@@ -908,8 +900,6 @@
 
     const now = new Date().toLocaleString('en-IN');
 
-    // Build wrapper — WILL be visible in DOM but hidden via opacity + z-index
-    // (html-to-image needs the element to be laid out, not display:none or off-screen)
     const wrapper = document.createElement('div');
     wrapper.style.cssText = `
       position: fixed;
@@ -922,7 +912,6 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
       border-radius: 20px;
       box-sizing: border-box;
-      opacity: 0;
       z-index: -1;
       pointer-events: none;
     `;
@@ -967,11 +956,11 @@
     document.body.appendChild(wrapper);
 
     // Wait for layout & fonts
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r => setTimeout(r, 1000));
 
     if (!window.htmlToImage) {
       QVH.toast('PNG library missing', 'error');
-      document.body.removeChild(wrapper);
+      if (wrapper.parentNode) document.body.removeChild(wrapper);
       return;
     }
 
@@ -983,7 +972,7 @@
         width: wrapper.scrollWidth,
         height: wrapper.scrollHeight,
         cacheBust: true,
-        skipFonts: false
+        skipAutoScale: true
       });
       const a = document.createElement('a');
       a.download = (file || 'qunverio-report') + '.png';
@@ -991,7 +980,7 @@
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       QVH.toast('HD PNG downloaded ✅', 'success');
     } catch (e) {
-      console.error(e);
+      console.error('PNG error:', e);
       QVH.toast('PNG failed: ' + (e.message || 'unknown'), 'error');
     } finally {
       if (wrapper.parentNode) document.body.removeChild(wrapper);
@@ -999,5 +988,5 @@
   }
 
   QVH.registerRenderer('money', render);
-  console.log('%c✅ Monetization Lab registered (v1.2)', 'color:#10b981;font-weight:bold');
+  console.log('%c✅ Monetization Lab registered (v1.3)', 'color:#10b981;font-weight:bold');
 })();
