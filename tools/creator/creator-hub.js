@@ -1,8 +1,9 @@
 /* ============================================================
-   QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js) v1.1
+   QUNVERIO — CREATOR HUB (tools/creator/creator-hub.js) v1.2
    YouTube Creator Dashboard — full-screen overlay
-   Namespace: window.QVH (Qunverio Creator Hub)
-   v1.1: scroll fix (100dvh), min-height:0, overscroll-behavior
+   Namespace: window.QVH
+   v1.2: SCROLL FIX — 100dvh, min-height:0, touch-action:pan-y,
+         overscroll-behavior:contain, flex-shrink:0
    ============================================================ */
 
 (function () {
@@ -12,17 +13,18 @@
 
   const QVH = window.QVH || {};
   QVH._loaded = true;
-  QVH._version = '1.1.0';
+  QVH._version = '1.2.0';
 
   /* ============================================================
-     CSS — scoped with qvh- prefix
+     CSS
      ============================================================ */
   const QVH_CSS = `
     .qvh-root {
       position: fixed; inset: 0; z-index: 9999;
       background: var(--bg, #0a0e27);
       color: var(--text, #eef1ff);
-      display: none; flex-direction: column;
+      display: none;
+      flex-direction: column;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
       -webkit-tap-highlight-color: transparent;
@@ -39,7 +41,8 @@
       padding: 12px 14px;
       background: var(--surface, #151a3d);
       border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
-      flex-shrink: 0; position: relative; z-index: 5;
+      flex-shrink: 0;
+      position: relative; z-index: 5;
     }
     .qvh-back {
       width: 38px; height: 38px; border-radius: 10px;
@@ -67,7 +70,7 @@
       letter-spacing: .04em; flex-shrink: 0;
     }
 
-    /* ── SCROLL FIX: min-height:0 + flex:1 1 0 ── */
+    /* ── SCROLL FIX ── */
     .qvh-body {
       flex: 1 1 0;
       min-height: 0;
@@ -76,6 +79,7 @@
       padding: 18px 16px 100px;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+      touch-action: pan-y;
     }
     @media (min-width: 900px) { .qvh-body { padding-bottom: 40px; } }
 
@@ -203,14 +207,19 @@
       font-size: 14.5px; margin-bottom: 4px;
     }
 
+    /* ── Bottom Nav — sticky at bottom, no shrink ── */
     .qvh-bottom-nav {
-      display: flex; position: absolute; bottom: 0; left: 0; right: 0;
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      display: flex;
       background: color-mix(in srgb, var(--surface, #151a3d) 96%, transparent);
       backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
       border-top: 1px solid var(--border, rgba(255,255,255,0.08));
       padding: 8px 4px;
       padding-bottom: calc(8px + env(safe-area-inset-bottom));
-      z-index: 10; overflow-x: auto; scrollbar-width: none;
+      z-index: 10;
+      overflow-x: auto;
+      scrollbar-width: none;
       flex-shrink: 0;
     }
     .qvh-bottom-nav::-webkit-scrollbar { display: none; }
@@ -229,6 +238,7 @@
     .qvh-bn-item.active .qvh-bn-icon { transform: scale(1.05); }
     @media (min-width: 900px) { .qvh-bottom-nav { display: none; } }
 
+    /* ── Desktop layout ── */
     .qvh-sidebar { display: none; }
     @media (min-width: 900px) {
       .qvh-root { flex-direction: row; }
@@ -237,7 +247,8 @@
         width: 240px; flex-shrink: 0;
         background: var(--surface, #151a3d);
         border-right: 1px solid var(--border, rgba(255,255,255,0.08));
-        padding: 14px 10px; overflow-y: auto;
+        padding: 14px 10px;
+        overflow-y: auto;
         height: 100%;
       }
       .qvh-sidebar .qvh-sb-brand {
@@ -269,7 +280,14 @@
         color: var(--text, #eef1ff);
       }
       .qvh-sb-item .qvh-sb-icon { font-size: 17px; width: 22px; text-align: center; }
-      .qvh-main { flex: 1 1 0; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+      .qvh-main {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+        height: 100%;
+      }
     }
 
     .qvh-toast {
@@ -481,6 +499,7 @@
     buildShell();
     rootEl.classList.add('open');
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
     state.open = true;
     renderHome();
   };
@@ -489,6 +508,7 @@
     if (!rootEl) return;
     rootEl.classList.remove('open');
     document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
     state.open = false;
   };
 
