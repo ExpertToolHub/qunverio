@@ -1,6 +1,7 @@
 /* ============================================================
-   QUNVERIO — INSTAGRAM BIO GENERATOR (v1.1)
+   QUNVERIO — INSTAGRAM BIO GENERATOR (v3.0 — dual register)
    Path: tools/creator/bio-generator.js
+   Works both as standalone tool + inside Creator Hub
    ============================================================ */
 
 (function () {
@@ -85,15 +86,9 @@
     s.id = 'qvbg-css'; s.textContent = CSS; document.head.appendChild(s);
   }
 
-  function render(container) {
-    injectCSS();
-    container.innerHTML = `
+  function renderHTML() {
+    return `
       <div class="qvbg-wrap">
-        <div class="qvh-tool-header" style="--qvh-card-grad:linear-gradient(135deg,#ec4899,#a78bfa)">
-          <div class="qvh-th-icon">✨</div>
-          <div style="flex:1;min-width:0"><h3>Instagram Bio Generator</h3><p>AI-powered bios — aesthetic, professional, funny</p></div>
-        </div>
-
         <div class="qvbg-card">
           <div class="qvbg-card-title">Your Info</div>
           <div class="qvbg-row2">
@@ -155,11 +150,9 @@
         </div>
       </div>
     `;
-
-    wire();
   }
 
-  function wire() {
+  function init() {
     const btn = document.getElementById('qvbg-go');
     if (!btn) return;
     btn.addEventListener('click', async () => {
@@ -335,6 +328,29 @@ Return ONLY the numbered list. No intro, no outro.`;
     }, 700);
   }
 
-  QVH.registerRenderer('bio', render);
-  console.log('%c✅ Bio Generator registered (v1.1)', 'color:#ec4899;font-weight:bold');
+  /* ============================================================
+     DUAL REGISTRATION
+     1. Creator Hub category renderer
+     2. Standalone tool renderer (Home page / category page)
+     ============================================================ */
+  injectCSS();
+
+  // Register with Creator Hub (for "bio" category inside Creator Hub)
+  QVH.registerRenderer('bio', function (container) {
+    container.innerHTML = renderHTML();
+    init();
+  });
+
+  // Register as standalone tool (for EXTRA_TOOLS card on Home / category page)
+  window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
+  window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
+
+  window.EXTRA_TOOL_RENDERERS['creator-bio-generator'] = function () {
+    return renderHTML();
+  };
+  window.EXTRA_TOOL_INITS['creator-bio-generator'] = function () {
+    init();
+  };
+
+  console.log('%c✅ Bio Generator registered (v3.0 — dual)', 'color:#ec4899;font-weight:bold');
 })();
