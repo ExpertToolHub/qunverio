@@ -460,7 +460,7 @@ const EXTRA_TOOLS = [
     cat: 'creator',
     icon: '✨',
     desc: 'AI-powered Instagram bio generator — 10 bio options in seconds',
-    howto: 'Creator Hub me Bio Generator kholo. Name, profession, vibe select karo, AI 10 bios degi.',
+    howto: 'Name, profession, vibe select karo. AI 10 bio options degi.',
     kw: ['instagram', 'bio', 'bio generator', 'instagram bio', 'ai bio', 'social media']
   },
   {
@@ -532,7 +532,7 @@ window.openExtraTool = function(toolId) {
     return;
   }
 
-  // Creator Hub special case
+  // Creator Hub special case (ONLY for creator-hub id)
   if (toolId === 'creator-hub') {
     if (window.QVH && typeof window.QVH.openHub === 'function') {
       window.QVH.openHub();
@@ -543,24 +543,7 @@ window.openExtraTool = function(toolId) {
     return;
   }
 
-  // Any other creator-* tool → open Creator Hub + navigate to category
-  if (toolId.startsWith('creator-')) {
-    if (window.QVH && typeof window.QVH.openHub === 'function') {
-      window.QVH.openHub();
-      const catMap = {
-        'creator-bio-generator': 'bio'
-      };
-      const catId = catMap[toolId];
-      if (catId && typeof window.QVH.openCategory === 'function') {
-        setTimeout(function () { window.QVH.openCategory(catId); }, 300);
-      }
-      if (typeof addRecent === 'function') addRecent(toolId);
-    } else {
-      if (typeof toast === 'function') toast('Creator Hub loading… refresh karo', 'error');
-    }
-    return;
-  }
-
+  // All other tools (including creator-bio-generator) — normal flow
   const tool = EXTRA_TOOLS.find(t => t.id === toolId);
   if (!tool) { if (typeof toast === 'function') toast('Tool not found', 'error'); return; }
 
