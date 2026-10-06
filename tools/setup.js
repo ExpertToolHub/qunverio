@@ -532,7 +532,7 @@ window.openExtraTool = function(toolId) {
     return;
   }
 
-  // Creator Hub special case (ONLY for creator-hub id)
+  // Creator Hub special case
   if (toolId === 'creator-hub') {
     if (window.QVH && typeof window.QVH.openHub === 'function') {
       window.QVH.openHub();
@@ -543,7 +543,6 @@ window.openExtraTool = function(toolId) {
     return;
   }
 
-  // All other tools (including creator-bio-generator) — normal flow
   const tool = EXTRA_TOOLS.find(t => t.id === toolId);
   if (!tool) { if (typeof toast === 'function') toast('Tool not found', 'error'); return; }
 
