@@ -455,15 +455,6 @@ const EXTRA_TOOLS = [
     kw: ['ai', 'assistant', 'chat', 'gpt', 'gemini', 'ask', 'image', 'analyze']
   },
   {
-    id: 'creator-bio-generator',
-    name: 'Instagram Bio Generator',
-    cat: 'creator',
-    icon: '✨',
-    desc: 'AI-powered Instagram bio generator — 10 bio options in seconds',
-    howto: 'Name, profession, vibe select karo. AI 10 bio options degi.',
-    kw: ['instagram', 'bio', 'bio generator', 'instagram bio', 'ai bio', 'social media']
-  },
-  {
     id: 'creator-hub',
     name: 'YouTube Creator Hub',
     cat: 'creator',
