@@ -1,24 +1,42 @@
 /* ============================================================
-   QUNVERIO — INSTAGRAM BIO GENERATOR (v2.0)
+   QUNVERIO — INSTAGRAM BIO GENERATOR (v3.0 — Standalone)
    Path: tools/creator/bio-generator.js
-   Standalone tool — uses EXTRA_TOOL_RENDERERS
+   Uses EXTRA_TOOL_RENDERERS (normal tool pattern)
    ============================================================ */
 
 (function () {
   'use strict';
-  if (!window.QVH) { console.warn('QVH not loaded — bio-generator.js skipping'); return; }
-  const QVH = window.QVH;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
   function copyText(text) {
-    if (!navigator.clipboard) { QVH.toast('Copy not supported', 'error'); return; }
-    navigator.clipboard.writeText(text).then(() => QVH.toast('Copied! 📋', 'success')).catch(() => QVH.toast('Copy failed', 'error'));
+    if (!navigator.clipboard) {
+      if (typeof window.toast === 'function') window.toast('Copy not supported', 'error');
+      return;
+    }
+    navigator.clipboard.writeText(text)
+      .then(() => { if (typeof window.toast === 'function') window.toast('Copied! 📋', 'success'); })
+      .catch(() => { if (typeof window.toast === 'function') window.toast('Copy failed', 'error'); });
   }
+
   async function callAI(prompt, opts) {
     opts = opts || {};
-    const body = { prompt, systemPrompt: opts.systemPrompt || '', temperature: opts.temperature != null ? opts.temperature : 0.95, maxTokens: opts.maxTokens || 1800 };
-    const r = await fetch('/api/creator-ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!r.ok) { let errMsg = 'AI request failed'; try { const j = await r.json(); errMsg = j.error || j.details || errMsg; } catch (e) {} throw new Error(errMsg); }
+    const body = {
+      prompt,
+      systemPrompt: opts.systemPrompt || '',
+      temperature: opts.temperature != null ? opts.temperature : 0.95,
+      maxTokens: opts.maxTokens || 2000
+    };
+    const r = await fetch('/api/creator-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      let errMsg = 'AI request failed';
+      try { const j = await r.json(); errMsg = j.error || j.details || errMsg; } catch (e) {}
+      throw new Error(errMsg);
+    }
     const data = await r.json();
     if (!data.success || !data.text) throw new Error('Empty AI response');
     return data.text;
@@ -164,7 +182,10 @@
       const interests = (document.getElementById('qvbg-interests').value || '').trim();
       const extra = (document.getElementById('qvbg-extra').value || '').trim();
 
-      if (!name) { QVH.toast('Name ya brand daalo', 'error'); return; }
+      if (!name) {
+        if (typeof window.toast === 'function') window.toast('Name ya brand daalo', 'error');
+        return;
+      }
 
       const out = document.getElementById('qvbg-out');
       out.innerHTML = `<div class="qvbg-loading"><div class="qvbg-spinner"></div>AI bios soch raha hai...</div>`;
@@ -283,8 +304,10 @@ Return ONLY the numbered list. No intro, no outro.`;
     });
     try {
       localStorage.setItem(KEY, JSON.stringify(data));
-      QVH.toast('Saved to Idea Vault ✅', 'success');
-    } catch (err) { QVH.toast('Save failed', 'error'); }
+      if (typeof window.toast === 'function') window.toast('Saved to Idea Vault ✅', 'success');
+    } catch (err) {
+      if (typeof window.toast === 'function') window.toast('Save failed', 'error');
+    }
   }
 
   function themeColors() {
@@ -330,7 +353,7 @@ Return ONLY the numbered list. No intro, no outro.`;
   }
 
   /* ============================================================
-     REGISTER AS STANDALONE TOOL (EXTRA_TOOL_RENDERERS)
+     REGISTER AS STANDALONE TOOL
      ============================================================ */
   window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
   window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
@@ -343,5 +366,5 @@ Return ONLY the numbered list. No intro, no outro.`;
     init();
   };
 
-  console.log('%c✅ Bio Generator loaded (v2.0 - standalone)', 'color:#ec4899;font-weight:bold');
+  console.log('%c✅ Bio Generator loaded (v3.0 — standalone)', 'color:#ec4899;font-weight:bold');
 })();
