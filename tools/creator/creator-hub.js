@@ -332,6 +332,7 @@
     { id: 'workspace', icon: '📁', name: 'Workspace',     desc: 'Idea vault, script vault, calendar',         grad: 'linear-gradient(135deg,#60a5fa,#2563eb)', ready: true },
     { id: 'roadmap',   icon: '🗺️', name: 'Roadmap',       desc: 'Beginner to pro YouTube journey',            grad: 'linear-gradient(135deg,#fb923c,#c2410c)', ready: true },
     { id: 'checklist', icon: '✅', name: 'Checklists',    desc: 'Upload, SEO, thumbnail & channel setup',     grad: 'linear-gradient(135deg,#facc15,#eab308)', ready: true },
+{ id: 'bio',      icon: '✨', name: 'Bio Generator',  desc: 'AI Instagram bios — aesthetic, funny, professional', grad: 'linear-gradient(135deg,#f472b6,#a78bfa)', ready: true },
     { id: 'coming',    icon: '🚀', name: 'Coming Soon',   desc: 'Instagram, TikTok, Facebook, X',             grad: 'linear-gradient(135deg,#94a3b8,#475569)', ready: false, tag: 'Soon' }
   ];
 
