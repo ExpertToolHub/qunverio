@@ -454,25 +454,22 @@ const EXTRA_TOOLS = [
     howto: 'Type your question or upload an image/PDF. AI will understand and perform the action.',
     kw: ['ai', 'assistant', 'chat', 'gpt', 'gemini', 'ask', 'image', 'analyze']
   },
-{
-  id: 'creator-bio-generator',
-  name: 'Instagram Bio Generator',
-  cat: 'creator',
-  icon: '✨',
-  desc: 'AI-powered Instagram bio generator — 10 bio options in seconds',
-  howto: 'Creator Hub me Bio Generator kholo. Name, profession, vibe select karo, AI 10 bios degi.',
-  kw: ['instagram', 'bio', 'bio generator', 'instagram bio', 'ai bio', 'social media']
-},
-  /* ══════════════════════════════════════════════════════
-     CREATOR HUB — ONE entry only (opens full dashboard)
-     ══════════════════════════════════════════════════════ */
+  {
+    id: 'creator-bio-generator',
+    name: 'Instagram Bio Generator',
+    cat: 'creator',
+    icon: '✨',
+    desc: 'AI-powered Instagram bio generator — 10 bio options in seconds',
+    howto: 'Creator Hub me Bio Generator kholo. Name, profession, vibe select karo, AI 10 bios degi.',
+    kw: ['instagram', 'bio', 'bio generator', 'instagram bio', 'ai bio', 'social media']
+  },
   {
     id: 'creator-hub',
     name: 'YouTube Creator Hub',
     cat: 'creator',
     icon: '🎬',
     desc: 'Complete YouTube toolkit — 13 modules: Ideas, Titles, Thumbnails, Scripts, SEO, Analytics, AI Coach & more',
-    howto: 'Click to open your full-screen YouTube Creator Dashboard with all 13 tools — Idea Lab, Title Lab, Thumbnail Lab, Script Lab, SEO Lab, Analytics, AI Coach, Community, Monetization, Workspace, Roadmap, Checklists.',
+    howto: 'Click to open your full-screen YouTube Creator Dashboard with all 13 tools.',
     kw: ['youtube', 'creator', 'video', 'seo', 'title', 'thumbnail', 'script', 'analytics', 'coach', 'youtuber', 'channel', 'viral', 'content', 'creator hub', 'youtube tools']
   }
 ];
@@ -539,6 +536,24 @@ window.openExtraTool = function(toolId) {
   if (toolId === 'creator-hub') {
     if (window.QVH && typeof window.QVH.openHub === 'function') {
       window.QVH.openHub();
+      if (typeof addRecent === 'function') addRecent(toolId);
+    } else {
+      if (typeof toast === 'function') toast('Creator Hub loading… refresh karo', 'error');
+    }
+    return;
+  }
+
+  // Any other creator-* tool → open Creator Hub + navigate to category
+  if (toolId.startsWith('creator-')) {
+    if (window.QVH && typeof window.QVH.openHub === 'function') {
+      window.QVH.openHub();
+      const catMap = {
+        'creator-bio-generator': 'bio'
+      };
+      const catId = catMap[toolId];
+      if (catId && typeof window.QVH.openCategory === 'function') {
+        setTimeout(function () { window.QVH.openCategory(catId); }, 300);
+      }
       if (typeof addRecent === 'function') addRecent(toolId);
     } else {
       if (typeof toast === 'function') toast('Creator Hub loading… refresh karo', 'error');
