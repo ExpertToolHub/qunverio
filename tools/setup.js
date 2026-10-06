@@ -454,6 +454,15 @@ const EXTRA_TOOLS = [
     howto: 'Type your question or upload an image/PDF. AI will understand and perform the action.',
     kw: ['ai', 'assistant', 'chat', 'gpt', 'gemini', 'ask', 'image', 'analyze']
   },
+{
+  id: 'creator-bio-generator',
+  name: 'Instagram Bio Generator',
+  cat: 'creator',
+  icon: '✨',
+  desc: 'AI-powered Instagram bio generator — 10 bio options in seconds',
+  howto: 'Creator Hub me Bio Generator kholo. Name, profession, vibe select karo, AI 10 bios degi.',
+  kw: ['instagram', 'bio', 'bio generator', 'instagram bio', 'ai bio', 'social media']
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB — ONE entry only (opens full dashboard)
      ══════════════════════════════════════════════════════ */
