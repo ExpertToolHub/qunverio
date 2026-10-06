@@ -1,7 +1,7 @@
 /* ============================================================
-   QUNVERIO — INSTAGRAM BIO GENERATOR (v1.0)
+   QUNVERIO — INSTAGRAM BIO GENERATOR (v2.0)
    Path: tools/creator/bio-generator.js
-   AI-powered Instagram bio generator
+   Standalone tool — uses EXTRA_TOOL_RENDERERS
    ============================================================ */
 
 (function () {
@@ -29,7 +29,6 @@
     const bios = [];
     let current = '';
     for (let line of lines) {
-      // New bio if starts with number
       if (/^\d+[\.\)]\s*/.test(line)) {
         if (current) bios.push(current.trim());
         current = line.replace(/^\d+[\.\)]\s*/, '');
@@ -40,7 +39,6 @@
         if (current) bios.push(current.trim());
         current = line.replace(/^Bio\s*\d+[:.]\s*/, '');
       } else {
-        // Continuation line
         if (current) current += '\n' + line;
         else current = line;
       }
@@ -88,15 +86,10 @@
     s.id = 'qvbg-css'; s.textContent = CSS; document.head.appendChild(s);
   }
 
-  function render(container) {
+  function renderHTML() {
     injectCSS();
-    container.innerHTML = `
+    return `
       <div class="qvbg-wrap">
-        <div class="qvh-tool-header" style="--qvh-card-grad:linear-gradient(135deg,#ec4899,#a78bfa)">
-          <div class="qvh-th-icon">✨</div>
-          <div style="flex:1;min-width:0"><h3>Instagram Bio Generator</h3><p>AI-powered bios — aesthetic, professional, funny</p></div>
-        </div>
-
         <div class="qvbg-card">
           <div class="qvbg-card-title">Your Info</div>
           <div class="qvbg-row2">
@@ -158,11 +151,9 @@
         </div>
       </div>
     `;
-
-    wire();
   }
 
-  function wire() {
+  function init() {
     const btn = document.getElementById('qvbg-go');
     if (!btn) return;
     btn.addEventListener('click', async () => {
@@ -194,7 +185,7 @@ Rules:
 - Include relevant emojis (2-4 per bio)
 - Use aesthetic symbols where suitable (✨ 💫 🌸 🖤 ⚡ 🌿 💫 ❀)
 - Use line breaks between sections
-- Include a CTA or link placeholder where natural (e.g. "👇 link below" or "DM for collabs")
+- Include a CTA or link placeholder where natural
 - Different styles for each: aesthetic, professional, funny, minimal, bold, poetic, etc.
 - Instagram-friendly (no offensive content)
 - Mix Hinglish and English where natural
@@ -252,7 +243,6 @@ Return ONLY the numbered list. No intro, no outro.`;
     `;
   }
 
-  /* Delegated events */
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-act]');
     if (!btn) return;
@@ -339,6 +329,19 @@ Return ONLY the numbered list. No intro, no outro.`;
     }, 700);
   }
 
-  QVH.registerRenderer('bio', render);
-  console.log('%c✅ Bio Generator registered', 'color:#ec4899;font-weight:bold');
+  /* ============================================================
+     REGISTER AS STANDALONE TOOL (EXTRA_TOOL_RENDERERS)
+     ============================================================ */
+  window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
+  window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
+
+  window.EXTRA_TOOL_RENDERERS['creator-bio-generator'] = function () {
+    return renderHTML();
+  };
+
+  window.EXTRA_TOOL_INITS['creator-bio-generator'] = function () {
+    init();
+  };
+
+  console.log('%c✅ Bio Generator loaded (v2.0 - standalone)', 'color:#ec4899;font-weight:bold');
 })();
