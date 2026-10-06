@@ -1,42 +1,23 @@
 /* ============================================================
-   QUNVERIO — INSTAGRAM BIO GENERATOR (v3.0 — Standalone)
+   QUNVERIO — INSTAGRAM BIO GENERATOR (v1.1)
    Path: tools/creator/bio-generator.js
-   Uses EXTRA_TOOL_RENDERERS (normal tool pattern)
    ============================================================ */
 
 (function () {
   'use strict';
+  if (!window.QVH) { console.warn('QVH not loaded — bio-generator.js skipping'); return; }
+  const QVH = window.QVH;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
   function copyText(text) {
-    if (!navigator.clipboard) {
-      if (typeof window.toast === 'function') window.toast('Copy not supported', 'error');
-      return;
-    }
-    navigator.clipboard.writeText(text)
-      .then(() => { if (typeof window.toast === 'function') window.toast('Copied! 📋', 'success'); })
-      .catch(() => { if (typeof window.toast === 'function') window.toast('Copy failed', 'error'); });
+    if (!navigator.clipboard) { QVH.toast('Copy not supported', 'error'); return; }
+    navigator.clipboard.writeText(text).then(() => QVH.toast('Copied! 📋', 'success')).catch(() => QVH.toast('Copy failed', 'error'));
   }
-
   async function callAI(prompt, opts) {
     opts = opts || {};
-    const body = {
-      prompt,
-      systemPrompt: opts.systemPrompt || '',
-      temperature: opts.temperature != null ? opts.temperature : 0.95,
-      maxTokens: opts.maxTokens || 2000
-    };
-    const r = await fetch('/api/creator-ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (!r.ok) {
-      let errMsg = 'AI request failed';
-      try { const j = await r.json(); errMsg = j.error || j.details || errMsg; } catch (e) {}
-      throw new Error(errMsg);
-    }
+    const body = { prompt, systemPrompt: opts.systemPrompt || '', temperature: opts.temperature != null ? opts.temperature : 0.95, maxTokens: opts.maxTokens || 1800 };
+    const r = await fetch('/api/creator-ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) { let errMsg = 'AI request failed'; try { const j = await r.json(); errMsg = j.error || j.details || errMsg; } catch (e) {} throw new Error(errMsg); }
     const data = await r.json();
     if (!data.success || !data.text) throw new Error('Empty AI response');
     return data.text;
@@ -104,10 +85,15 @@
     s.id = 'qvbg-css'; s.textContent = CSS; document.head.appendChild(s);
   }
 
-  function renderHTML() {
+  function render(container) {
     injectCSS();
-    return `
+    container.innerHTML = `
       <div class="qvbg-wrap">
+        <div class="qvh-tool-header" style="--qvh-card-grad:linear-gradient(135deg,#ec4899,#a78bfa)">
+          <div class="qvh-th-icon">✨</div>
+          <div style="flex:1;min-width:0"><h3>Instagram Bio Generator</h3><p>AI-powered bios — aesthetic, professional, funny</p></div>
+        </div>
+
         <div class="qvbg-card">
           <div class="qvbg-card-title">Your Info</div>
           <div class="qvbg-row2">
@@ -169,9 +155,11 @@
         </div>
       </div>
     `;
+
+    wire();
   }
 
-  function init() {
+  function wire() {
     const btn = document.getElementById('qvbg-go');
     if (!btn) return;
     btn.addEventListener('click', async () => {
@@ -182,10 +170,7 @@
       const interests = (document.getElementById('qvbg-interests').value || '').trim();
       const extra = (document.getElementById('qvbg-extra').value || '').trim();
 
-      if (!name) {
-        if (typeof window.toast === 'function') window.toast('Name ya brand daalo', 'error');
-        return;
-      }
+      if (!name) { QVH.toast('Name ya brand daalo', 'error'); return; }
 
       const out = document.getElementById('qvbg-out');
       out.innerHTML = `<div class="qvbg-loading"><div class="qvbg-spinner"></div>AI bios soch raha hai...</div>`;
@@ -304,10 +289,8 @@ Return ONLY the numbered list. No intro, no outro.`;
     });
     try {
       localStorage.setItem(KEY, JSON.stringify(data));
-      if (typeof window.toast === 'function') window.toast('Saved to Idea Vault ✅', 'success');
-    } catch (err) {
-      if (typeof window.toast === 'function') window.toast('Save failed', 'error');
-    }
+      QVH.toast('Saved to Idea Vault ✅', 'success');
+    } catch (err) { QVH.toast('Save failed', 'error'); }
   }
 
   function themeColors() {
@@ -352,19 +335,6 @@ Return ONLY the numbered list. No intro, no outro.`;
     }, 700);
   }
 
-  /* ============================================================
-     REGISTER AS STANDALONE TOOL
-     ============================================================ */
-  window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
-  window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
-
-  window.EXTRA_TOOL_RENDERERS['creator-bio-generator'] = function () {
-    return renderHTML();
-  };
-
-  window.EXTRA_TOOL_INITS['creator-bio-generator'] = function () {
-    init();
-  };
-
-  console.log('%c✅ Bio Generator loaded (v3.0 — standalone)', 'color:#ec4899;font-weight:bold');
+  QVH.registerRenderer('bio', render);
+  console.log('%c✅ Bio Generator registered (v1.1)', 'color:#ec4899;font-weight:bold');
 })();
