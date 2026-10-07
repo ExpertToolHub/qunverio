@@ -78,7 +78,14 @@ const CATEGORIES = [
     icon: '🎬',
     desc: 'YouTube tools — AI coach, analytics & growth',
     gradient: 'linear-gradient(135deg,#ff0000,#ec4899)'
-  }
+  },
+{
+  id: 'sarkari',
+  name: 'Sarkari Kaam',
+  icon: '🏛️',
+  desc: 'Land records, PF, PM Yojana, ration card — sab kuch ek jagah',
+  color: '#f59e0b'
+}
 ];
 
 /* ============================================================
@@ -462,6 +469,15 @@ const EXTRA_TOOLS = [
   desc: 'Lookup pincode details and bank IFSC codes instantly',
   howto: 'Pincode ya IFSC code daalo, instant details milengi.',
   kw: ['pincode', 'ifsc', 'bank', 'postal', 'address', 'lookup']
+},
+{
+  id: 'epfo-guide',
+  name: 'EPFO / PF Guide',
+  cat: 'sarkari',
+  icon: '💰',
+  desc: 'PF balance check, passbook, claim — step-by-step guide',
+  howto: 'UAN daalo aur complete guide lo. Official EPFO portal ka direct link bhi milega.',
+  kw: ['epfo', 'pf', 'uan', 'passbook', 'claim', 'provident fund', 'sarkari']
 },
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
