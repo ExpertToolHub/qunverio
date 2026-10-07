@@ -479,6 +479,15 @@ const EXTRA_TOOLS = [
   howto: 'UAN daalo aur complete guide lo. Official EPFO portal ka direct link bhi milega.',
   kw: ['epfo', 'pf', 'uan', 'passbook', 'claim', 'provident fund', 'sarkari']
 },
+{
+  id: 'pdf-editor',
+  name: 'PDF Editor',
+  cat: 'pdf',
+  icon: '📝',
+  desc: 'Upload PDF and edit text, images, shapes, add signature, redact',
+  howto: 'PDF upload karo, phir toolbar se edit karo. Sab kuch browser me process hota hai.',
+  kw: ['pdf editor', 'edit pdf', 'pdf text', 'pdf image', 'sign pdf', 'redact pdf']
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
