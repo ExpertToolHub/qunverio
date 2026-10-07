@@ -1,10 +1,11 @@
 /* ============================================================
-   Qunverio — Advanced PDF Editor
+   Qunverio — Advanced PDF Editor (FINAL)
    Single File Version | CSS prefix: qvpe-
    Libraries: PDF.js (CDN) + pdf-lib (CDN)
    Max file size: 30 MB | Max pages: 200
-   Part 1: Core (viewer, upload, nav, zoom)
+   Part 1: Core viewer
    Part 2: Text, Image, Shapes, Draw, Highlight
+   Part 3: Signature, Redaction, Export, Undo/Redo, Page Ops
    ============================================================ */
 (function () {
   'use strict';
@@ -23,27 +24,31 @@
     rotation: 0,
     tool: 'select',
     annotations: {},
+    pageOrder: [],
+    deletedPages: [],
     selectedObject: null,
-    drawing: false,
-    drawStart: null,
-    currentDraw: null,
     drawingColor: '#6366f1',
     drawingWidth: 2,
     textFont: 'Helvetica',
     textSize: 14,
     textColor: '#000000',
     highlightColor: '#fbbf24',
-    imageFile: null
+    imageFile: null,
+    signatureData: null,
+    history: [],
+    historyIndex: -1,
+    shapeType: 'rect',
+    shapeColor: '#6366f1',
+    shapeWidth: 2
   };
 
-  // ---------- LIBRARY LOADER ----------
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       if (document.querySelector(`script[src="${src}"]`)) return resolve();
       const s = document.createElement('script');
       s.src = src;
       s.onload = resolve;
-      s.onerror = () => reject(new Error('Failed to load: ' + src));
+      s.onerror = () => reject(new Error('Failed: ' + src));
       document.head.appendChild(s);
     });
   }
@@ -63,206 +68,158 @@
     const style = document.createElement('style');
     style.id = 'qvpe-style';
     style.textContent = `
-      .qvpe-wrap {
-        position: fixed; inset: 0; z-index: 9998;
-        background: #0a0e27; display: flex; flex-direction: column;
-        font-family: system-ui, -apple-system, sans-serif;
-      }
+      .qvpe-wrap { position: fixed; inset: 0; z-index: 9998; background: #0a0e27;
+        display: flex; flex-direction: column; font-family: system-ui, -apple-system, sans-serif; }
       .qvpe-wrap.qvpe-hidden { display: none !important; }
       .qvpe-hidden { display: none !important; }
 
-      .qvpe-topbar {
-        display: flex; align-items: center; gap: 8px;
+      .qvpe-topbar { display: flex; align-items: center; gap: 8px;
         padding: 10px 12px; background: #151a3d;
-        border-bottom: 1px solid rgba(255,255,255,.08);
-        flex-shrink: 0;
-      }
-      .qvpe-btn-icon {
-        width: 40px; height: 40px; border-radius: 10px;
+        border-bottom: 1px solid rgba(255,255,255,.08); flex-shrink: 0; }
+      .qvpe-btn-icon { width: 40px; height: 40px; border-radius: 10px;
         background: transparent; border: 1px solid rgba(255,255,255,.1);
         color: #fff; font-size: 18px; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
-        transition: all .2s; flex-shrink: 0;
-      }
+        transition: all .2s; flex-shrink: 0; }
       .qvpe-btn-icon:hover { border-color: #6366f1; background: rgba(99,102,241,.1); }
       .qvpe-btn-icon:disabled { opacity: .35; cursor: not-allowed; }
-      .qvpe-filename {
-        flex: 1; font-size: 13px; color: #9ca3af; font-weight: 600;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-        text-align: center;
-      }
-      .qvpe-btn-primary {
-        padding: 10px 16px; border-radius: 10px; border: none;
+      .qvpe-filename { flex: 1; font-size: 13px; color: #9ca3af; font-weight: 600;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
+      .qvpe-btn-primary { padding: 10px 16px; border-radius: 10px; border: none;
         background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#ec4899 100%);
         color: #fff; font-weight: 700; font-size: 13px; cursor: pointer;
-        font-family: inherit; white-space: nowrap;
-      }
+        font-family: inherit; white-space: nowrap; }
       .qvpe-btn-primary:hover { opacity: .9; }
+      .qvpe-btn-primary:disabled { opacity: .4; cursor: not-allowed; }
 
-      .qvpe-main {
-        flex: 1; display: flex; overflow: hidden; position: relative;
-      }
-
-      .qvpe-sidebar {
-        width: 130px; background: #0d1230;
+      .qvpe-main { flex: 1; display: flex; overflow: hidden; position: relative; }
+      .qvpe-sidebar { width: 130px; background: #0d1230;
         border-right: 1px solid rgba(255,255,255,.08);
-        overflow-y: auto; padding: 10px 8px; flex-shrink: 0;
-      }
+        overflow-y: auto; padding: 10px 8px; flex-shrink: 0; }
       .qvpe-sidebar.qvpe-hidden { display: none; }
-      .qvpe-thumb {
-        margin-bottom: 10px; cursor: pointer; border-radius: 8px;
+      .qvpe-thumb { margin-bottom: 10px; cursor: pointer; border-radius: 8px;
         overflow: hidden; border: 2px solid transparent;
-        background: #151a3d; transition: border .2s;
-      }
+        background: #151a3d; transition: border .2s; position: relative; }
       .qvpe-thumb.active { border-color: #6366f1; }
       .qvpe-thumb canvas { width: 100%; display: block; }
-      .qvpe-thumb-num {
-        text-align: center; font-size: 11px; color: #9ca3af;
-        padding: 4px 0; font-weight: 600;
-      }
+      .qvpe-thumb-num { text-align: center; font-size: 11px; color: #9ca3af;
+        padding: 4px 0; font-weight: 600; }
+      .qvpe-thumb-del { position: absolute; top: 4px; right: 4px;
+        background: rgba(239,68,68,.9); color: #fff; border: none;
+        border-radius: 50%; width: 22px; height: 22px; font-size: 12px;
+        cursor: pointer; display: none; align-items: center; justify-content: center; }
+      .qvpe-thumb:hover .qvpe-thumb-del { display: flex; }
 
-      .qvpe-canvas-wrap {
-        flex: 1; overflow: auto; position: relative;
+      .qvpe-canvas-wrap { flex: 1; overflow: auto; position: relative;
         background: #060a1f; display: flex; justify-content: center;
-        align-items: flex-start; padding: 20px;
-      }
-      .qvpe-canvas-container {
-        position: relative; box-shadow: 0 4px 30px rgba(0,0,0,.5);
-        background: #fff; line-height: 0;
-      }
-      .qvpe-canvas-container canvas {
-        display: block; max-width: 100%;
-      }
-      .qvpe-overlay {
-        position: absolute; inset: 0; pointer-events: none;
-      }
-      .qvpe-overlay.active {
-        pointer-events: auto; cursor: crosshair;
-      }
+        align-items: flex-start; padding: 20px; }
+      .qvpe-canvas-container { position: relative;
+        box-shadow: 0 4px 30px rgba(0,0,0,.5); background: #fff; line-height: 0; }
+      .qvpe-canvas-container canvas { display: block; max-width: 100%; }
+      .qvpe-overlay { position: absolute; inset: 0; pointer-events: none; }
+      .qvpe-overlay.active { pointer-events: auto; cursor: crosshair; }
       .qvpe-overlay.text-mode { cursor: text; }
       .qvpe-overlay.draw-mode { cursor: crosshair; }
       .qvpe-overlay.highlight-mode { cursor: crosshair; }
+      .qvpe-overlay.redact-mode { cursor: crosshair; }
 
-      /* Floating text input */
-      .qvpe-text-input {
-        position: absolute; z-index: 100;
-        background: rgba(99,102,241,.1);
-        border: 2px solid #6366f1; border-radius: 6px;
-        color: #000; padding: 4px 8px; font-family: Helvetica, Arial, sans-serif;
-        outline: none; min-width: 80px; box-shadow: 0 4px 20px rgba(0,0,0,.4);
-      }
+      .qvpe-text-input { position: absolute; z-index: 100;
+        background: rgba(99,102,241,.1); border: 2px solid #6366f1;
+        border-radius: 6px; color: #000; padding: 4px 8px;
+        font-family: Helvetica, Arial, sans-serif; outline: none;
+        min-width: 80px; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
 
-      .qvpe-toolbar {
-        display: flex; gap: 6px; padding: 10px 12px;
+      .qvpe-toolbar { display: flex; gap: 6px; padding: 10px 12px;
         background: #151a3d; border-top: 1px solid rgba(255,255,255,.08);
-        overflow-x: auto; flex-shrink: 0;
-        scrollbar-width: none;
-      }
+        overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
       .qvpe-toolbar::-webkit-scrollbar { display: none; }
-      .qvpe-tool {
-        display: flex; flex-direction: column; align-items: center;
+      .qvpe-tool { display: flex; flex-direction: column; align-items: center;
         gap: 4px; padding: 8px 12px; border-radius: 10px;
         background: transparent; border: 1px solid rgba(255,255,255,.08);
         color: #9ca3af; font-size: 10px; cursor: pointer;
         font-family: inherit; font-weight: 600; flex-shrink: 0;
-        transition: all .2s; min-width: 60px;
-      }
+        transition: all .2s; min-width: 60px; }
       .qvpe-tool:hover { border-color: #6366f1; color: #fff; }
-      .qvpe-tool.active {
-        background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
-        color: #fff; border-color: transparent;
-      }
+      .qvpe-tool.active { background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+        color: #fff; border-color: transparent; }
       .qvpe-tool-icon { font-size: 18px; }
 
-      /* Sub-toolbar (context sensitive) */
-      .qvpe-subtoolbar {
-        display: flex; gap: 8px; padding: 8px 12px;
+      .qvpe-subtoolbar { display: flex; gap: 8px; padding: 8px 12px;
         background: #0d1230; border-top: 1px solid rgba(255,255,255,.05);
         align-items: center; overflow-x: auto; flex-shrink: 0;
-        scrollbar-width: none;
-      }
+        scrollbar-width: none; }
       .qvpe-subtoolbar::-webkit-scrollbar { display: none; }
-      .qvpe-subtoolbar label {
-        font-size: 11px; color: #9ca3af; font-weight: 600;
-        display: flex; align-items: center; gap: 6px; white-space: nowrap;
-      }
-      .qvpe-subtoolbar input[type="color"] {
-        width: 32px; height: 28px; border: none; border-radius: 6px;
-        background: transparent; cursor: pointer;
-      }
-      .qvpe-subtoolbar input[type="number"] {
-        width: 60px; padding: 6px 8px; border-radius: 6px;
+      .qvpe-subtoolbar label { font-size: 11px; color: #9ca3af; font-weight: 600;
+        display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+      .qvpe-subtoolbar input[type="color"] { width: 32px; height: 28px;
+        border: none; border-radius: 6px; background: transparent; cursor: pointer; }
+      .qvpe-subtoolbar input[type="number"] { width: 60px; padding: 6px 8px;
+        border-radius: 6px; background: #151a3d; border: 1px solid rgba(255,255,255,.1);
+        color: #fff; font-size: 12px; font-family: inherit; }
+      .qvpe-subtoolbar select { padding: 6px 8px; border-radius: 6px;
         background: #151a3d; border: 1px solid rgba(255,255,255,.1);
-        color: #fff; font-size: 12px; font-family: inherit;
-      }
-      .qvpe-subtoolbar select {
-        padding: 6px 8px; border-radius: 6px;
-        background: #151a3d; border: 1px solid rgba(255,255,255,.1);
-        color: #fff; font-size: 12px; font-family: inherit;
-      }
+        color: #fff; font-size: 12px; font-family: inherit; }
 
-      .qvpe-pagenav {
-        position: absolute; bottom: 80px; right: 20px;
+      .qvpe-pagenav { position: absolute; bottom: 80px; right: 20px;
         background: rgba(21,26,61,.95); border: 1px solid rgba(255,255,255,.15);
         border-radius: 12px; padding: 8px 12px; display: flex;
         align-items: center; gap: 10px; font-size: 13px; color: #fff;
-        backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,.4);
-      }
-      .qvpe-pagenav button {
-        background: transparent; border: none; color: #fff; cursor: pointer;
-        font-size: 16px; padding: 4px 8px; border-radius: 6px;
-      }
+        backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,.4); }
+      .qvpe-pagenav button { background: transparent; border: none; color: #fff;
+        cursor: pointer; font-size: 16px; padding: 4px 8px; border-radius: 6px; }
       .qvpe-pagenav button:hover { background: rgba(99,102,241,.3); }
 
-      .qvpe-zoomctl {
-        position: absolute; bottom: 80px; left: 20px;
+      .qvpe-zoomctl { position: absolute; bottom: 80px; left: 20px;
         background: rgba(21,26,61,.95); border: 1px solid rgba(255,255,255,.15);
         border-radius: 12px; padding: 6px; display: flex; gap: 4px;
-        backdrop-filter: blur(10px);
-      }
-      .qvpe-zoomctl button {
-        background: transparent; border: none; color: #fff; cursor: pointer;
-        padding: 6px 10px; border-radius: 6px; font-size: 14px; font-weight: 700;
-      }
+        backdrop-filter: blur(10px); }
+      .qvpe-zoomctl button { background: transparent; border: none; color: #fff;
+        cursor: pointer; padding: 6px 10px; border-radius: 6px;
+        font-size: 14px; font-weight: 700; }
       .qvpe-zoomctl button:hover { background: rgba(99,102,241,.3); }
 
-      .qvpe-upload {
-        flex: 1; display: flex; flex-direction: column;
-        align-items: center; justify-content: center; padding: 40px 20px;
-        text-align: center;
-      }
+      .qvpe-upload { flex: 1; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; padding: 40px 20px; text-align: center; }
       .qvpe-upload-icon { font-size: 64px; margin-bottom: 20px; opacity: .7; }
       .qvpe-upload-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px; }
-      .qvpe-upload-sub { font-size: 14px; color: #9ca3af; margin-bottom: 28px; max-width: 400px; line-height: 1.5; }
-      .qvpe-upload-btn {
-        padding: 16px 32px; border-radius: 14px; border: none;
+      .qvpe-upload-sub { font-size: 14px; color: #9ca3af; margin-bottom: 28px;
+        max-width: 400px; line-height: 1.5; }
+      .qvpe-upload-btn { padding: 16px 32px; border-radius: 14px; border: none;
         background: linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#ec4899 100%);
-        color: #fff; font-weight: 700; font-size: 16px; cursor: pointer;
-        font-family: inherit;
-      }
+        color: #fff; font-weight: 700; font-size: 16px; cursor: pointer; font-family: inherit; }
       .qvpe-upload-hint { font-size: 12px; color: #6b7280; margin-top: 16px; }
 
-      .qvpe-loading {
-        position: absolute; inset: 0; background: rgba(10,14,39,.9);
+      .qvpe-loading { position: absolute; inset: 0; background: rgba(10,14,39,.9);
         display: flex; flex-direction: column; align-items: center;
-        justify-content: center; gap: 16px; z-index: 10;
-      }
-      .qvpe-spinner {
-        width: 40px; height: 40px; border: 4px solid rgba(99,102,241,.25);
+        justify-content: center; gap: 16px; z-index: 10; }
+      .qvpe-spinner { width: 40px; height: 40px; border: 4px solid rgba(99,102,241,.25);
         border-top-color: #6366f1; border-radius: 50%;
-        animation: qvpe-spin .7s linear infinite;
-      }
+        animation: qvpe-spin .7s linear infinite; }
       @keyframes qvpe-spin { to { transform: rotate(360deg); } }
       .qvpe-loading-text { color: #9ca3af; font-size: 14px; }
 
-      .qvpe-toast {
-        position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+      .qvpe-toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
         background: #151a3d; border: 1px solid rgba(99,102,241,.4);
         color: #fff; padding: 12px 20px; border-radius: 12px;
         font-size: 14px; z-index: 10001; box-shadow: 0 8px 30px rgba(0,0,0,.5);
-        max-width: 90vw;
-      }
+        max-width: 90vw; }
       .qvpe-toast.error { border-color: rgba(239,68,68,.5); }
+
+      .qvpe-modal { position: fixed; inset: 0; background: rgba(0,0,0,.8);
+        z-index: 10000; display: flex; align-items: center; justify-content: center;
+        padding: 20px; }
+      .qvpe-modal-box { background: #151a3d; border-radius: 16px;
+        border: 1px solid rgba(255,255,255,.1); padding: 20px;
+        max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+      .qvpe-modal-box h3 { color: #fff; margin-bottom: 14px; font-size: 17px; }
+      .qvpe-modal-box p { color: #9ca3af; font-size: 13px; margin-bottom: 14px; line-height: 1.5; }
+      .qvpe-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+      .qvpe-sigpad { background: #fff; border-radius: 10px; touch-action: none;
+        width: 100%; height: 200px; display: block; cursor: crosshair; }
+
+      .qvpe-redact-preview { position: absolute; background: #000; z-index: 5;
+        pointer-events: none; }
 
       @media (max-width: 700px) {
         .qvpe-sidebar { width: 90px; }
@@ -280,7 +237,6 @@
     document.head.appendChild(style);
   }
 
-  // ---------- TOAST ----------
   function toast(msg, type) {
     const t = document.createElement('div');
     t.className = 'qvpe-toast' + (type === 'error' ? ' error' : '');
@@ -293,13 +249,10 @@
   function renderHTML() {
     return `
       <div class="qvpe-wrap qvpe-hidden" id="qvpe-wrap">
-
         <div class="qvpe-upload" id="qvpe-upload-screen">
           <div class="qvpe-upload-icon">📄</div>
           <div class="qvpe-upload-title">PDF Editor</div>
-          <div class="qvpe-upload-sub">
-            PDF upload karo aur edit karo — text, image, shapes, drawing, highlight sab kuch.
-          </div>
+          <div class="qvpe-upload-sub">PDF upload karo aur edit karo — text, image, shapes, drawing, highlight, signature, redaction sab kuch.</div>
           <button class="qvpe-upload-btn" id="qvpe-upload-btn">📁 PDF Upload Karo</button>
           <input type="file" id="qvpe-file-input" accept="application/pdf" style="display:none" />
           <div class="qvpe-upload-hint">Max 30 MB · Max 200 pages · Sab kuch browser me process hota hai</div>
@@ -310,6 +263,9 @@
             <button class="qvpe-btn-icon" id="qvpe-back" title="Close">←</button>
             <button class="qvpe-btn-icon" id="qvpe-toggle-sidebar" title="Pages">📄</button>
             <div class="qvpe-filename" id="qvpe-fname">document.pdf</div>
+            <button class="qvpe-btn-icon" id="qvpe-undo" title="Undo" disabled>↶</button>
+            <button class="qvpe-btn-icon" id="qvpe-redo" title="Redo" disabled>↷</button>
+            <button class="qvpe-btn-icon" id="qvpe-pages-menu" title="Page Options">☰</button>
             <button class="qvpe-btn-primary" id="qvpe-save">💾 Save</button>
           </div>
 
@@ -321,19 +277,16 @@
                 <div class="qvpe-overlay" id="qvpe-overlay"></div>
               </div>
             </div>
-
             <div class="qvpe-zoomctl">
               <button id="qvpe-zoom-out">−</button>
               <button id="qvpe-zoom-in">+</button>
               <button id="qvpe-zoom-fit">⤢</button>
             </div>
-
             <div class="qvpe-pagenav">
               <button id="qvpe-prev">‹</button>
               <span><span id="qvpe-cur-page">1</span> / <span id="qvpe-total-pages">1</span></span>
               <button id="qvpe-next">›</button>
             </div>
-
             <div class="qvpe-loading qvpe-hidden" id="qvpe-loading">
               <div class="qvpe-spinner"></div>
               <div class="qvpe-loading-text">Loading...</div>
@@ -355,9 +308,40 @@
             <button class="qvpe-tool" data-tool="redact"><span class="qvpe-tool-icon">⬛</span>Redact</button>
           </div>
         </div>
-
       </div>
     `;
+  }
+
+  // ---------- HISTORY (Undo/Redo) ----------
+  function pushHistory() {
+    const snapshot = JSON.stringify(state.annotations);
+    state.history = state.history.slice(0, state.historyIndex + 1);
+    state.history.push(snapshot);
+    state.historyIndex = state.history.length - 1;
+    updateUndoRedo();
+  }
+
+  function updateUndoRedo() {
+    const u = document.getElementById('qvpe-undo');
+    const r = document.getElementById('qvpe-redo');
+    if (u) u.disabled = state.historyIndex <= 0;
+    if (r) r.disabled = state.historyIndex >= state.history.length - 1;
+  }
+
+  function undo() {
+    if (state.historyIndex <= 0) return;
+    state.historyIndex--;
+    state.annotations = JSON.parse(state.history[state.historyIndex]);
+    redrawAnnotations();
+    toast('Undo');
+  }
+
+  function redo() {
+    if (state.historyIndex >= state.history.length - 1) return;
+    state.historyIndex++;
+    state.annotations = JSON.parse(state.history[state.historyIndex]);
+    redrawAnnotations();
+    toast('Redo');
   }
 
   // ---------- RENDER PAGE ----------
@@ -370,7 +354,6 @@
     const ctx = canvas.getContext('2d');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-
     await page.render({ canvasContext: ctx, viewport }).promise;
 
     const container = document.getElementById('qvpe-canvas-container');
@@ -378,12 +361,10 @@
     container.style.height = viewport.height + 'px';
 
     document.getElementById('qvpe-cur-page').textContent = pageNum;
-
     document.querySelectorAll('.qvpe-thumb').forEach((t, i) => {
       t.classList.toggle('active', i + 1 === pageNum);
     });
 
-    // Redraw existing annotations for this page
     redrawAnnotations();
   }
 
@@ -403,14 +384,27 @@
       num.className = 'qvpe-thumb-num';
       num.textContent = 'Page ' + i;
       wrap.appendChild(num);
+
+      const del = document.createElement('button');
+      del.className = 'qvpe-thumb-del';
+      del.textContent = '×';
+      del.title = 'Delete page';
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deletePage(i);
+      });
+      wrap.appendChild(del);
+
       sidebar.appendChild(wrap);
 
       (async () => {
-        const page = await state.pdfDoc.getPage(i);
-        const viewport = page.getViewport({ scale: thumbScale });
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        try {
+          const page = await state.pdfDoc.getPage(i);
+          const viewport = page.getViewport({ scale: thumbScale });
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        } catch (e) {}
       })();
 
       wrap.addEventListener('click', () => {
@@ -420,82 +414,63 @@
     }
   }
 
-  // ---------- ANNOTATIONS REDRAW ----------
+  // ---------- REDRAW ANNOTATIONS ----------
   function redrawAnnotations() {
     const overlay = document.getElementById('qvpe-overlay');
     overlay.innerHTML = '';
     const pageAnns = state.annotations[state.currentPage] || [];
     pageAnns.forEach(ann => {
-      if (ann.type === 'text') {
-        addTextAnnotation(ann);
-      } else if (ann.type === 'image') {
-        addImageAnnotation(ann);
-      } else if (ann.type === 'shape') {
-        addShapeAnnotation(ann);
-      } else if (ann.type === 'draw') {
-        addDrawAnnotation(ann);
-      } else if (ann.type === 'highlight') {
-        addHighlightAnnotation(ann);
-      }
+      if (ann.type === 'text') addTextAnnotation(ann);
+      else if (ann.type === 'image') addImageAnnotation(ann);
+      else if (ann.type === 'shape') addShapeAnnotation(ann);
+      else if (ann.type === 'draw') addDrawAnnotation(ann);
+      else if (ann.type === 'highlight') addHighlightAnnotation(ann);
+      else if (ann.type === 'redact') addRedactAnnotation(ann);
     });
   }
 
-  // ---------- TEXT ANNOTATION ----------
+  // ---------- ANNOTATION RENDERERS ----------
   function addTextAnnotation(ann) {
     const overlay = document.getElementById('qvpe-overlay');
     const div = document.createElement('div');
-    div.className = 'qvpe-ann-text';
     div.style.position = 'absolute';
     div.style.left = ann.x + 'px';
     div.style.top = ann.y + 'px';
-    div.style.fontFamily = ann.font || 'Helvetica, Arial, sans-serif';
+    div.style.fontFamily = (ann.font === 'Times-Roman' ? 'Times, serif' :
+                            ann.font === 'Courier' ? 'Courier, monospace' : 'Helvetica, Arial, sans-serif');
     div.style.fontSize = (ann.size * state.scale) + 'px';
-    div.style.color = ann.color || '#000';
+    div.style.color = ann.color;
     div.style.whiteSpace = 'pre';
     div.style.lineHeight = '1.2';
     div.style.cursor = 'move';
-    div.dataset.annId = ann.id;
+    div.style.padding = '2px 4px';
     div.textContent = ann.text;
 
-    // Drag support
     let dragging = false, sx, sy, ox, oy;
-    div.addEventListener('mousedown', (e) => {
+    const start = (e) => {
       if (state.tool !== 'select') return;
       e.stopPropagation();
-      dragging = true;
-      sx = e.clientX; sy = e.clientY;
-      ox = ann.x; oy = ann.y;
-    });
-    div.addEventListener('touchstart', (e) => {
-      if (state.tool !== 'select') return;
-      e.stopPropagation();
-      const t = e.touches[0];
-      dragging = true;
-      sx = t.clientX; sy = t.clientY;
-      ox = ann.x; oy = ann.y;
-    }, { passive: true });
-
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('touchmove', onMove, { passive: false });
-
-    function onMove(e) {
+      const pt = e.touches ? e.touches[0] : e;
+      dragging = true; sx = pt.clientX; sy = pt.clientY; ox = ann.x; oy = ann.y;
+    };
+    const move = (e) => {
       if (!dragging) return;
       const pt = e.touches ? e.touches[0] : e;
-      const dx = pt.clientX - sx;
-      const dy = pt.clientY - sy;
-      ann.x = ox + dx;
-      ann.y = oy + dy;
+      ann.x = ox + (pt.clientX - sx);
+      ann.y = oy + (pt.clientY - sy);
       div.style.left = ann.x + 'px';
       div.style.top = ann.y + 'px';
-    }
-
-    document.addEventListener('mouseup', () => { dragging = false; });
-    document.addEventListener('touchend', () => { dragging = false; });
-
+    };
+    const end = () => { dragging = false; };
+    div.addEventListener('mousedown', start);
+    div.addEventListener('touchstart', start, { passive: true });
+    document.addEventListener('mousemove', move);
+    document.addEventListener('touchmove', move, { passive: true });
+    document.addEventListener('mouseup', end);
+    document.addEventListener('touchend', end);
     overlay.appendChild(div);
   }
 
-  // ---------- IMAGE ANNOTATION ----------
   function addImageAnnotation(ann) {
     const overlay = document.getElementById('qvpe-overlay');
     const img = document.createElement('img');
@@ -507,16 +482,13 @@
     img.style.height = (ann.h * state.scale) + 'px';
     img.style.cursor = 'move';
     img.style.userSelect = 'none';
-    img.dataset.annId = ann.id;
 
     let dragging = false, sx, sy, ox, oy;
     const start = (e) => {
       if (state.tool !== 'select') return;
       e.stopPropagation();
       const pt = e.touches ? e.touches[0] : e;
-      dragging = true;
-      sx = pt.clientX; sy = pt.clientY;
-      ox = ann.x; oy = ann.y;
+      dragging = true; sx = pt.clientX; sy = pt.clientY; ox = ann.x; oy = ann.y;
     };
     const move = (e) => {
       if (!dragging) return;
@@ -527,18 +499,15 @@
       img.style.top = ann.y + 'px';
     };
     const end = () => { dragging = false; };
-
     img.addEventListener('mousedown', start);
     img.addEventListener('touchstart', start, { passive: true });
     document.addEventListener('mousemove', move);
     document.addEventListener('touchmove', move, { passive: true });
     document.addEventListener('mouseup', end);
     document.addEventListener('touchend', end);
-
     overlay.appendChild(img);
   }
 
-  // ---------- SHAPE ANNOTATION ----------
   function addShapeAnnotation(ann) {
     const overlay = document.getElementById('qvpe-overlay');
     const el = document.createElement('div');
@@ -547,29 +516,25 @@
     el.style.top = ann.y + 'px';
     el.style.width = (ann.w * state.scale) + 'px';
     el.style.height = (ann.h * state.scale) + 'px';
-    el.style.border = ann.borderWidth + 'px solid ' + ann.color;
     el.style.pointerEvents = 'auto';
-    el.dataset.annId = ann.id;
+    el.style.cursor = 'move';
 
     if (ann.shape === 'circle') {
+      el.style.border = ann.borderWidth + 'px solid ' + ann.color;
       el.style.borderRadius = '50%';
     } else if (ann.shape === 'line') {
-      // line handled as thin div
       el.style.height = '2px';
       el.style.background = ann.color;
-      el.style.border = 'none';
+    } else {
+      el.style.border = ann.borderWidth + 'px solid ' + ann.color;
     }
-
-    el.style.cursor = 'move';
 
     let dragging = false, sx, sy, ox, oy;
     const start = (e) => {
       if (state.tool !== 'select') return;
       e.stopPropagation();
       const pt = e.touches ? e.touches[0] : e;
-      dragging = true;
-      sx = pt.clientX; sy = pt.clientY;
-      ox = ann.x; oy = ann.y;
+      dragging = true; sx = pt.clientX; sy = pt.clientY; ox = ann.x; oy = ann.y;
     };
     const move = (e) => {
       if (!dragging) return;
@@ -580,18 +545,15 @@
       el.style.top = ann.y + 'px';
     };
     const end = () => { dragging = false; };
-
     el.addEventListener('mousedown', start);
     el.addEventListener('touchstart', start, { passive: true });
     document.addEventListener('mousemove', move);
     document.addEventListener('touchmove', move, { passive: true });
     document.addEventListener('mouseup', end);
     document.addEventListener('touchend', end);
-
     overlay.appendChild(el);
   }
 
-  // ---------- DRAW ANNOTATION ----------
   function addDrawAnnotation(ann) {
     const overlay = document.getElementById('qvpe-overlay');
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -600,14 +562,11 @@
     svg.style.width = '100%';
     svg.style.height = '100%';
     svg.style.pointerEvents = 'none';
-    svg.dataset.annId = ann.id;
-
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     const pts = ann.points;
+    if (pts.length < 2) return;
     let d = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      d += ` L ${pts[i].x} ${pts[i].y}`;
-    }
+    for (let i = 1; i < pts.length; i++) d += ` L ${pts[i].x} ${pts[i].y}`;
     path.setAttribute('d', d);
     path.setAttribute('stroke', ann.color);
     path.setAttribute('stroke-width', ann.width * state.scale);
@@ -615,11 +574,9 @@
     path.setAttribute('stroke-linecap', 'round');
     path.setAttribute('stroke-linejoin', 'round');
     svg.appendChild(path);
-
     overlay.appendChild(svg);
   }
 
-  // ---------- HIGHLIGHT ANNOTATION ----------
   function addHighlightAnnotation(ann) {
     const overlay = document.getElementById('qvpe-overlay');
     const el = document.createElement('div');
@@ -635,15 +592,25 @@
     overlay.appendChild(el);
   }
 
+  function addRedactAnnotation(ann) {
+    const overlay = document.getElementById('qvpe-overlay');
+    const el = document.createElement('div');
+    el.style.position = 'absolute';
+    el.style.left = ann.x + 'px';
+    el.style.top = ann.y + 'px';
+    el.style.width = ann.w + 'px';
+    el.style.height = ann.h + 'px';
+    el.style.background = '#000';
+    el.style.pointerEvents = 'none';
+    el.style.zIndex = '5';
+    overlay.appendChild(el);
+  }
+
   // ---------- SUBTOOLBAR ----------
   function renderSubtoolbar(tool) {
     const sub = document.getElementById('qvpe-subtoolbar');
     const content = document.getElementById('qvpe-subtoolbar-content');
-
-    if (tool === 'select') {
-      sub.style.display = 'none';
-      return;
-    }
+    if (tool === 'select') { sub.style.display = 'none'; return; }
     sub.style.display = 'flex';
 
     if (tool === 'text') {
@@ -652,36 +619,29 @@
         <label>Size <input type="number" id="qvpe-text-size" value="${state.textSize}" min="8" max="72"></label>
         <label>Font
           <select id="qvpe-text-font">
-            <option>Helvetica</option>
-            <option>Times-Roman</option>
-            <option>Courier</option>
+            <option ${state.textFont === 'Helvetica' ? 'selected' : ''}>Helvetica</option>
+            <option ${state.textFont === 'Times-Roman' ? 'selected' : ''}>Times-Roman</option>
+            <option ${state.textFont === 'Courier' ? 'selected' : ''}>Courier</option>
           </select>
-        </label>
-      `;
+        </label>`;
       document.getElementById('qvpe-text-color').addEventListener('input', e => state.textColor = e.target.value);
       document.getElementById('qvpe-text-size').addEventListener('input', e => state.textSize = parseInt(e.target.value) || 14);
       document.getElementById('qvpe-text-font').addEventListener('change', e => state.textFont = e.target.value);
     } else if (tool === 'draw') {
       content.innerHTML = `
         <label>Color <input type="color" id="qvpe-draw-color" value="${state.drawingColor}"></label>
-        <label>Width <input type="number" id="qvpe-draw-width" value="${state.drawingWidth}" min="1" max="20"></label>
-      `;
+        <label>Width <input type="number" id="qvpe-draw-width" value="${state.drawingWidth}" min="1" max="20"></label>`;
       document.getElementById('qvpe-draw-color').addEventListener('input', e => state.drawingColor = e.target.value);
       document.getElementById('qvpe-draw-width').addEventListener('input', e => state.drawingWidth = parseInt(e.target.value) || 2);
     } else if (tool === 'highlight') {
-      content.innerHTML = `
-        <label>Color <input type="color" id="qvpe-hl-color" value="${state.highlightColor}"></label>
-      `;
+      content.innerHTML = `<label>Color <input type="color" id="qvpe-hl-color" value="${state.highlightColor}"></label>`;
       document.getElementById('qvpe-hl-color').addEventListener('input', e => state.highlightColor = e.target.value);
     } else if (tool === 'image') {
       content.innerHTML = `
         <button class="qvpe-btn-primary" id="qvpe-img-pick" style="padding:8px 12px;font-size:12px">📁 Image Choose</button>
         <input type="file" id="qvpe-img-input" accept="image/*" style="display:none">
-        <span style="font-size:12px;color:#9ca3af">Phir page pe tap karo</span>
-      `;
-      document.getElementById('qvpe-img-pick').addEventListener('click', () => {
-        document.getElementById('qvpe-img-input').click();
-      });
+        <span style="font-size:12px;color:#9ca3af">Phir page pe tap karo</span>`;
+      document.getElementById('qvpe-img-pick').addEventListener('click', () => document.getElementById('qvpe-img-input').click());
       document.getElementById('qvpe-img-input').addEventListener('change', (e) => {
         const f = e.target.files[0];
         if (f) {
@@ -702,25 +662,94 @@
             <option value="line">Line</option>
           </select>
         </label>
-        <label>Color <input type="color" id="qvpe-shape-color" value="#6366f1"></label>
-        <label>Width <input type="number" id="qvpe-shape-width" value="2" min="1" max="10"></label>
-      `;
-      state.shapeType = 'rect';
-      state.shapeColor = '#6366f1';
-      state.shapeWidth = 2;
+        <label>Color <input type="color" id="qvpe-shape-color" value="${state.shapeColor}"></label>
+        <label>Width <input type="number" id="qvpe-shape-width" value="${state.shapeWidth}" min="1" max="10"></label>`;
       document.getElementById('qvpe-shape-type').addEventListener('change', e => state.shapeType = e.target.value);
       document.getElementById('qvpe-shape-color').addEventListener('input', e => state.shapeColor = e.target.value);
       document.getElementById('qvpe-shape-width').addEventListener('input', e => state.shapeWidth = parseInt(e.target.value) || 2);
     } else if (tool === 'signature') {
       content.innerHTML = `
         <button class="qvpe-btn-primary" id="qvpe-sig-pick" style="padding:8px 12px;font-size:12px">✍️ Draw Signature</button>
-        <span style="font-size:12px;color:#9ca3af">Part 3 me aayega</span>
-      `;
+        <span style="font-size:12px;color:#9ca3af">Phir page pe tap karo</span>`;
+      document.getElementById('qvpe-sig-pick').addEventListener('click', openSignaturePad);
     } else if (tool === 'redact') {
-      content.innerHTML = `
-        <span style="font-size:12px;color:#f87171;font-weight:600">⚠️ Redaction — Part 3 me aayega</span>
-      `;
+      content.innerHTML = `<span style="font-size:12px;color:#f87171;font-weight:600">⬛ Drag karo redact karne ke liye</span>`;
     }
+  }
+
+  // ---------- SIGNATURE PAD ----------
+  function openSignaturePad() {
+    const modal = document.createElement('div');
+    modal.className = 'qvpe-modal';
+    modal.innerHTML = `
+      <div class="qvpe-modal-box">
+        <h3>✍️ Draw Your Signature</h3>
+        <p>Neeche apna signature draw karein. Mouse ya finger use karein.</p>
+        <canvas class="qvpe-sigpad" id="qvpe-sigpad" width="560" height="200"></canvas>
+        <div class="qvpe-modal-actions">
+          <button class="qvpe-btn-icon" id="qvpe-sig-clear" style="width:auto;padding:8px 14px;font-size:13px">Clear</button>
+          <button class="qvpe-btn-primary" id="qvpe-sig-save">Save Signature</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    const canvas = modal.querySelector('#qvpe-sigpad');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    let drawing = false;
+    const getPos = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const pt = e.touches ? e.touches[0] : e;
+      return {
+        x: (pt.clientX - rect.left) * scaleX,
+        y: (pt.clientY - rect.top) * scaleY
+      };
+    };
+    const start = (e) => {
+      e.preventDefault();
+      drawing = true;
+      const p = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    };
+    const move = (e) => {
+      if (!drawing) return;
+      e.preventDefault();
+      const p = getPos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    };
+    const end = () => { drawing = false; };
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    canvas.addEventListener('mouseup', end);
+    canvas.addEventListener('mouseleave', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+
+    modal.querySelector('#qvpe-sig-clear').addEventListener('click', () => {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
+
+    modal.querySelector('#qvpe-sig-save').addEventListener('click', () => {
+      // Trim transparent — save as PNG data URL
+      state.signatureData = canvas.toDataURL('image/png');
+      modal.remove();
+      toast('Signature ready — page pe tap karo');
+    });
+
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
   }
 
   // ---------- OVERLAY EVENTS ----------
@@ -728,14 +757,13 @@
     const overlay = document.getElementById('qvpe-overlay');
     let tempInput = null;
 
-    // TEXT tool — click to place text input
+    // Generic click handler
     overlay.addEventListener('click', (e) => {
       const rect = overlay.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
       if (state.tool === 'text') {
-        // create temp input
         if (tempInput) tempInput.remove();
         tempInput = document.createElement('input');
         tempInput.className = 'qvpe-text-input';
@@ -748,34 +776,32 @@
         setTimeout(() => tempInput.focus(), 50);
 
         const commit = () => {
+          if (!tempInput) return;
           const text = tempInput.value.trim();
           if (text) {
             const ann = {
               id: 'ann_' + Date.now(),
               type: 'text',
-              x: x,
-              y: y - 15,
-              text: text,
+              x, y: y - 15,
+              text,
               size: state.textSize,
               color: state.textColor,
               font: state.textFont
             };
             if (!state.annotations[state.currentPage]) state.annotations[state.currentPage] = [];
             state.annotations[state.currentPage].push(ann);
+            pushHistory();
             redrawAnnotations();
             toast('Text add ho gaya');
           }
           tempInput.remove();
           tempInput = null;
         };
-
         tempInput.addEventListener('keydown', (ev) => {
           if (ev.key === 'Enter') commit();
           if (ev.key === 'Escape') { tempInput.remove(); tempInput = null; }
         });
-        tempInput.addEventListener('blur', () => {
-          setTimeout(commit, 100);
-        });
+        tempInput.addEventListener('blur', () => setTimeout(commit, 100));
       } else if (state.tool === 'image' && state.imageFile) {
         const img = new Image();
         img.onload = () => {
@@ -786,25 +812,46 @@
           const ann = {
             id: 'ann_' + Date.now(),
             type: 'image',
-            x: x - w / 2,
-            y: y - h / 2,
-            w: w,
-            h: h,
+            x: x - w / 2, y: y - h / 2,
+            w, h,
             src: state.imageFile.src
           };
           if (!state.annotations[state.currentPage]) state.annotations[state.currentPage] = [];
           state.annotations[state.currentPage].push(ann);
+          pushHistory();
           redrawAnnotations();
           toast('Image add ho gayi');
+          state.imageFile = null;
         };
         img.src = state.imageFile.src;
+      } else if (state.tool === 'signature' && state.signatureData) {
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 180;
+          const ratio = img.height / img.width;
+          const w = Math.min(maxW, img.width);
+          const h = w * ratio;
+          const ann = {
+            id: 'ann_' + Date.now(),
+            type: 'image',
+            x: x - w / 2, y: y - h / 2,
+            w, h,
+            src: state.signatureData
+          };
+          if (!state.annotations[state.currentPage]) state.annotations[state.currentPage] = [];
+          state.annotations[state.currentPage].push(ann);
+          pushHistory();
+          redrawAnnotations();
+          toast('Signature add ho gaya');
+          state.signatureData = null;
+        };
+        img.src = state.signatureData;
       }
     });
 
-    // DRAW — mousedown/move/up
+    // DRAW + HIGHLIGHT
     let drawing = false;
     let currentPoints = [];
-
     const getPt = (e) => {
       const rect = overlay.getBoundingClientRect();
       const pt = e.touches ? e.touches[0] : e;
@@ -820,10 +867,7 @@
       if (!drawing) return;
       e.preventDefault();
       currentPoints.push(getPt(e));
-      // live preview — simplified: just add path each move
-      const overlay2 = document.getElementById('qvpe-overlay');
-      // Remove previous preview
-      const prev = overlay2.querySelector('.qvpe-preview');
+      const prev = overlay.querySelector('.qvpe-preview');
       if (prev) prev.remove();
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
       svg.classList.add('qvpe-preview');
@@ -834,9 +878,7 @@
       svg.style.pointerEvents = 'none';
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       let d = `M ${currentPoints[0].x} ${currentPoints[0].y}`;
-      for (let i = 1; i < currentPoints.length; i++) {
-        d += ` L ${currentPoints[i].x} ${currentPoints[i].y}`;
-      }
+      for (let i = 1; i < currentPoints.length; i++) d += ` L ${currentPoints[i].x} ${currentPoints[i].y}`;
       path.setAttribute('d', d);
       path.setAttribute('stroke', state.tool === 'draw' ? state.drawingColor : state.highlightColor);
       path.setAttribute('stroke-width', (state.tool === 'draw' ? state.drawingWidth : 12) * state.scale);
@@ -845,44 +887,36 @@
       path.setAttribute('stroke-linejoin', 'round');
       if (state.tool === 'highlight') path.setAttribute('opacity', '0.35');
       svg.appendChild(path);
-      overlay2.appendChild(svg);
+      overlay.appendChild(svg);
     };
     const endDraw = () => {
       if (!drawing) return;
       drawing = false;
+      const prev = overlay.querySelector('.qvpe-preview');
+      if (prev) prev.remove();
       if (currentPoints.length < 2) { currentPoints = []; return; }
 
       if (state.tool === 'draw') {
-        const ann = {
-          id: 'ann_' + Date.now(),
-          type: 'draw',
+        state.annotations[state.currentPage] = state.annotations[state.currentPage] || [];
+        state.annotations[state.currentPage].push({
+          id: 'ann_' + Date.now(), type: 'draw',
           points: currentPoints.slice(),
-          color: state.drawingColor,
-          width: state.drawingWidth
-        };
-        if (!state.annotations[state.currentPage]) state.annotations[state.currentPage] = [];
-        state.annotations[state.currentPage].push(ann);
+          color: state.drawingColor, width: state.drawingWidth
+        });
       } else if (state.tool === 'highlight') {
-        // Bounding box of points
         const xs = currentPoints.map(p => p.x);
         const ys = currentPoints.map(p => p.y);
-        const x = Math.min(...xs);
-        const y = Math.min(...ys);
-        const w = Math.max(...xs) - x;
-        const h = Math.max(...ys) - y;
-        const ann = {
-          id: 'ann_' + Date.now(),
-          type: 'highlight',
-          x: x, y: y, w: w, h: h,
-          color: state.highlightColor
-        };
-        if (!state.annotations[state.currentPage]) state.annotations[state.currentPage] = [];
-        state.annotations[state.currentPage].push(ann);
+        const x = Math.min(...xs), y = Math.min(...ys);
+        const w = Math.max(...xs) - x, h = Math.max(...ys) - y;
+        state.annotations[state.currentPage] = state.annotations[state.currentPage] || [];
+        state.annotations[state.currentPage].push({
+          id: 'ann_' + Date.now(), type: 'highlight',
+          x, y, w, h, color: state.highlightColor
+        });
       }
-
       currentPoints = [];
+      pushHistory();
       redrawAnnotations();
-      toast(state.tool === 'draw' ? 'Drawing add ho gayi' : 'Highlight add ho gaya');
     };
 
     overlay.addEventListener('mousedown', startDraw);
@@ -892,35 +926,44 @@
     overlay.addEventListener('touchmove', moveDraw, { passive: false });
     overlay.addEventListener('touchend', endDraw);
 
-    // SHAPE — drag to create
-    let shapeStart = null;
+    // SHAPE + REDACT (drag to create)
+    let dragStart = null;
     overlay.addEventListener('mousedown', (e) => {
-      if (state.tool !== 'shape') return;
+      if (state.tool !== 'shape' && state.tool !== 'redact') return;
       const rect = overlay.getBoundingClientRect();
-      shapeStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top, tool: state.tool };
     });
     overlay.addEventListener('mouseup', (e) => {
-      if (state.tool !== 'shape' || !shapeStart) return;
+      if (!dragStart) return;
       const rect = overlay.getBoundingClientRect();
       const x2 = e.clientX - rect.left;
       const y2 = e.clientY - rect.top;
-      const x = Math.min(shapeStart.x, x2);
-      const y = Math.min(shapeStart.y, y2);
-      const w = Math.abs(x2 - shapeStart.x) || 100;
-      const h = Math.abs(y2 - shapeStart.y) || 60;
-      const ann = {
-        id: 'ann_' + Date.now(),
-        type: 'shape',
-        shape: state.shapeType || 'rect',
-        x, y, w, h,
-        color: state.shapeColor || '#6366f1',
-        borderWidth: state.shapeWidth || 2
-      };
-      if (!state.annotations[state.currentPage]) state.annotations[state.currentPage] = [];
-      state.annotations[state.currentPage].push(ann);
+      const x = Math.min(dragStart.x, x2);
+      const y = Math.min(dragStart.y, y2);
+      const w = Math.abs(x2 - dragStart.x) || 100;
+      const h = Math.abs(y2 - dragStart.y) || 60;
+
+      state.annotations[state.currentPage] = state.annotations[state.currentPage] || [];
+
+      if (dragStart.tool === 'shape') {
+        state.annotations[state.currentPage].push({
+          id: 'ann_' + Date.now(), type: 'shape',
+          shape: state.shapeType || 'rect',
+          x, y, w, h,
+          color: state.shapeColor || '#6366f1',
+          borderWidth: state.shapeWidth || 2
+        });
+        toast('Shape add ho gaya');
+      } else if (dragStart.tool === 'redact') {
+        state.annotations[state.currentPage].push({
+          id: 'ann_' + Date.now(), type: 'redact',
+          x, y, w, h
+        });
+        toast('Redaction add ho gayi');
+      }
+      dragStart = null;
+      pushHistory();
       redrawAnnotations();
-      shapeStart = null;
-      toast('Shape add ho gaya');
     });
   }
 
@@ -934,33 +977,31 @@
       toast('Sirf PDF files allowed hain.', 'error');
       return;
     }
-
     showLoading(true, 'PDF load ho rahi hai...');
     try {
       const arrayBuffer = await file.arrayBuffer();
       state.pdfBytes = arrayBuffer.slice(0);
       state.fileName = file.name;
-
       state.pdfDoc = await window.pdfjsLib.getDocument({ data: arrayBuffer.slice(0) }).promise;
       state.totalPages = state.pdfDoc.numPages;
-
       if (state.totalPages > MAX_PAGES) {
         toast(`${MAX_PAGES} se zyada pages hain.`, 'error');
         showLoading(false);
         return;
       }
-
       state.pdfLibDoc = await window.PDFLib.PDFDocument.load(arrayBuffer.slice(0));
+      state.annotations = {};
+      state.history = [JSON.stringify({})];
+      state.historyIndex = 0;
+      updateUndoRedo();
 
       document.getElementById('qvpe-upload-screen').classList.add('qvpe-hidden');
       document.getElementById('qvpe-editor-screen').classList.remove('qvpe-hidden');
       document.getElementById('qvpe-fname').textContent = file.name;
       document.getElementById('qvpe-total-pages').textContent = state.totalPages;
-
       await renderThumbnails();
       await renderPage(1);
       state.currentPage = 1;
-
       showLoading(false);
       toast('PDF load ho gayi ✅');
     } catch (err) {
@@ -977,6 +1018,189 @@
     if (text) el.querySelector('.qvpe-loading-text').textContent = text;
   }
 
+  // ---------- EXPORT ----------
+  async function exportPDF() {
+    showLoading(true, 'PDF ban rahi hai... (thoda time lagega)');
+    try {
+      const pdfDoc = await window.PDFLib.PDFDocument.load(state.pdfBytes.slice(0));
+      const pages = pdfDoc.getPages();
+      const { rgb } = window.PDFLib;
+
+      // Helper: hex to rgb
+      const hexToRgb = (hex) => {
+        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const g = parseInt(hex.slice(3, 5), 16) / 255;
+        const b = parseInt(hex.slice(5, 7), 16) / 255;
+        return rgb(r, g, b);
+      };
+
+      for (let pageNum = 1; pageNum <= state.totalPages; pageNum++) {
+        const page = pages[pageNum - 1];
+        if (!page) continue;
+        const { width: pw, height: ph } = page.getSize();
+        const scaleFactor = pw / (state.pdfDoc ? (await state.pdfDoc.getPage(pageNum)).getViewport({ scale: 1 }).width : pw);
+        const anns = state.annotations[pageNum] || [];
+
+        for (const ann of anns) {
+          // Convert screen coords (top-left, scaled) to PDF coords (bottom-left, unscaled)
+          const pdfX = ann.x * scaleFactor;
+          const pdfY = ph - (ann.y * scaleFactor);
+
+          if (ann.type === 'text') {
+            try {
+              const font = await pdfDoc.embedFont(window.PDFLib.StandardFonts.Helvetica);
+              page.drawText(ann.text, {
+                x: pdfX,
+                y: pdfY - (ann.size * 0.8),
+                size: ann.size,
+                font: font,
+                color: hexToRgb(ann.color)
+              });
+            } catch (e) { console.warn('text export', e); }
+          } else if (ann.type === 'image') {
+            try {
+              const resp = await fetch(ann.src);
+              const buf = await resp.arrayBuffer();
+              let img;
+              if (ann.src.startsWith('data:image/png')) {
+                img = await pdfDoc.embedPng(buf);
+              } else {
+                img = await pdfDoc.embedJpg(buf);
+              }
+              const w = ann.w * scaleFactor;
+              const h = ann.h * scaleFactor;
+              page.drawImage(img, {
+                x: pdfX,
+                y: ph - (ann.y * scaleFactor) - h,
+                width: w,
+                height: h
+              });
+            } catch (e) { console.warn('image export', e); }
+          } else if (ann.type === 'shape') {
+            try {
+              const color = hexToRgb(ann.color);
+              const w = ann.w * scaleFactor;
+              const h = ann.h * scaleFactor;
+              const y = ph - (ann.y * scaleFactor) - h;
+              if (ann.shape === 'rect') {
+                page.drawRectangle({ x: pdfX, y, width: w, height: h, borderColor: color, borderWidth: ann.borderWidth });
+              } else if (ann.shape === 'circle') {
+                page.drawEllipse({ x: pdfX + w / 2, y: y + h / 2, xScale: w / 2, yScale: h / 2, borderColor: color, borderWidth: ann.borderWidth });
+              } else if (ann.shape === 'line') {
+                page.drawLine({ start: { x: pdfX, y: y + h }, end: { x: pdfX + w, y: y }, color, thickness: ann.borderWidth });
+              }
+            } catch (e) { console.warn('shape export', e); }
+          } else if (ann.type === 'draw') {
+            try {
+              const color = hexToRgb(ann.color);
+              const pts = ann.points;
+              for (let i = 1; i < pts.length; i++) {
+                page.drawLine({
+                  start: { x: pts[i - 1].x * scaleFactor, y: ph - pts[i - 1].y * scaleFactor },
+                  end: { x: pts[i].x * scaleFactor, y: ph - pts[i].y * scaleFactor },
+                  color, thickness: ann.width
+                });
+              }
+            } catch (e) { console.warn('draw export', e); }
+          } else if (ann.type === 'highlight') {
+            try {
+              const color = hexToRgb(ann.color);
+              const w = ann.w * scaleFactor;
+              const h = ann.h * scaleFactor;
+              page.drawRectangle({
+                x: pdfX, y: ph - (ann.y * scaleFactor) - h,
+                width: w, height: h, color, opacity: 0.35
+              });
+            } catch (e) { console.warn('highlight export', e); }
+          } else if (ann.type === 'redact') {
+            try {
+              const w = ann.w * scaleFactor;
+              const h = ann.h * scaleFactor;
+              page.drawRectangle({
+                x: pdfX, y: ph - (ann.y * scaleFactor) - h,
+                width: w, height: h, color: rgb(0, 0, 0)
+              });
+            } catch (e) { console.warn('redact export', e); }
+          }
+        }
+      }
+
+      const bytes = await pdfDoc.save();
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = state.fileName.replace(/\.pdf$/i, '') + '_edited.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showLoading(false);
+      toast('PDF download ho gayi ✅');
+    } catch (err) {
+      console.error(err);
+      showLoading(false);
+      toast('Export me error aaya.', 'error');
+    }
+  }
+
+  // ---------- PAGE OPS ----------
+  function deletePage(pageNum) {
+    if (state.totalPages <= 1) { toast('Last page delete nahi kar sakte', 'error'); return; }
+    if (!confirm('Page ' + pageNum + ' delete karein?')) return;
+    try {
+      state.pdfLibDoc.removePage(pageNum - 1);
+      toast('Page ' + pageNum + ' delete ho gaya (Save pe apply hoga)');
+    } catch (e) {
+      console.error(e);
+      toast('Delete failed', 'error');
+    }
+  }
+
+  function openPagesMenu() {
+    const modal = document.createElement('div');
+    modal.className = 'qvpe-modal';
+    modal.innerHTML = `
+      <div class="qvpe-modal-box">
+        <h3>📄 Page Options</h3>
+        <p>Current page: <b style="color:#fff">${state.currentPage}</b> / ${state.totalPages}</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+          <button class="qvpe-btn-primary" id="qvpe-opt-rotate" style="text-align:left">🔄 Rotate Current Page 90°</button>
+          <button class="qvpe-btn-primary" id="qvpe-opt-del" style="text-align:left;background:linear-gradient(135deg,#ef4444,#b91c1c)">🗑️ Delete Current Page</button>
+          <button class="qvpe-btn-primary" id="qvpe-opt-dup" style="text-align:left">📋 Duplicate Current Page</button>
+        </div>
+        <div class="qvpe-modal-actions">
+          <button class="qvpe-btn-icon" id="qvpe-opt-close" style="width:auto;padding:8px 14px;font-size:13px">Close</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+
+    modal.querySelector('#qvpe-opt-rotate').addEventListener('click', () => {
+      try {
+        const p = state.pdfLibDoc.getPage(state.currentPage - 1);
+        const cur = p.getRotation().angle || 0;
+        p.setRotation(window.PDFLib.degrees((cur + 90) % 360));
+        state.rotation = (state.rotation + 90) % 360;
+        renderPage(state.currentPage);
+        toast('Page rotate ho gaya');
+      } catch (e) { toast('Rotate failed', 'error'); }
+    });
+    modal.querySelector('#qvpe-opt-del').addEventListener('click', () => {
+      deletePage(state.currentPage);
+      modal.remove();
+    });
+    modal.querySelector('#qvpe-opt-dup').addEventListener('click', async () => {
+      try {
+        const [copy] = await state.pdfLibDoc.copyPages(state.pdfLibDoc, [state.currentPage - 1]);
+        state.pdfLibDoc.insertPage(state.currentPage, copy);
+        toast('Page duplicate ho gaya (Save pe apply)');
+      } catch (e) { toast('Duplicate failed', 'error'); }
+    });
+    modal.querySelector('#qvpe-opt-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+  }
+
   // ---------- INIT ----------
   function init() {
     injectCSS();
@@ -988,64 +1212,50 @@
       const file = e.target.files[0];
       if (file) loadPDF(file);
     });
-
     document.getElementById('qvpe-back').addEventListener('click', () => {
       if (confirm('Editor band karein? Unsaved changes lost ho jaayenge.')) {
         document.getElementById('qvpe-wrap').classList.add('qvpe-hidden');
       }
     });
-
     document.getElementById('qvpe-toggle-sidebar').addEventListener('click', () => {
       document.getElementById('qvpe-sidebar').classList.toggle('qvpe-hidden');
     });
-
     document.getElementById('qvpe-prev').addEventListener('click', () => {
-      if (state.currentPage > 1) {
-        state.currentPage--;
-        renderPage(state.currentPage);
-      }
+      if (state.currentPage > 1) { state.currentPage--; renderPage(state.currentPage); }
     });
     document.getElementById('qvpe-next').addEventListener('click', () => {
-      if (state.currentPage < state.totalPages) {
-        state.currentPage++;
-        renderPage(state.currentPage);
-      }
+      if (state.currentPage < state.totalPages) { state.currentPage++; renderPage(state.currentPage); }
     });
-
     document.getElementById('qvpe-zoom-in').addEventListener('click', () => {
-      state.scale = Math.min(state.scale + 0.25, 3);
-      renderPage(state.currentPage);
+      state.scale = Math.min(state.scale + 0.25, 3); renderPage(state.currentPage);
     });
     document.getElementById('qvpe-zoom-out').addEventListener('click', () => {
-      state.scale = Math.max(state.scale - 0.25, 0.4);
-      renderPage(state.currentPage);
+      state.scale = Math.max(state.scale - 0.25, 0.4); renderPage(state.currentPage);
     });
     document.getElementById('qvpe-zoom-fit').addEventListener('click', () => {
-      state.scale = 1.0;
-      renderPage(state.currentPage);
+      state.scale = 1.0; renderPage(state.currentPage);
     });
+    document.getElementById('qvpe-undo').addEventListener('click', undo);
+    document.getElementById('qvpe-redo').addEventListener('click', redo);
+    document.getElementById('qvpe-pages-menu').addEventListener('click', openPagesMenu);
 
     document.querySelectorAll('.qvpe-tool').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.qvpe-tool').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.tool = btn.dataset.tool;
-
         const overlay = document.getElementById('qvpe-overlay');
         overlay.className = 'qvpe-overlay';
         if (state.tool !== 'select') overlay.classList.add('active');
         if (state.tool === 'text') overlay.classList.add('text-mode');
         if (state.tool === 'draw') overlay.classList.add('draw-mode');
         if (state.tool === 'highlight') overlay.classList.add('highlight-mode');
-
+        if (state.tool === 'redact') overlay.classList.add('redact-mode');
         renderSubtoolbar(state.tool);
       });
     });
 
-    document.getElementById('qvpe-save').addEventListener('click', () => {
-      toast('Export Part 3 me aayega', 'error');
-    });
-
+    document.getElementById('qvpe-save').addEventListener('click', exportPDF);
     setupOverlayEvents();
   }
 
