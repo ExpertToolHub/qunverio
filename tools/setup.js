@@ -454,6 +454,15 @@ const EXTRA_TOOLS = [
     howto: 'Type your question or upload an image/PDF. AI will understand and perform the action.',
     kw: ['ai', 'assistant', 'chat', 'gpt', 'gemini', 'ask', 'image', 'analyze']
   },
+{
+  id: 'pincode-ifsc',
+  name: 'Pincode & IFSC Lookup',
+  cat: 'utilities',
+  icon: '📍',
+  desc: 'Lookup pincode details and bank IFSC codes instantly',
+  howto: 'Pincode ya IFSC code daalo, instant details milengi.',
+  kw: ['pincode', 'ifsc', 'bank', 'postal', 'address', 'lookup']
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
