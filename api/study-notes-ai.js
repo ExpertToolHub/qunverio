@@ -1,8 +1,12 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES API PROXY
    File: api/study-notes-ai.js
-   Final Version (v8) — 32K tokens, mega content
+   Final Version (v9) — 60s timeout + 16K tokens
    ============================================================ */
+
+export const config = {
+  maxDuration: 60
+};
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -48,10 +52,10 @@ export default async function handler(req, res) {
     const depthInstructions = {
       basic: 'Keep content SIMPLE. Only key points. No extra explanations.',
       standard: 'Include examples for each concept. Student-friendly explanations.',
-      deep: 'Include full explanations, real-world examples, extra facts, interesting details. Be comprehensive.'
+      deep: 'Include full explanations, real-world examples, extra facts. Be comprehensive.'
     };
 
-    const pagesInstruction = maxPages === '10'
+    const pagesInstruction = maxPages === '15'
       ? 'Write as much as needed (no limit).'
       : `Limit content to approximately ${maxPages} A4 page(s) (about ${parseInt(maxPages) * 400} words maximum).`;
 
@@ -68,54 +72,28 @@ DEPTH: ${depth} — ${depthInstructions[depth]}
 PAGES LIMIT: ${pagesInstruction}
 LANGUAGE: ${languageInstructions[language]}
 
-=== CRITICAL RULES (NEVER BREAK) ===
+=== CRITICAL RULES ===
 
-1. NEVER repeat the user's request or write meta-commentary in the output.
-2. NEVER write any reasoning, thinking, self-check, or verification.
-3. Output ONLY the final study notes. Nothing else.
-4. START your response DIRECTLY with the chapter title using # symbol.
-5. Use ## for section headings. Use ### for sub-headings.
-6. Use "- " for bullet points ONLY. Never use * or ** or any other markdown.
-7. For definitions, ALWAYS start the line with "Definition: "
-8. For formulas, ALWAYS wrap in $$ on both sides with NOTHING else on the line.
-9. For diagrams, write [DIAGRAM: name] on its OWN LINE with NOTHING else.
-   Allowed names: solar_panel, circuit, graph, flowchart, microscope, atom, plant, human_heart, dna, water_cycle
-10. NEVER use bold (**text**), italics (*text*), or any other markdown.
-11. Write in natural teaching style. Explain concepts simply. Add examples.
-12. Cover ALL topics mentioned in the user's request. Do not skip any.
-13. Keep content CONSISTENT throughout — same style, same depth, same tone.
-14. Organize into proper sections. Each section complete and self-contained.
-15. DO NOT include any preamble. Start directly with # heading.
+1. NEVER repeat the user's request or write meta-commentary.
+2. NEVER write reasoning, thinking, self-check, or verification.
+3. Output ONLY final study notes.
+4. START DIRECTLY with # chapter title.
+5. Use ## for sections, ### for sub-sections.
+6. Use "- " for bullets ONLY. Never use * or **.
+7. For definitions, start with "Definition: "
+8. For formulas, wrap in $$ with NOTHING else on the line.
+9. For diagrams, write [DIAGRAM: name] on its OWN LINE.
+   Allowed: solar_panel, circuit, graph, flowchart, microscope, atom, plant, human_heart, dna, water_cycle
+10. NEVER use bold (**), italics (*), or markdown.
+11. Cover ALL topics mentioned. Do not skip.
+12. DO NOT include preamble.
 
-=== OUTPUT EXAMPLE ===
-
-# Photosynthesis
-
-## What is Photosynthesis?
-Definition: Photosynthesis is the process by which green plants make their own food using sunlight.
-- It occurs in the chloroplasts of plant cells.
-- Requires sunlight, water, and carbon dioxide.
-- Produces glucose and oxygen.
-
-[DIAGRAM: plant]
-
-## Chemical Equation
-$$6CO_2 + 6H_2O → C_6H_{12}O_6 + 6O_2$$
-
-## Key Steps
-- Step 1: Light absorption by chlorophyll.
-- Step 2: Water splitting (photolysis).
-- Step 3: Carbon dioxide fixation.
-
-=== END EXAMPLE ===
-
-Now generate complete detailed notes. Start directly with # heading:`;
+Generate the notes now. Start directly with # heading:`;
 
     const models = [
       'gemini-2.5-flash',
-      'gemini-2.5-pro',
       'gemini-flash-latest',
-      'gemma-4-26b-a4b-it'
+      'gemini-2.0-flash'
     ];
 
     let lastError = '';
@@ -131,7 +109,7 @@ Now generate complete detailed notes. Start directly with # heading:`;
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 32000,
+              maxOutputTokens: 16000,
               topP: 0.95
             }
           })
