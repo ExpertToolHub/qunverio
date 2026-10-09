@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES API PROXY
    File: api/study-notes-ai.js
-   Final Version (v9) — 60s timeout + 16K tokens
+   Final Version (v10) — Sequential parts, no duplicate
    ============================================================ */
 
 export const config = {
@@ -20,28 +20,23 @@ export default async function handler(req, res) {
 
   try {
     const {
-      topic,
+      topic = '',
+      fullPrompt = '',
+      previousContent = '',
+      partNumber = 1,
       level = 'medium',
-      subject = '',
-      language = 'english',
       depth = 'standard',
-      maxPages = '2'
+      language = 'english'
     } = req.body || {};
 
-    if (!topic || !topic.trim()) {
-      return res.status(400).json({ success: false, error: 'Topic is required' });
+    if (!topic && !fullPrompt) {
+      return res.status(400).json({ success: false, error: 'Topic or prompt is required' });
     }
 
     const apiKey = process.env.GEMINI_KEY_2 || process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ success: false, error: 'Server API key not configured' });
     }
-
-    const wordCount = {
-      short: '400-500 words',
-      medium: '800-1200 words',
-      detailed: '1500-2500 words'
-    };
 
     const languageInstructions = {
       english: 'Respond ONLY in English.',
@@ -55,40 +50,93 @@ export default async function handler(req, res) {
       deep: 'Include full explanations, real-world examples, extra facts. Be comprehensive.'
     };
 
-    const pagesInstruction = maxPages === '15'
-      ? 'Write as much as needed (no limit).'
-      : `Limit content to approximately ${maxPages} A4 page(s) (about ${parseInt(maxPages) * 400} words maximum).`;
+    const userRequest = fullPrompt.trim() || topic.trim();
+    const firstLine = userRequest.split('\n')[0].trim();
+    const chapterTitle = firstLine.slice(0, 100);
 
-    const subjectLine = subject ? `SUBJECT: ${subject}` : '';
+    // Build prompt based on part number
+    let prompt;
 
-    const prompt = `You are an expert teacher creating handwritten study notes for students.
+    if (partNumber === 1) {
+      // PART 1 — Fresh start
+      prompt = `You are an expert teacher creating handwritten-style study notes.
 
-USER'S TOPIC / REQUEST:
-${topic}
-${subjectLine}
+USER'S REQUEST:
+${userRequest}
 
-DETAIL LEVEL: ${level} (${wordCount[level]})
 DEPTH: ${depth} — ${depthInstructions[depth]}
-PAGES LIMIT: ${pagesInstruction}
 LANGUAGE: ${languageInstructions[language]}
 
-=== CRITICAL RULES ===
+=== YOUR TASK ===
 
-1. NEVER repeat the user's request or write meta-commentary.
-2. NEVER write reasoning, thinking, self-check, or verification.
-3. Output ONLY final study notes.
-4. START DIRECTLY with # chapter title.
-5. Use ## for sections, ### for sub-sections.
-6. Use "- " for bullets ONLY. Never use * or **.
-7. For definitions, start with "Definition: "
-8. For formulas, wrap in $$ with NOTHING else on the line.
-9. For diagrams, write [DIAGRAM: name] on its OWN LINE.
+Generate PART 1 of study notes.
+
+- Start DIRECTLY with # ${chapterTitle}
+- Cover the FIRST major topics from the user's request
+- Be detailed and thorough
+- End at a natural section break (after completing a topic)
+- Do NOT try to cover everything — this is PART 1
+
+=== FORMATTING RULES (STRICTLY FOLLOW) ===
+
+1. START with # heading (chapter title)
+2. Use ## for section headings
+3. Use ### for sub-sections
+4. Use "- " for bullet points ONLY
+5. For definitions: "Definition: ..."
+6. For formulas: $$formula$$ on its OWN line
+7. For diagrams: [DIAGRAM: name] on its OWN line
    Allowed: solar_panel, circuit, graph, flowchart, microscope, atom, plant, human_heart, dna, water_cycle
-10. NEVER use bold (**), italics (*), or markdown.
-11. Cover ALL topics mentioned. Do not skip.
-12. DO NOT include preamble.
+8. NEVER use bold (**text**) or italics (*text*)
+9. NEVER write any thinking, reasoning, or meta-commentary
+10. Start directly with # heading. No preamble.
 
-Generate the notes now. Start directly with # heading:`;
+Generate PART 1 now:`;
+    } else {
+      // PART 2+ — Continue from previous
+      const prevTail = previousContent.slice(-3000);
+
+      prompt = `You are continuing to create study notes. This is PART ${partNumber}.
+
+USER'S ORIGINAL REQUEST:
+${userRequest}
+
+DEPTH: ${depth} — ${depthInstructions[depth]}
+LANGUAGE: ${languageInstructions[language]}
+
+=== PREVIOUSLY COVERED (DO NOT REPEAT ANY OF THIS) ===
+
+${prevTail}
+
+=== END PREVIOUS CONTENT ===
+
+=== YOUR TASK ===
+
+Generate PART ${partNumber} — CONTINUE from where the previous part ended.
+
+CRITICAL RULES:
+- DO NOT repeat anything from the previous content
+- DO NOT repeat definitions already given
+- DO NOT repeat formulas already shown
+- Start with a ## heading for the NEXT UNCOVERED topic
+- Continue naturally from the last section
+- Cover the NEXT major topics from the user's request that haven't been covered yet
+- End at a natural section break
+- If ALL topics from the request are already covered, write ONLY: "ALL_TOPICS_COVERED"
+
+=== FORMATTING RULES ===
+
+1. Use ## for main sections, ### for sub-sections
+2. Use "- " for bullet points
+3. For definitions: "Definition: ..."
+4. For formulas: $$formula$$ on its OWN line
+5. For diagrams: [DIAGRAM: name] on its OWN line
+6. NEVER use bold (**text**) or italics (*text*)
+7. NEVER write any thinking, reasoning, or meta-commentary
+8. Start directly with ## heading. No preamble.
+
+Generate PART ${partNumber} now (continue from previous, no repeats):`;
+    }
 
     const models = [
       'gemini-2.5-flash',
@@ -109,7 +157,7 @@ Generate the notes now. Start directly with # heading:`;
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 16000,
+              maxOutputTokens: 6000,
               topP: 0.95
             }
           })
@@ -135,16 +183,15 @@ Generate the notes now. Start directly with # heading:`;
           continue;
         }
 
+        const trimmedText = text.trim();
+        const allCovered = /^ALL_TOPICS_COVERED\s*$/i.test(trimmedText);
+
         return res.status(200).json({
           success: true,
-          topic,
-          level,
-          subject,
-          language,
-          depth,
-          maxPages,
+          partNumber,
           model,
-          text: text.trim()
+          text: allCovered ? '' : trimmedText,
+          allCovered
         });
 
       } catch (err) {
