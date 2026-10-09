@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES API PROXY
    File: api/study-notes-ai.js
-   Final Version (v3) — No thinking/reasoning output
+   Final Version (v4) — No thinkingConfig (model compatible)
    ============================================================ */
 
 export default async function handler(req, res) {
@@ -70,14 +70,21 @@ LANGUAGE: ${languageInstructions[language]}
 === CRITICAL RULES (NEVER BREAK) ===
 
 1. NEVER write any reasoning, thinking, self-check, verification, or meta-commentary.
-   - Do NOT write "Wait, I need to..."
-   - Do NOT write "Check diagram names again..."
-   - Do NOT write "Word Count Check..."
-   - Do NOT write "Self-Correction during drafting..."
-   - Do NOT write "Final Structure Verification..."
-   - Do NOT write "Ensure no... are used..."
-   - Do NOT write any line starting with "Hinglish Check:"
-   - Do NOT write "I will just write...", "Instead of...", "One detail..."
+   Forbidden phrases (DO NOT use any of these):
+   - "Wait, I need to..."
+   - "Check diagram names again..."
+   - "Word Count Check..."
+   - "Self-Correction during drafting..."
+   - "Final Structure Verification..."
+   - "Ensure no... are used..."
+   - "Hinglish Check:"
+   - "I will just write..."
+   - "Instead of..."
+   - "One detail..."
+   - "Let me..."
+   - "The content looks..."
+   - "I initially thought..."
+   - "I must ensure..."
 
 2. Output ONLY the final study notes. Nothing else.
 
@@ -130,7 +137,7 @@ $$6CO_2 + 6H_2O → C_6H_{12}O_6 + 6O_2$$
 
 === END EXAMPLE ===
 
-Now generate notes on "${topic}". Start directly with # ${topic}. DO NOT include any thinking, reasoning, or self-check content in the output:`;
+Now generate notes on "${topic}". Start directly with # ${topic}. DO NOT include any thinking, reasoning, or self-check content:`;
 
     const models = [
       'gemini-2.5-flash',
@@ -154,10 +161,7 @@ Now generate notes on "${topic}". Start directly with # ${topic}. DO NOT include
             generationConfig: {
               temperature: 0.7,
               maxOutputTokens: 8000,
-              topP: 0.95,
-              thinkingConfig: {
-                thinkingBudget: 0
-              }
+              topP: 0.95
             }
           })
         });
