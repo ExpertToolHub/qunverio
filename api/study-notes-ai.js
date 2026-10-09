@@ -1,79 +1,130 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES API PROXY
    File: api/study-notes-ai.js
-   Full Final Working Code
+   Final Version (v2) — Clean output + Depth + Page limit
    ============================================================ */
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
+  if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   try {
-    const { topic, level = 'medium', subject = '', language = 'english' } = req.body || {};
+    const {
+      topic,
+      level = 'medium',
+      subject = '',
+      language = 'english',
+      depth = 'standard',
+      maxPages = '2'
+    } = req.body || {};
 
     if (!topic || !topic.trim()) {
       return res.status(400).json({ success: false, error: 'Topic is required' });
     }
 
     const apiKey = process.env.GEMINI_KEY_2 || process.env.GEMINI_API_KEY;
-
     if (!apiKey) {
-      return res.status(500).json({
-        success: false,
-        error: 'Server API key not configured'
-      });
+      return res.status(500).json({ success: false, error: 'Server API key not configured' });
     }
 
-    // Level-specific instructions
-    const levelInstructions = {
-      short: 'Write concise notes in about 150-200 words. Only key points.',
-      medium: 'Write detailed notes in about 350-450 words. Main concepts with examples.',
-      detailed: 'Write comprehensive notes in about 700-900 words. All concepts, definitions, examples, diagrams.'
+    const wordCount = {
+      short: '300-400 words',
+      medium: '600-800 words',
+      detailed: '1000-1200 words'
     };
 
-    // Language-specific instructions
     const languageInstructions = {
       english: 'Respond ONLY in English.',
       hindi: 'Respond ONLY in Hindi (Devanagari script).',
-      hinglish: 'Respond in Hinglish (Hindi words written in English letters, mixed with English).'
+      hinglish: 'Respond in Hinglish (Hindi words in English letters, mixed with English).'
     };
 
-    const subjectLine = subject ? `Subject: ${subject}` : '';
+    const depthInstructions = {
+      basic: 'Keep content SIMPLE. Only key points. No extra explanations.',
+      standard: 'Include examples for each concept. Student-friendly explanations.',
+      deep: 'Include full explanations, real-world examples, extra facts, interesting details. Be comprehensive.'
+    };
 
-    const prompt = `You are an expert teacher creating handwritten-style study notes.
+    const pagesInstruction = maxPages === '10'
+      ? 'Write as much as needed (no limit).'
+      : `Limit content to approximately ${maxPages} A4 page(s) (about ${parseInt(maxPages) * 350} words maximum).`;
 
-Topic: ${topic}
+    const subjectLine = subject ? `SUBJECT: ${subject}` : '';
+
+    const prompt = `You are an expert teacher creating handwritten study notes for students.
+
+TOPIC: ${topic}
 ${subjectLine}
-Detail Level: ${level}
-${levelInstructions[level] || levelInstructions.medium}
 
-${languageInstructions[language] || languageInstructions.english}
+DETAIL LEVEL: ${level} (${wordCount[level]})
+DEPTH: ${depth} — ${depthInstructions[depth]}
+PAGES LIMIT: ${pagesInstruction}
+LANGUAGE: ${languageInstructions[language]}
 
-FORMAT RULES (STRICTLY FOLLOW):
-1. Start with "# ${topic}" as chapter title.
-2. Use "## " for section headings.
-3. Use "- " for bullet points.
-4. Use "Definition: ..." for key definitions.
-5. Use "$$formula$$" for important formulas.
-6. You can include diagrams using: [DIAGRAM: name]
-   Allowed diagram names: solar_panel, circuit, graph, flowchart, microscope, atom, plant, human_heart, dna, water_cycle
-7. Keep language simple and student-friendly.
-8. Do NOT use markdown bold (**text**) or italic (*text*).
-9. Output ONLY the notes content, no extra explanation.
+=== CRITICAL RULES (NEVER BREAK) ===
 
-Generate the study notes now:`;
+1. NEVER write meta information like "Topic:", "Detail Level:", "Word Count:", "Format:", "Section:" headers in the output. Only write the ACTUAL NOTES CONTENT.
 
-    // CONFIRMED WORKING MODELS (aapki API key ke liye)
+2. START your response directly with the chapter title using # symbol:
+   # ${topic}
+
+3. Use ## for section headings (they will appear in red).
+   Use ### for sub-headings.
+
+4. Use "- " for bullet points ONLY. Never use * or ** or any other markdown.
+
+5. For definitions, ALWAYS start the line with "Definition: "
+   Example: Definition: Energy is the capacity to do work.
+
+6. For formulas, ALWAYS wrap in $$ on both sides with NOTHING else on the line.
+   Example: $$E = mc^2$$
+
+7. For diagrams, write [DIAGRAM: name] on its OWN LINE with NOTHING else.
+   Allowed names: solar_panel, circuit, graph, flowchart, microscope, atom, plant, human_heart, dna, water_cycle
+   Correct: [DIAGRAM: solar_panel]
+   Wrong: [DIAGRAM: solar_panel] (Solar Energy)
+
+8. NEVER use bold (**text**), italics (*text*), or any other markdown.
+   Only use: # for title, ## for section, - for bullet, Definition: for definitions, $$ for formulas, [DIAGRAM: name] for diagrams.
+
+9. Write in natural teaching style. Explain concepts simply. Add examples where helpful.
+
+10. DO NOT include any preamble like "Here are the notes". Start directly with # ${topic}.
+
+=== OUTPUT EXAMPLE ===
+
+# Photosynthesis
+
+## What is Photosynthesis?
+Definition: Photosynthesis is the process by which green plants make their own food using sunlight.
+- It occurs in the chloroplasts of plant cells.
+- Requires sunlight, water, and carbon dioxide.
+- Produces glucose and oxygen.
+
+[DIAGRAM: plant]
+
+## Chemical Equation
+$$6CO_2 + 6H_2O → C_6H_{12}O_6 + 6O_2$$
+
+## Key Steps
+- Step 1: Light absorption by chlorophyll.
+- Step 2: Water splitting (photolysis).
+- Step 3: Carbon dioxide fixation.
+
+## Importance
+- Provides oxygen for all living beings.
+- Forms base of food chain.
+
+=== END EXAMPLE ===
+
+Now generate notes on "${topic}". Start directly with # ${topic}:`;
+
     const models = [
       'gemini-2.5-flash',
       'gemini-2.5-pro',
@@ -92,12 +143,10 @@ Generate the study notes now:`;
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }],
+            contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
               temperature: 0.7,
-              maxOutputTokens: 4000,
+              maxOutputTokens: 8000,
               topP: 0.95
             }
           })
@@ -129,6 +178,8 @@ Generate the study notes now:`;
           level: level,
           subject: subject,
           language: language,
+          depth: depth,
+          maxPages: maxPages,
           model: model,
           text: text.trim()
         });
