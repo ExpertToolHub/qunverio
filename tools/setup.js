@@ -488,6 +488,15 @@ const EXTRA_TOOLS = [
   howto: 'PDF upload karo, phir toolbar se edit karo. Sab kuch browser me process hota hai.',
   kw: ['pdf editor', 'edit pdf', 'pdf text', 'pdf image', 'sign pdf', 'redact pdf']
 },
+{
+  id: 'table-studio',
+  name: 'Table Studio',
+  cat: 'utilities',
+  icon: '📊',
+  desc: 'Create, customize, download & print beautiful tables — Excel-style editor',
+  howto: 'Open Table Studio. Edit rows/columns, apply formatting, choose template, and export as PNG, PDF or Print.',
+  kw: ['table', 'excel', 'spreadsheet', 'grid', 'csv', 'pdf', 'png', 'print', 'table maker']
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
