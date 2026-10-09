@@ -1,16 +1,25 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v8) — Redesigned UI + Mega content
+   Final Version (v10) — Light UI, Auto + Manual modes
    ============================================================ */
 
 (function () {
   'use strict';
 
   const QVSN_STATE = {
-    topic: '', level: 'medium', subject: '', language: 'english',
-    depth: 'standard', maxPages: '2', penColor: 'blue',
-    rawText: '', isEditing: false, draftKey: 'qvsn_draft_v8'
+    topic: '',
+    fullPrompt: '',
+    level: 'medium',
+    depth: 'standard',
+    language: 'english',
+    penColor: 'blue',
+    rawText: '',
+    partNumber: 0,
+    isGenerating: false,
+    autoMode: false,
+    isEditing: false,
+    draftKey: 'qvsn_draft_v10'
   };
 
   const QVSN_DIAGRAMS = {
@@ -62,162 +71,163 @@
     return f;
   }
 
-  /* ---------------- REDESIGNED CSS ---------------- */
+  /* ---------------- LIGHT THEME CSS ---------------- */
   const QVSN_CSS = `
 .qvsn-wrap {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 20px 16px 40px;
+  max-width: 700px; margin: 0 auto; padding: 14px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #e5e7eb;
+  color: #1f2937; background: #f8fafc;
 }
-.qvsn-header { text-align: center; margin-bottom: 24px; }
+.qvsn-header { text-align: center; margin-bottom: 16px; }
 .qvsn-title {
-  font-size: 1.9rem; font-weight: 800; letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #f472b6 100%);
+  font-size: 1.5rem; font-weight: 800; letter-spacing: -0.3px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   margin: 0;
 }
-.qvsn-sub { color: #94a3b8; font-size: 0.9rem; margin-top: 8px; line-height: 1.5; }
+.qvsn-sub { color: #64748b; font-size: 0.82rem; margin-top: 4px; }
 
 .qvsn-card {
-  background: linear-gradient(180deg, #1a1f4a 0%, #151a3d 100%);
-  border-radius: 20px; padding: 22px; margin-bottom: 18px;
-  border: 1px solid rgba(139, 92, 246, 0.15);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  background: #ffffff; border-radius: 12px; padding: 14px;
+  margin-bottom: 12px; border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .qvsn-label {
-  display: block; font-size: 0.82rem; color: #c7d2fe;
-  margin-bottom: 8px; font-weight: 600; letter-spacing: 0.3px;
+  display: block; font-size: 0.78rem; color: #475569;
+  margin-bottom: 5px; font-weight: 600;
 }
 
-.qvsn-input, .qvsn-select, .qvsn-textarea {
-  width: 100%; padding: 13px 16px; border-radius: 12px;
-  border: 1.5px solid rgba(139, 92, 246, 0.25);
-  background: #0d1130; color: #f1f5f9;
-  font-size: 0.95rem; font-family: inherit; outline: none;
-  box-sizing: border-box; transition: all 0.2s ease;
+.qvsn-textarea, .qvsn-input, .qvsn-select {
+  width: 100%; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid #d1d5db; background: #ffffff; color: #1f2937;
+  font-size: 0.88rem; font-family: inherit; outline: none;
+  box-sizing: border-box; transition: border-color 0.15s;
 }
-.qvsn-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
-.qvsn-input:focus, .qvsn-select:focus, .qvsn-textarea:focus {
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
-  background: #0f1435;
+.qvsn-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.qvsn-textarea:focus, .qvsn-input:focus, .qvsn-select:focus {
+  border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
 }
 
-.qvsn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.qvsn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.qvsn-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
 
 .qvsn-btn {
-  width: 100%; padding: 15px; border: none; border-radius: 14px;
-  font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  width: 100%; padding: 12px; border: none; border-radius: 10px;
+  font-size: 0.92rem; font-weight: 700; cursor: pointer; font-family: inherit;
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-  color: #fff; margin-top: 18px; letter-spacing: 0.3px;
-  transition: transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+  color: #fff; margin-top: 12px;
+  transition: transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 3px 10px rgba(99,102,241,0.25);
 }
-.qvsn-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4); }
-.qvsn-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.qvsn-btn:hover:not(:disabled) { transform: translateY(-1px); }
+.qvsn-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .qvsn-btn-secondary {
-  background: #1e2547; color: #c7d2fe;
-  border: 1.5px solid rgba(139, 92, 246, 0.3);
+  background: #ffffff; color: #4f46e5; border: 1.5px solid #c7d2fe;
   box-shadow: none;
 }
-.qvsn-btn-secondary:hover:not(:disabled) { background: #252c56; transform: none; box-shadow: none; }
-
-.qvsn-status {
-  text-align: center; padding: 14px; font-size: 0.9rem;
-  color: #a5b4fc; font-weight: 500;
+.qvsn-btn-secondary:hover:not(:disabled) { background: #eef2ff; }
+.qvsn-btn-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 3px 10px rgba(16,185,129,0.25);
 }
 
+.qvsn-status { text-align: center; padding: 10px; font-size: 0.82rem; color: #6366f1; font-weight: 500; }
 .qvsn-error {
-  background: rgba(239, 68, 68, 0.08);
-  border: 1.5px solid rgba(239, 68, 68, 0.35);
-  color: #fca5a5; padding: 14px 16px; border-radius: 12px;
-  margin-top: 14px; font-size: 0.88rem; line-height: 1.5;
+  background: #fef2f2; border: 1px solid #fecaca; color: #dc2626;
+  padding: 10px 12px; border-radius: 8px; margin-top: 10px; font-size: 0.82rem; line-height: 1.4;
 }
-
-.qvsn-hint {
-  font-size: 0.75rem; color: #64748b; margin-top: 6px;
-  line-height: 1.5; display: flex; align-items: flex-start; gap: 6px;
+.qvsn-success {
+  background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a;
+  padding: 10px 12px; border-radius: 8px; margin-top: 10px; font-size: 0.82rem; font-weight: 500;
 }
-.qvsn-counter {
-  font-size: 0.7rem; color: #475569; text-align: right;
-  margin-top: 4px; font-variant-numeric: tabular-nums;
-}
+.qvsn-hint { font-size: 0.72rem; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+.qvsn-counter { font-size: 0.68rem; color: #94a3b8; text-align: right; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .qvsn-counter.warn { color: #f59e0b; }
 
+.qvsn-toggle {
+  display: flex; gap: 6px; margin-top: 10px; padding: 3px;
+  background: #f1f5f9; border-radius: 8px;
+}
+.qvsn-toggle button {
+  flex: 1; padding: 8px 12px; border: none; background: transparent;
+  border-radius: 6px; cursor: pointer; font-family: inherit;
+  font-size: 0.8rem; font-weight: 600; color: #64748b; transition: all 0.15s;
+}
+.qvsn-toggle button.active { background: #ffffff; color: #4f46e5; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+/* PROGRESS */
+.qvsn-progress-wrap { margin-top: 10px; }
+.qvsn-progress-bar {
+  width: 100%; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden;
+}
+.qvsn-progress-fill {
+  height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+  border-radius: 3px; transition: width 0.3s ease; width: 0%;
+}
+.qvsn-progress-text {
+  text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 6px;
+}
+
 /* NOTEBOOK PAGES */
-.qvsn-pages { display: flex; flex-direction: column; gap: 24px; margin-top: 24px; }
+.qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
-  aspect-ratio: 210 / 297; padding: 20mm 15mm 15mm 25mm;
+  aspect-ratio: 210 / 297; padding: 18mm 12mm 12mm 22mm;
   position: relative; border-radius: 6px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   font-family: 'Kalam', cursive, sans-serif;
   overflow: hidden; box-sizing: border-box;
   background-image: repeating-linear-gradient(transparent, transparent 27px, #e5e7eb 27px, #e5e7eb 28px);
-  background-size: 100% 28px; background-position: 0 20mm;
-  line-height: 28px; font-size: 15px;
+  background-size: 100% 28px; background-position: 0 18mm;
+  line-height: 28px; font-size: 14px;
 }
 .qvsn-page::before {
-  content: ''; position: absolute; top: 0; bottom: 0; left: 20mm;
+  content: ''; position: absolute; top: 0; bottom: 0; left: 18mm;
   width: 1.5px; background: #fca5a5;
 }
 .qvsn-page-num {
-  position: absolute; bottom: 6mm; right: 10mm;
-  font-size: 11px; color: #9ca3af; font-weight: 500;
+  position: absolute; bottom: 5mm; right: 8mm;
+  font-size: 10px; color: #9ca3af; font-weight: 500;
 }
-.qvsn-h1 {
-  color: #dc2626; font-weight: 700; font-size: 21px;
-  margin: 0 0 10px; line-height: 28px;
-  border-bottom: 2px solid #fecaca; padding-bottom: 2px;
-}
-.qvsn-h2 {
-  color: #dc2626; font-weight: 700; font-size: 17px;
-  margin: 14px 0 6px; line-height: 28px;
-}
+.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 19px; margin: 0 0 8px; line-height: 28px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
+.qvsn-h2 { color: #dc2626; font-weight: 700; font-size: 16px; margin: 12px 0 4px; line-height: 28px; }
 .qvsn-p { margin: 0; line-height: 28px; color: #1e3a8a; }
-.qvsn-ul { margin: 0; padding-left: 24px; line-height: 28px; color: #1e3a8a; }
-.qvsn-ul li { margin-bottom: 2px; }
+.qvsn-ul { margin: 0; padding-left: 22px; line-height: 28px; color: #1e3a8a; }
 .qvsn-def {
-  background: linear-gradient(90deg, rgba(250, 204, 21, 0.3) 0%, rgba(250, 204, 21, 0.15) 100%);
-  border-left: 4px solid #f59e0b;
-  padding: 8px 14px; margin: 6px 0; border-radius: 6px;
-  line-height: 28px; font-weight: 500;
+  background: linear-gradient(90deg, rgba(250,204,21,0.3) 0%, rgba(250,204,21,0.15) 100%);
+  border-left: 4px solid #f59e0b; padding: 6px 12px; margin: 4px 0;
+  border-radius: 6px; line-height: 28px;
 }
 .qvsn-formula {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border: 1.5px dashed #6366f1;
-  padding: 10px 14px; margin: 8px 0; border-radius: 8px;
-  font-weight: 700; text-align: center; line-height: 28px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.1) 100%);
+  border: 1.5px dashed #6366f1; padding: 8px 12px; margin: 6px 0;
+  border-radius: 6px; font-weight: 700; text-align: center; line-height: 28px;
   color: #4338ca; word-wrap: break-word; overflow-wrap: break-word;
 }
-.qvsn-diagram { display: flex; justify-content: center; margin: 10px 0; }
-.qvsn-diagram svg { width: 90px; height: 90px; }
+.qvsn-diagram { display: flex; justify-content: center; margin: 8px 0; }
+.qvsn-diagram svg { width: 80px; height: 80px; }
 
 .qvsn-pen-black .qvsn-p, .qvsn-pen-black .qvsn-ul, .qvsn-pen-black .qvsn-page { color: #111827; }
 .qvsn-pen-green .qvsn-p, .qvsn-pen-green .qvsn-ul, .qvsn-pen-green .qvsn-page { color: #166534; }
-.qvsn-page[contenteditable="true"] {
-  outline: 2px dashed #8b5cf6; outline-offset: 4px;
-}
+.qvsn-page[contenteditable="true"] { outline: 2px dashed #6366f1; outline-offset: 4px; }
 
-/* ACTIONS */
-.qvsn-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.qvsn-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .qvsn-actions .qvsn-btn { margin-top: 0; }
 
 @media (max-width: 640px) {
-  .qvsn-wrap { padding: 16px 12px 32px; }
-  .qvsn-title { font-size: 1.5rem; }
-  .qvsn-card { padding: 18px; border-radius: 16px; }
-  .qvsn-row { grid-template-columns: 1fr; gap: 12px; }
+  .qvsn-wrap { padding: 12px 10px 24px; }
+  .qvsn-title { font-size: 1.3rem; }
+  .qvsn-card { padding: 12px; border-radius: 10px; }
+  .qvsn-row { grid-template-columns: 1fr; gap: 8px; }
+  .qvsn-row3 { grid-template-columns: 1fr 1fr; gap: 6px; }
   .qvsn-page {
-    padding: 12mm 8mm 12mm 15mm; font-size: 13px; line-height: 24px;
+    padding: 12mm 8mm 10mm 15mm; font-size: 12px; line-height: 24px;
     background-size: 100% 24px; background-position: 0 12mm;
   }
   .qvsn-page::before { left: 12mm; }
-  .qvsn-h1 { font-size: 17px; line-height: 24px; }
-  .qvsn-h2 { font-size: 15px; line-height: 24px; }
+  .qvsn-h1 { font-size: 16px; line-height: 24px; }
+  .qvsn-h2 { font-size: 14px; line-height: 24px; }
   .qvsn-p, .qvsn-ul { line-height: 24px; }
 }`;
 
@@ -229,15 +239,13 @@
     document.head.appendChild(style);
     if (!document.getElementById('qvsn-font')) {
       const link = document.createElement('link');
-      link.id = 'qvsn-font';
-      link.rel = 'stylesheet';
+      link.id = 'qvsn-font'; link.rel = 'stylesheet';
       link.href = 'https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap';
       document.head.appendChild(link);
     }
     if (!document.getElementById('qvsn-inter')) {
       const link2 = document.createElement('link');
-      link2.id = 'qvsn-inter';
-      link2.rel = 'stylesheet';
+      link2.id = 'qvsn-inter'; link2.rel = 'stylesheet';
       link2.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
       document.head.appendChild(link2);
     }
@@ -249,7 +257,7 @@
       const s = document.createElement('script');
       s.src = src;
       s.onload = function () { resolve(); };
-      s.onerror = function () { reject(new Error('Failed to load: ' + src)); };
+      s.onerror = function () { reject(new Error('Failed: ' + src)); };
       document.head.appendChild(s);
     });
   }
@@ -265,54 +273,15 @@
 <div class="qvsn-wrap">
   <div class="qvsn-header">
     <div class="qvsn-title">📚 AI Study Notes Generator</div>
-    <div class="qvsn-sub">Topic daalo → AI handwriting notes banayega → PNG/PDF export karo</div>
+    <div class="qvsn-sub">Pura prompt daalo → AI notes banayega → Auto ya Manual mode</div>
   </div>
 
   <div class="qvsn-card">
-    <label class="qvsn-label" for="qvsn-topic">📝 Topic / Detailed Prompt</label>
-    <textarea id="qvsn-topic" class="qvsn-textarea" placeholder="e.g. Single Phase Transformer - Definition, Construction, Working, EMF Equation..." maxlength="2000"></textarea>
+    <label class="qvsn-label" for="qvsn-prompt">📝 Full Prompt</label>
+    <textarea id="qvsn-prompt" class="qvsn-textarea" placeholder="Example:&#10;Single Phase Transformer&#10;B.Tech Electrical Engineering&#10;&#10;Topics to cover: Definition, Construction, Working Principle, EMF Equation, Equivalent Circuit, Losses, Efficiency, Voltage Regulation, Solved Numericals, Applications" maxlength="2000"></textarea>
     <div class="qvsn-counter" id="qvsn-counter">0 / 2000</div>
-    <div class="qvsn-hint">💡 Simple topic ya detailed prompt (max 2000 chars) — dono chalega.</div>
 
-    <div class="qvsn-row">
-      <div>
-        <label class="qvsn-label" for="qvsn-level">📊 Detail Level</label>
-        <select id="qvsn-level" class="qvsn-select">
-          <option value="short">Short (Concise)</option>
-          <option value="medium" selected>Medium (Balanced)</option>
-          <option value="detailed">Detailed (In-depth)</option>
-        </select>
-      </div>
-      <div>
-        <label class="qvsn-label" for="qvsn-subject">🎓 Subject (optional)</label>
-        <input type="text" id="qvsn-subject" class="qvsn-input" placeholder="e.g. Electrical Machines" autocomplete="off" maxlength="80" />
-      </div>
-    </div>
-
-    <div class="qvsn-row">
-      <div>
-        <label class="qvsn-label" for="qvsn-depth">📖 Content Depth</label>
-        <select id="qvsn-depth" class="qvsn-select">
-          <option value="basic">Basic — Simple points</option>
-          <option value="standard" selected>Standard — With examples</option>
-          <option value="deep">Deep — Full explanation + extra facts</option>
-        </select>
-      </div>
-      <div>
-        <label class="qvsn-label" for="qvsn-pages-limit">📄 Max Pages</label>
-        <select id="qvsn-pages-limit" class="qvsn-select">
-          <option value="1">1 Page</option>
-          <option value="2" selected>2 Pages</option>
-          <option value="3">3 Pages</option>
-          <option value="5">5 Pages</option>
-          <option value="7">7 Pages</option>
-          <option value="10">10 Pages</option>
-          <option value="15">15 Pages</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="qvsn-row">
+    <div class="qvsn-row3">
       <div>
         <label class="qvsn-label" for="qvsn-language">🌐 Language</label>
         <select id="qvsn-language" class="qvsn-select">
@@ -322,28 +291,49 @@
         </select>
       </div>
       <div>
-        <label class="qvsn-label" for="qvsn-pen">🖊️ Pen Color</label>
-        <select id="qvsn-pen" class="qvsn-select">
-          <option value="blue" selected>Blue Pen</option>
-          <option value="black">Black Pen</option>
-          <option value="green">Green Pen</option>
+        <label class="qvsn-label" for="qvsn-depth">📊 Depth</label>
+        <select id="qvsn-depth" class="qvsn-select">
+          <option value="basic">Basic</option>
+          <option value="standard" selected>Standard</option>
+          <option value="deep">Deep</option>
         </select>
       </div>
+      <div>
+        <label class="qvsn-label" for="qvsn-pen">🖊️ Pen</label>
+        <select id="qvsn-pen" class="qvsn-select">
+          <option value="blue" selected>Blue</option>
+          <option value="black">Black</option>
+          <option value="green">Green</option>
+        </select>
+      </div>
+    </div>
+
+    <label class="qvsn-label" style="margin-top:12px;">⚙️ Mode</label>
+    <div class="qvsn-toggle" id="qvsn-mode-toggle">
+      <button type="button" data-mode="manual" class="active">🎯 Manual (1 click = 1 part)</button>
+      <button type="button" data-mode="auto">🚀 Auto (sab generate karo)</button>
     </div>
 
     <button id="qvsn-generate" class="qvsn-btn">✨ Generate Notes</button>
     <div id="qvsn-status" class="qvsn-status" style="display:none;"></div>
     <div id="qvsn-error" class="qvsn-error" style="display:none;"></div>
+    <div id="qvsn-success" class="qvsn-success" style="display:none;"></div>
+  </div>
+
+  <div id="qvsn-progress-wrap" class="qvsn-card" style="display:none;">
+    <div class="qvsn-progress-bar"><div class="qvsn-progress-fill" id="qvsn-progress-fill"></div></div>
+    <div class="qvsn-progress-text" id="qvsn-progress-text">Ready</div>
   </div>
 
   <div id="qvsn-actions-wrap" class="qvsn-card" style="display:none;">
-    <div class="qvsn-actions">
-      <button id="qvsn-edit" class="qvsn-btn qvsn-btn-secondary">✏️ Edit Mode</button>
-      <button id="qvsn-regen" class="qvsn-btn qvsn-btn-secondary">🔄 Regenerate</button>
-      <button id="qvsn-png" class="qvsn-btn">🖼️ PNG (HD)</button>
-      <button id="qvsn-pdf" class="qvsn-btn">📄 PDF</button>
+    <button id="qvsn-more" class="qvsn-btn qvsn-btn-success" style="display:none;">🔄 Generate More (Part <span id="qvsn-part-num">2</span>)</button>
+    <button id="qvsn-done" class="qvsn-btn qvsn-btn-secondary" style="display:none;">✅ Done — Merge All</button>
+    <div class="qvsn-actions" style="margin-top:10px;">
+      <button id="qvsn-edit" class="qvsn-btn qvsn-btn-secondary">✏️ Edit</button>
+      <button id="qvsn-png" class="qvsn-btn qvsn-btn-secondary">🖼️ PNG</button>
+      <button id="qvsn-pdf" class="qvsn-btn qvsn-btn-secondary">📄 PDF</button>
       <button id="qvsn-print" class="qvsn-btn qvsn-btn-secondary">🖨️ Print</button>
-      <button id="qvsn-clear" class="qvsn-btn qvsn-btn-secondary">🗑️ Clear</button>
+      <button id="qvsn-clear" class="qvsn-btn qvsn-btn-secondary" style="grid-column: span 2;">🗑️ Clear All</button>
     </div>
   </div>
 
@@ -355,10 +345,12 @@
   function qvsnHideStatus() { const el = document.getElementById('qvsn-status'); if (el) el.style.display = 'none'; }
   function qvsnShowError(msg) { const el = document.getElementById('qvsn-error'); if (el) { el.textContent = msg; el.style.display = 'block'; } }
   function qvsnHideError() { const el = document.getElementById('qvsn-error'); if (el) el.style.display = 'none'; }
+  function qvsnShowSuccess(msg) { const el = document.getElementById('qvsn-success'); if (el) { el.textContent = msg; el.style.display = 'block'; } }
+  function qvsnHideSuccess() { const el = document.getElementById('qvsn-success'); if (el) el.style.display = 'none'; }
   function qvsnEsc(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
   function qvsnUpdateCounter() {
-    const input = document.getElementById('qvsn-topic');
+    const input = document.getElementById('qvsn-prompt');
     const counter = document.getElementById('qvsn-counter');
     if (!input || !counter) return;
     const len = input.value.length;
@@ -367,50 +359,128 @@
     else counter.classList.remove('warn');
   }
 
-  async function qvsnCallAI() {
-    const topic = (document.getElementById('qvsn-topic') || {}).value || '';
-    const level = (document.getElementById('qvsn-level') || {}).value || 'medium';
-    const subject = (document.getElementById('qvsn-subject') || {}).value || '';
+  function qvsnUpdateProgress(percent, text) {
+    const fill = document.getElementById('qvsn-progress-fill');
+    const txt = document.getElementById('qvsn-progress-text');
+    const wrap = document.getElementById('qvsn-progress-wrap');
+    if (wrap) wrap.style.display = 'block';
+    if (fill) fill.style.width = percent + '%';
+    if (txt) txt.textContent = text;
+  }
+
+  async function qvsnGeneratePart(isFirstPart) {
+    if (QVSN_STATE.isGenerating) return;
+    QVSN_STATE.isGenerating = true;
+
+    const fullPrompt = (document.getElementById('qvsn-prompt') || {}).value || '';
     const language = (document.getElementById('qvsn-language') || {}).value || 'english';
     const depth = (document.getElementById('qvsn-depth') || {}).value || 'standard';
-    const maxPages = (document.getElementById('qvsn-pages-limit') || {}).value || '2';
 
-    if (!topic.trim()) { qvsnShowError('Bhai, pehle topic toh likho!'); return; }
-    if (topic.length > 2000) { qvsnShowError('Topic bahut lamba hai (max 2000 characters).'); return; }
+    if (isFirstPart && !fullPrompt.trim()) {
+      qvsnShowError('Bhai, pehle prompt toh likho!');
+      QVSN_STATE.isGenerating = false;
+      return;
+    }
 
-    qvsnShowStatus('🤖 AI notes bana raha hai... (10-30 seconds lag sakte hain)');
+    if (isFirstPart && fullPrompt.length > 2000) {
+      qvsnShowError('Prompt bahut lamba hai (max 2000 characters).');
+      QVSN_STATE.isGenerating = false;
+      return;
+    }
+
+    const nextPart = isFirstPart ? 1 : (QVSN_STATE.partNumber + 1);
+    const topic = fullPrompt.split('\n')[0].trim().slice(0, 100);
+
     qvsnHideError();
+    qvsnHideSuccess();
+    qvsnShowStatus(`🤖 Part ${nextPart} generate ho raha hai... (10-20 seconds)`);
+    qvsnUpdateProgress(10, `Part ${nextPart} start...`);
+
     const genBtn = document.getElementById('qvsn-generate');
+    const moreBtn = document.getElementById('qvsn-more');
+    const doneBtn = document.getElementById('qvsn-done');
     if (genBtn) genBtn.disabled = true;
-    document.getElementById('qvsn-pages').innerHTML = '';
+    if (moreBtn) moreBtn.disabled = true;
 
     try {
+      qvsnUpdateProgress(30, `Part ${nextPart}: AI soch raha hai...`);
+
       const res = await fetch('/api/study-notes-ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic.trim(), level, subject: subject.trim(), language, depth, maxPages })
+        body: JSON.stringify({
+          topic: topic,
+          fullPrompt: fullPrompt.trim(),
+          previousContent: isFirstPart ? '' : QVSN_STATE.rawText,
+          partNumber: nextPart,
+          level: 'detailed',
+          depth: depth,
+          language: language
+        })
       });
+
+      qvsnUpdateProgress(70, `Part ${nextPart}: Response process ho raha hai...`);
+
       let data;
       try { data = await res.json(); } catch (e) { throw new Error('Server response invalid (HTTP ' + res.status + ')'); }
-      if (!res.ok || !data.success || !data.text) throw new Error((data && data.error) || 'AI response empty');
+      if (!res.ok || !data.success) throw new Error((data && data.error) || 'AI response empty');
 
-      QVSN_STATE.rawText = data.text;
-      QVSN_STATE.topic = topic.trim();
-      QVSN_STATE.level = level;
-      QVSN_STATE.subject = subject.trim();
-      QVSN_STATE.language = language;
+      // Check if all topics covered
+      if (data.allCovered) {
+        qvsnUpdateProgress(100, `✅ Saare topics cover ho gaye!`);
+        qvsnShowSuccess('🎉 Saare topics cover ho gaye! Ab export kar sakte ho.');
+        if (moreBtn) moreBtn.style.display = 'none';
+        if (doneBtn) doneBtn.style.display = 'block';
+        if (genBtn) genBtn.disabled = false;
+        QVSN_STATE.isGenerating = false;
+        return;
+      }
+
+      // Append to accumulated content
+      if (isFirstPart) {
+        QVSN_STATE.rawText = data.text;
+      } else {
+        QVSN_STATE.rawText = QVSN_STATE.rawText + '\n\n' + data.text;
+      }
+
+      QVSN_STATE.partNumber = nextPart;
+      QVSN_STATE.fullPrompt = fullPrompt.trim();
       QVSN_STATE.depth = depth;
-      QVSN_STATE.maxPages = maxPages;
+      QVSN_STATE.language = language;
 
-      qvsnRenderPages(data.text);
+      // Render
+      qvsnRenderPages(QVSN_STATE.rawText);
       qvsnSaveDraft();
-      qvsnShowStatus('✅ Notes ready! Ab export kar sakte ho.');
-      document.getElementById('qvsn-actions-wrap').style.display = 'block';
-      setTimeout(qvsnHideStatus, 2500);
+
+      qvsnUpdateProgress(100, `✅ Part ${nextPart} ready!`);
+      qvsnShowSuccess(`✅ Part ${nextPart} ready! Total pages: ${document.querySelectorAll('.qvsn-page').length}`);
+      qvsnShowStatus('');
+      setTimeout(qvsnHideStatus, 100);
+
+      // Show action buttons
+      const actionsWrap = document.getElementById('qvsn-actions-wrap');
+      if (actionsWrap) actionsWrap.style.display = 'block';
+      if (moreBtn) { moreBtn.style.display = 'block'; moreBtn.disabled = false; }
+      const partNumEl = document.getElementById('qvsn-part-num');
+      if (partNumEl) partNumEl.textContent = nextPart + 1;
+      if (doneBtn) doneBtn.style.display = 'block';
+
+      // Auto mode
+      if (QVSN_STATE.autoMode && !data.allCovered) {
+        qvsnUpdateProgress(50, `🚀 Auto mode: Part ${nextPart + 1} shuru ho raha hai...`);
+        await new Promise(r => setTimeout(r, 1500));
+        QVSN_STATE.isGenerating = false;
+        await qvsnGeneratePart(false);
+        return;
+      }
+
     } catch (err) {
       qvsnShowError('❌ ' + err.message);
+      qvsnUpdateProgress(0, 'Error');
     } finally {
+      QVSN_STATE.isGenerating = false;
       if (genBtn) genBtn.disabled = false;
+      if (moreBtn) moreBtn.disabled = false;
     }
   }
 
@@ -463,7 +533,7 @@
       }
       if (trimmed.startsWith('### ')) {
         if (inList) { html += '</ul>'; inList = false; }
-        html += '<div class="qvsn-h2" style="font-size:15px;">' + qvsnEsc(trimmed.slice(4)) + '</div>';
+        html += '<div class="qvsn-h2" style="font-size:14px;">' + qvsnEsc(trimmed.slice(4)) + '</div>';
         continue;
       }
       if (trimmed.startsWith('## ')) {
@@ -530,15 +600,18 @@
       pages[i].setAttribute('contenteditable', QVSN_STATE.isEditing ? 'true' : 'false');
     }
     const btn = document.getElementById('qvsn-edit');
-    if (btn) btn.textContent = QVSN_STATE.isEditing ? '💾 Save Edits' : '✏️ Edit Mode';
+    if (btn) btn.textContent = QVSN_STATE.isEditing ? '💾 Save' : '✏️ Edit';
   }
 
   function qvsnSaveDraft() {
     try {
       localStorage.setItem(QVSN_STATE.draftKey, JSON.stringify({
-        topic: QVSN_STATE.topic, level: QVSN_STATE.level, subject: QVSN_STATE.subject,
-        language: QVSN_STATE.language, depth: QVSN_STATE.depth, maxPages: QVSN_STATE.maxPages,
-        penColor: QVSN_STATE.penColor, rawText: QVSN_STATE.rawText
+        fullPrompt: QVSN_STATE.fullPrompt,
+        depth: QVSN_STATE.depth,
+        language: QVSN_STATE.language,
+        penColor: QVSN_STATE.penColor,
+        rawText: QVSN_STATE.rawText,
+        partNumber: QVSN_STATE.partNumber
       }));
     } catch (e) {}
   }
@@ -548,23 +621,27 @@
       const raw = localStorage.getItem(QVSN_STATE.draftKey);
       if (!raw) return;
       const d = JSON.parse(raw);
-      if (d.topic && document.getElementById('qvsn-topic')) document.getElementById('qvsn-topic').value = d.topic;
-      if (d.level && document.getElementById('qvsn-level')) document.getElementById('qvsn-level').value = d.level;
-      if (d.subject && document.getElementById('qvsn-subject')) document.getElementById('qvsn-subject').value = d.subject;
-      if (d.language && document.getElementById('qvsn-language')) document.getElementById('qvsn-language').value = d.language;
+      if (d.fullPrompt && document.getElementById('qvsn-prompt')) document.getElementById('qvsn-prompt').value = d.fullPrompt;
       if (d.depth && document.getElementById('qvsn-depth')) document.getElementById('qvsn-depth').value = d.depth;
-      if (d.maxPages && document.getElementById('qvsn-pages-limit')) document.getElementById('qvsn-pages-limit').value = d.maxPages;
+      if (d.language && document.getElementById('qvsn-language')) document.getElementById('qvsn-language').value = d.language;
       if (d.penColor && document.getElementById('qvsn-pen')) {
         document.getElementById('qvsn-pen').value = d.penColor;
         QVSN_STATE.penColor = d.penColor;
       }
       if (d.rawText) {
         QVSN_STATE.rawText = d.rawText;
-        QVSN_STATE.topic = d.topic || '';
-        QVSN_STATE.subject = d.subject || '';
+        QVSN_STATE.partNumber = d.partNumber || 1;
+        QVSN_STATE.fullPrompt = d.fullPrompt || '';
         qvsnRenderPages(d.rawText);
         const aw = document.getElementById('qvsn-actions-wrap');
         if (aw) aw.style.display = 'block';
+        const moreBtn = document.getElementById('qvsn-more');
+        if (moreBtn) moreBtn.style.display = 'block';
+        const doneBtn = document.getElementById('qvsn-done');
+        if (doneBtn) doneBtn.style.display = 'block';
+        const partNumEl = document.getElementById('qvsn-part-num');
+        if (partNumEl) partNumEl.textContent = (QVSN_STATE.partNumber + 1);
+        qvsnUpdateProgress(100, `Restored: ${QVSN_STATE.partNumber} parts loaded`);
       }
       qvsnUpdateCounter();
     } catch (e) {}
@@ -573,13 +650,15 @@
   function qvsnClearAll() {
     if (!confirm('Sab kuch clear kar dein?')) return;
     localStorage.removeItem(QVSN_STATE.draftKey);
-    if (document.getElementById('qvsn-topic')) document.getElementById('qvsn-topic').value = '';
-    if (document.getElementById('qvsn-subject')) document.getElementById('qvsn-subject').value = '';
+    QVSN_STATE.rawText = '';
+    QVSN_STATE.partNumber = 0;
+    QVSN_STATE.fullPrompt = '';
+    if (document.getElementById('qvsn-prompt')) document.getElementById('qvsn-prompt').value = '';
     document.getElementById('qvsn-pages').innerHTML = '';
     document.getElementById('qvsn-actions-wrap').style.display = 'none';
-    QVSN_STATE.rawText = '';
-    qvsnHideStatus();
-    qvsnHideError();
+    const progressWrap = document.getElementById('qvsn-progress-wrap');
+    if (progressWrap) progressWrap.style.display = 'none';
+    qvsnHideStatus(); qvsnHideError(); qvsnHideSuccess();
     qvsnUpdateCounter();
   }
 
@@ -593,7 +672,7 @@
         qvsnShowStatus('🖼️ Page ' + (i + 1) + ' / ' + pages.length + ' export ho raha hai...');
         const dataUrl = await htmlToImage.toPng(pages[i], { pixelRatio: 3, backgroundColor: '#fefefe' });
         const link = document.createElement('a');
-        link.download = 'study-notes-' + (QVSN_STATE.topic.slice(0, 30) || 'notes') + '-page-' + (i + 1) + '.png';
+        link.download = 'study-notes-page-' + (i + 1) + '.png';
         link.href = dataUrl;
         link.click();
         await new Promise(function (r) { setTimeout(r, 400); });
@@ -615,7 +694,6 @@
       const jsPDF = window.jspdf.jsPDF;
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pages = document.querySelectorAll('.qvsn-page');
-
       if (pages.length === 0) throw new Error('Pehle notes generate karo!');
 
       for (let i = 0; i < pages.length; i++) {
@@ -628,7 +706,7 @@
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, Math.min(pdfH, 297));
       }
 
-      pdf.save('study-notes-' + (QVSN_STATE.topic.slice(0, 30) || 'notes') + '.pdf');
+      pdf.save('study-notes.pdf');
       qvsnShowStatus('✅ PDF download ho gaya!');
       setTimeout(qvsnHideStatus, 2500);
     } catch (e) {
@@ -657,18 +735,24 @@
     qvsnEnsureLibraries().catch(function () {});
 
     const genBtn = document.getElementById('qvsn-generate');
+    const moreBtn = document.getElementById('qvsn-more');
+    const doneBtn = document.getElementById('qvsn-done');
     const editBtn = document.getElementById('qvsn-edit');
-    const regenBtn = document.getElementById('qvsn-regen');
     const pngBtn = document.getElementById('qvsn-png');
     const pdfBtn = document.getElementById('qvsn-pdf');
     const printBtn = document.getElementById('qvsn-print');
     const clearBtn = document.getElementById('qvsn-clear');
     const penSel = document.getElementById('qvsn-pen');
-    const topicInput = document.getElementById('qvsn-topic');
+    const promptInput = document.getElementById('qvsn-prompt');
+    const modeToggle = document.getElementById('qvsn-mode-toggle');
 
-    if (genBtn) genBtn.addEventListener('click', qvsnCallAI);
+    if (genBtn) genBtn.addEventListener('click', function () { qvsnGeneratePart(true); });
+    if (moreBtn) moreBtn.addEventListener('click', function () { qvsnGeneratePart(false); });
+    if (doneBtn) doneBtn.addEventListener('click', function () {
+      qvsnShowSuccess('🎉 Notes ready! Ab PNG/PDF/Print kar sakte ho.');
+      document.getElementById('qvsn-progress-wrap').style.display = 'none';
+    });
     if (editBtn) editBtn.addEventListener('click', qvsnToggleEdit);
-    if (regenBtn) regenBtn.addEventListener('click', qvsnCallAI);
     if (pngBtn) pngBtn.addEventListener('click', qvsnExportPNG);
     if (pdfBtn) pdfBtn.addEventListener('click', qvsnExportPDF);
     if (printBtn) printBtn.addEventListener('click', qvsnPrint);
@@ -686,10 +770,21 @@
       });
     }
 
-    if (topicInput) {
-      topicInput.addEventListener('input', qvsnUpdateCounter);
-      topicInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' && e.ctrlKey) qvsnCallAI();
+    if (modeToggle) {
+      modeToggle.addEventListener('click', function (e) {
+        if (e.target.tagName !== 'BUTTON') return;
+        const mode = e.target.getAttribute('data-mode');
+        QVSN_STATE.autoMode = (mode === 'auto');
+        const btns = modeToggle.querySelectorAll('button');
+        for (let i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+        e.target.classList.add('active');
+      });
+    }
+
+    if (promptInput) {
+      promptInput.addEventListener('input', qvsnUpdateCounter);
+      promptInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.ctrlKey) qvsnGeneratePart(true);
       });
     }
   }
