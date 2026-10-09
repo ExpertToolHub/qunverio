@@ -497,6 +497,15 @@ const EXTRA_TOOLS = [
   howto: 'Open Table Studio. Edit rows/columns, apply formatting, choose template, and export as PNG, PDF or Print.',
   kw: ['table', 'excel', 'spreadsheet', 'grid', 'csv', 'pdf', 'png', 'print', 'table maker']
 },
+{
+  id: 'study-notes-generator',
+  name: 'AI Study Notes Generator',
+  cat: 'students',
+  icon: '📚',
+  desc: 'Generate detailed study notes with AI — handwriting style, HD PNG & PDF export',
+  howto: 'Topic daalo, detail level choose karo, AI notes banayega.',
+  kw: ['study', 'notes', 'ai notes', 'handwriting', 'syllabus', 'exam']
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
