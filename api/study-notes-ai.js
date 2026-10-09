@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES API PROXY
    File: api/study-notes-ai.js
-   Final Version (v2) — Clean output + Depth + Page limit
+   Final Version (v3) — No thinking/reasoning output
    ============================================================ */
 
 export default async function handler(req, res) {
@@ -48,7 +48,7 @@ export default async function handler(req, res) {
     const depthInstructions = {
       basic: 'Keep content SIMPLE. Only key points. No extra explanations.',
       standard: 'Include examples for each concept. Student-friendly explanations.',
-      deep: 'Include full explanations, real-world examples, extra facts, interesting details. Be comprehensive.'
+      deep: 'Include full explanations, real-world examples, extra facts, interesting details.'
     };
 
     const pagesInstruction = maxPages === '10'
@@ -69,33 +69,40 @@ LANGUAGE: ${languageInstructions[language]}
 
 === CRITICAL RULES (NEVER BREAK) ===
 
-1. NEVER write meta information like "Topic:", "Detail Level:", "Word Count:", "Format:", "Section:" headers in the output. Only write the ACTUAL NOTES CONTENT.
+1. NEVER write any reasoning, thinking, self-check, verification, or meta-commentary.
+   - Do NOT write "Wait, I need to..."
+   - Do NOT write "Check diagram names again..."
+   - Do NOT write "Word Count Check..."
+   - Do NOT write "Self-Correction during drafting..."
+   - Do NOT write "Final Structure Verification..."
+   - Do NOT write "Ensure no... are used..."
+   - Do NOT write any line starting with "Hinglish Check:"
+   - Do NOT write "I will just write...", "Instead of...", "One detail..."
 
-2. START your response directly with the chapter title using # symbol:
+2. Output ONLY the final study notes. Nothing else.
+
+3. NEVER write meta information like "Topic:", "Detail Level:", "Word Count:", "Format:", "Section:" headers.
+
+4. START your response DIRECTLY with the chapter title using # symbol:
    # ${topic}
 
-3. Use ## for section headings (they will appear in red).
+5. Use ## for section headings.
    Use ### for sub-headings.
 
-4. Use "- " for bullet points ONLY. Never use * or ** or any other markdown.
+6. Use "- " for bullet points ONLY. Never use * or ** or any other markdown.
 
-5. For definitions, ALWAYS start the line with "Definition: "
-   Example: Definition: Energy is the capacity to do work.
+7. For definitions, ALWAYS start the line with "Definition: "
 
-6. For formulas, ALWAYS wrap in $$ on both sides with NOTHING else on the line.
-   Example: $$E = mc^2$$
+8. For formulas, ALWAYS wrap in $$ on both sides with NOTHING else on the line.
 
-7. For diagrams, write [DIAGRAM: name] on its OWN LINE with NOTHING else.
+9. For diagrams, write [DIAGRAM: name] on its OWN LINE with NOTHING else.
    Allowed names: solar_panel, circuit, graph, flowchart, microscope, atom, plant, human_heart, dna, water_cycle
-   Correct: [DIAGRAM: solar_panel]
-   Wrong: [DIAGRAM: solar_panel] (Solar Energy)
 
-8. NEVER use bold (**text**), italics (*text*), or any other markdown.
-   Only use: # for title, ## for section, - for bullet, Definition: for definitions, $$ for formulas, [DIAGRAM: name] for diagrams.
+10. NEVER use bold (**text**), italics (*text*), or any other markdown.
 
-9. Write in natural teaching style. Explain concepts simply. Add examples where helpful.
+11. Write in natural teaching style. Explain concepts simply. Add examples where helpful.
 
-10. DO NOT include any preamble like "Here are the notes". Start directly with # ${topic}.
+12. DO NOT include any preamble. Start directly with # ${topic}.
 
 === OUTPUT EXAMPLE ===
 
@@ -123,12 +130,12 @@ $$6CO_2 + 6H_2O → C_6H_{12}O_6 + 6O_2$$
 
 === END EXAMPLE ===
 
-Now generate notes on "${topic}". Start directly with # ${topic}:`;
+Now generate notes on "${topic}". Start directly with # ${topic}. DO NOT include any thinking, reasoning, or self-check content in the output:`;
 
     const models = [
       'gemini-2.5-flash',
-      'gemini-2.5-pro',
       'gemini-flash-latest',
+      'gemini-2.0-flash',
       'gemma-4-26b-a4b-it',
       'gemma-4-31b-it'
     ];
@@ -147,7 +154,10 @@ Now generate notes on "${topic}". Start directly with # ${topic}:`;
             generationConfig: {
               temperature: 0.7,
               maxOutputTokens: 8000,
-              topP: 0.95
+              topP: 0.95,
+              thinkingConfig: {
+                thinkingBudget: 0
+              }
             }
           })
         });
