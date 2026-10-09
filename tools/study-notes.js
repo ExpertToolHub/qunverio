@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v2) — Clean output + Depth + Page limit
+   Final Version (v3) — Thinking filter + Clean output
    ============================================================ */
 
 (function () {
@@ -18,7 +18,7 @@
     penColor: 'blue',
     rawText: '',
     isEditing: false,
-    draftKey: 'qvsn_draft_v2'
+    draftKey: 'qvsn_draft_v3'
   };
 
   /* ---------------- SVG DIAGRAMS ---------------- */
@@ -277,8 +277,50 @@
     }
   }
 
-  /* ---------------- PARSER ---------------- */
+  /* ---------------- PARSER (with thinking filter) ---------------- */
   function qvsnParseMarkdown(md) {
+    const thinkingPatterns = [
+      /^wait\b/i,
+      /^check\b/i,
+      /^word count check/i,
+      /^self-correction/i,
+      /^final structure verification/i,
+      /^ensure\b/i,
+      /^hinglish check/i,
+      /^instead of/i,
+      /^i will just write/i,
+      /^i need to/i,
+      /^i initially thought/i,
+      /^one detail/i,
+      /^correction on/i,
+      /^i'll use/i,
+      /^i must\b/i,
+      /^let me\b/i,
+      /^now[, ]/i,
+      /^alright[, ]/i,
+      /^okay[, ]/i,
+      /^note:/i,
+      /^checking\b/i,
+      /^verify/i,
+      /^the content/i,
+      /^the rules/i,
+      /^my response/i,
+      /^my output/i,
+      /^i used/i,
+      /^as per/i,
+      /^following the/i,
+      /^based on the/i,
+      /^it looks/i,
+      /^the structure/i,
+      /^format check/i,
+      /^language check/i,
+      /^drafting:/i,
+      /^final answer/i,
+      /^actually[, ]/i,
+      /^hmm\b/i,
+      /^let's\b/i
+    ];
+
     const lines = md.split('\n');
     let html = '';
     let inList = false;
@@ -292,10 +334,15 @@
         continue;
       }
 
-      // Remove markdown bold/italic
       trimmed = trimmed.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
 
-      // Diagram (exact match only)
+      const cleanForCheck = trimmed.replace(/^-\s*/, '').replace(/^#+\s*/, '');
+      let isThinking = false;
+      for (let p = 0; p < thinkingPatterns.length; p++) {
+        if (thinkingPatterns[p].test(cleanForCheck)) { isThinking = true; break; }
+      }
+      if (isThinking) continue;
+
       const diagMatch = trimmed.match(/^\[DIAGRAM:\s*(\w+)\s*\]\s*$/i);
       if (diagMatch) {
         if (inList) { html += '</ul>'; inList = false; }
@@ -306,62 +353,48 @@
         continue;
       }
 
-      // H1 (but not ##)
       if (trimmed.startsWith('# ') && !trimmed.startsWith('## ')) {
         if (inList) { html += '</ul>'; inList = false; }
         html += '<div class="qvsn-h1">' + qvsnEsc(trimmed.slice(2)) + '</div>';
         continue;
       }
-
-      // H3 (before H2 check)
       if (trimmed.startsWith('### ')) {
         if (inList) { html += '</ul>'; inList = false; }
         html += '<div class="qvsn-h2" style="font-size:15px;">' + qvsnEsc(trimmed.slice(4)) + '</div>';
         continue;
       }
-
-      // H2
       if (trimmed.startsWith('## ')) {
         if (inList) { html += '</ul>'; inList = false; }
         html += '<div class="qvsn-h2">' + qvsnEsc(trimmed.slice(3)) + '</div>';
         continue;
       }
 
-      // Formula (only if entire line is $$...$$)
       if (trimmed.startsWith('$$') && trimmed.endsWith('$$') && trimmed.length > 4) {
         if (inList) { html += '</ul>'; inList = false; }
         let formula = trimmed.slice(2, -2).trim();
         formula = formula
-          .replace(/\\times/g, '×')
-          .replace(/\\rightarrow/g, '→')
-          .replace(/\\leftarrow/g, '←')
-          .replace(/\\cdot/g, '·')
-          .replace(/\\pm/g, '±')
-          .replace(/\\Delta/g, 'Δ')
-          .replace(/\\alpha/g, 'α')
-          .replace(/\\beta/g, 'β')
-          .replace(/\\gamma/g, 'γ')
-          .replace(/\\pi/g, 'π')
+          .replace(/\\times/g, '×').replace(/\\rightarrow/g, '→')
+          .replace(/\\leftarrow/g, '←').replace(/\\cdot/g, '·')
+          .replace(/\\pm/g, '±').replace(/\\Delta/g, 'Δ')
+          .replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β')
+          .replace(/\\gamma/g, 'γ').replace(/\\pi/g, 'π')
           .replace(/\\/g, '');
         html += '<div class="qvsn-formula">' + qvsnEsc(formula) + '</div>';
         continue;
       }
 
-      // Bullet list
       if (trimmed.startsWith('- ')) {
         if (!inList) { html += '<ul class="qvsn-ul">'; inList = true; }
         html += '<li>' + qvsnEsc(trimmed.slice(2)) + '</li>';
         continue;
       }
 
-      // Definition
       if (/^definition:/i.test(trimmed)) {
         if (inList) { html += '</ul>'; inList = false; }
         html += '<div class="qvsn-def">' + qvsnEsc(trimmed) + '</div>';
         continue;
       }
 
-      // Normal paragraph
       if (inList) { html += '</ul>'; inList = false; }
       html += '<div class="qvsn-p">' + qvsnEsc(trimmed) + '</div>';
     }
