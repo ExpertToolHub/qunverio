@@ -1,6 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES API PROXY
    File: api/study-notes-ai.js
+   Full Final Working Code
    ============================================================ */
 
 export default async function handler(req, res) {
@@ -33,14 +34,14 @@ export default async function handler(req, res) {
       });
     }
 
-    // Level instructions
+    // Level-specific instructions
     const levelInstructions = {
       short: 'Write concise notes in about 150-200 words. Only key points.',
       medium: 'Write detailed notes in about 350-450 words. Main concepts with examples.',
       detailed: 'Write comprehensive notes in about 700-900 words. All concepts, definitions, examples, diagrams.'
     };
 
-    // Language instructions
+    // Language-specific instructions
     const languageInstructions = {
       english: 'Respond ONLY in English.',
       hindi: 'Respond ONLY in Hindi (Devanagari script).',
@@ -65,17 +66,20 @@ FORMAT RULES (STRICTLY FOLLOW):
 4. Use "Definition: ..." for key definitions.
 5. Use "$$formula$$" for important formulas.
 6. You can include diagrams using: [DIAGRAM: name]
-   Allowed: solar_panel, circuit, graph, flowchart, microscope, atom, plant, human_heart, dna, water_cycle
+   Allowed diagram names: solar_panel, circuit, graph, flowchart, microscope, atom, plant, human_heart, dna, water_cycle
 7. Keep language simple and student-friendly.
 8. Do NOT use markdown bold (**text**) or italic (*text*).
 9. Output ONLY the notes content, no extra explanation.
 
 Generate the study notes now:`;
 
+    // CONFIRMED WORKING MODELS (aapki API key ke liye)
     const models = [
-      'gemini-2.0-flash-exp',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro-latest'
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+      'gemini-flash-latest',
+      'gemma-4-26b-a4b-it',
+      'gemma-4-31b-it'
     ];
 
     let lastError = '';
