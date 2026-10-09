@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v3) — Thinking filter + Clean output
+   Final Version (v6) — LaTeX converter + PDF auto-load
    ============================================================ */
 
 (function () {
@@ -18,7 +18,7 @@
     penColor: 'blue',
     rawText: '',
     isEditing: false,
-    draftKey: 'qvsn_draft_v3'
+    draftKey: 'qvsn_draft_v6'
   };
 
   /* ---------------- SVG DIAGRAMS ---------------- */
@@ -34,6 +34,130 @@
     dna: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="M30 10 Q70 30 30 50 Q70 70 30 90" fill="none" stroke="#1e40af" stroke-width="2"/><path d="M70 10 Q30 30 70 50 Q30 70 70 90" fill="none" stroke="#dc2626" stroke-width="2"/></svg>',
     water_cycle: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="75" cy="25" r="10" fill="#fbbf24"/><path d="M10 60 Q30 40 50 60 Q70 80 90 60" fill="none" stroke="#3b82f6" stroke-width="2"/></svg>'
   };
+
+  /* ---------------- LaTeX TO UNICODE CONVERTER ---------------- */
+  function qvsnConvertLatex(formula) {
+    let f = formula;
+
+    const subMap = {
+      '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
+      '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
+      'a': 'ₐ', 'e': 'ₑ', 'h': 'ₕ', 'i': 'ᵢ', 'j': 'ⱼ',
+      'k': 'ₖ', 'l': 'ₗ', 'm': 'ₘ', 'n': 'ₙ', 'o': 'ₒ',
+      'p': 'ₚ', 'r': 'ᵣ', 's': 'ₛ', 't': 'ₜ', 'u': 'ᵤ',
+      'v': 'ᵥ', 'x': 'ₓ'
+    };
+
+    const supMap = {
+      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+      '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+      'n': 'ⁿ', 'i': 'ⁱ', 'x': 'ˣ', 'a': 'ᵃ', 'b': 'ᵇ',
+      'c': 'ᶜ', 'd': 'ᵈ', 'e': 'ᵉ', 'g': 'ᵍ', 'h': 'ʰ',
+      'j': 'ʲ', 'k': 'ᵏ', 'l': 'ˡ', 'm': 'ᵐ', 'o': 'ᵒ',
+      'p': 'ᵖ', 'r': 'ʳ', 's': 'ˢ', 't': 'ᵗ', 'u': 'ᵘ',
+      'v': 'ᵛ', 'w': 'ʷ', 'y': 'ʸ', 'z': 'ᶻ'
+    };
+
+    // Fractions (nested)
+    let prev = '';
+    let iter = 5;
+    while (f !== prev && iter > 0) {
+      prev = f;
+      f = f.replace(/\\?frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)');
+      iter--;
+    }
+
+    // Square roots (nested)
+    prev = '';
+    iter = 5;
+    while (f !== prev && iter > 0) {
+      prev = f;
+      f = f.replace(/\\?sqrt\{([^{}]+)\}/g, '√($1)');
+      iter--;
+    }
+
+    // Subscripts
+    f = f.replace(/_\{([^}]+)\}/g, function (m, s) {
+      return s.split('').map(function (c) { return subMap[c] || c; }).join('');
+    });
+    f = f.replace(/_([0-9a-zA-Z])/g, function (m, c) {
+      return subMap[c] || ('_' + c);
+    });
+
+    // Superscripts
+    f = f.replace(/\^\{([^}]+)\}/g, function (m, s) {
+      return s.split('').map(function (c) { return supMap[c] || ('^' + c); }).join('');
+    });
+    f = f.replace(/\^([0-9ni])/g, function (m, c) {
+      return supMap[c] || ('^' + c);
+    });
+
+    // LaTeX symbols
+    f = f
+      .replace(/\\times/g, ' × ')
+      .replace(/\\cdot/g, ' · ')
+      .replace(/\\div/g, ' ÷ ')
+      .replace(/\\pm/g, ' ± ')
+      .replace(/\\mp/g, ' ∓ ')
+      .replace(/\\leq/g, ' ≤ ')
+      .replace(/\\geq/g, ' ≥ ')
+      .replace(/\\neq/g, ' ≠ ')
+      .replace(/\\approx/g, ' ≈ ')
+      .replace(/\\equiv/g, ' ≡ ')
+      .replace(/\\propto/g, ' ∝ ')
+      .replace(/\\infty/g, ' ∞ ')
+      .replace(/\\rightarrow/g, ' → ')
+      .replace(/\\leftarrow/g, ' ← ')
+      .replace(/\\leftrightarrow/g, ' ↔ ')
+      .replace(/\\Rightarrow/g, ' ⇒ ')
+      .replace(/\\Leftarrow/g, ' ⇐ ')
+      .replace(/\\sum/g, ' Σ ')
+      .replace(/\\prod/g, ' ∏ ')
+      .replace(/\\int/g, ' ∫ ')
+      .replace(/\\partial/g, ' ∂ ')
+      .replace(/\\nabla/g, ' ∇ ')
+      .replace(/\\alpha/g, ' α ')
+      .replace(/\\beta/g, ' β ')
+      .replace(/\\gamma/g, ' γ ')
+      .replace(/\\delta/g, ' δ ')
+      .replace(/\\Delta/g, ' Δ ')
+      .replace(/\\epsilon/g, ' ε ')
+      .replace(/\\varepsilon/g, ' ε ')
+      .replace(/\\zeta/g, ' ζ ')
+      .replace(/\\eta/g, ' η ')
+      .replace(/\\theta/g, ' θ ')
+      .replace(/\\Theta/g, ' Θ ')
+      .replace(/\\iota/g, ' ι ')
+      .replace(/\\kappa/g, ' κ ')
+      .replace(/\\lambda/g, ' λ ')
+      .replace(/\\Lambda/g, ' Λ ')
+      .replace(/\\mu/g, ' μ ')
+      .replace(/\\nu/g, ' ν ')
+      .replace(/\\xi/g, ' ξ ')
+      .replace(/\\pi/g, ' π ')
+      .replace(/\\Pi/g, ' Π ')
+      .replace(/\\rho/g, ' ρ ')
+      .replace(/\\sigma/g, ' σ ')
+      .replace(/\\Sigma/g, ' Σ ')
+      .replace(/\\tau/g, ' τ ')
+      .replace(/\\upsilon/g, ' υ ')
+      .replace(/\\phi/g, ' φ ')
+      .replace(/\\Phi/g, ' Φ ')
+      .replace(/\\chi/g, ' χ ')
+      .replace(/\\psi/g, ' ψ ')
+      .replace(/\\Psi/g, ' Ψ ')
+      .replace(/\\omega/g, ' ω ')
+      .replace(/\\Omega/g, ' Ω ')
+      .replace(/\\text\{([^}]+)\}/g, '$1')
+      .replace(/\\mathrm\{([^}]+)\}/g, '$1')
+      .replace(/\\mathbf\{([^}]+)\}/g, '$1')
+      .replace(/\\left/g, '')
+      .replace(/\\right/g, '')
+      .replace(/\\/g, '');
+
+    f = f.replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+    return f;
+  }
 
   /* ---------------- CSS ---------------- */
   const QVSN_CSS = `
@@ -51,6 +175,7 @@
 .qvsn-btn-secondary { background: #1f2547; color: #c7d2fe; border: 1px solid rgba(99,102,241,0.3); }
 .qvsn-status { text-align: center; padding: 12px; font-size: 0.9rem; color: #9ca3af; }
 .qvsn-error { background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.4); color: #fca5a5; padding: 12px; border-radius: 10px; margin-top: 12px; font-size: 0.9rem; }
+.qvsn-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 4px; line-height: 1.4; }
 .qvsn-pages { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
 .qvsn-page { background: #fefefe; color: #1e3a8a; width: 100%; aspect-ratio: 210 / 297; padding: 20mm 15mm 15mm 25mm; position: relative; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); font-family: 'Kalam', cursive, sans-serif; overflow: hidden; box-sizing: border-box; background-image: repeating-linear-gradient(transparent, transparent 27px, #e5e7eb 27px, #e5e7eb 28px); background-size: 100% 28px; background-position: 0 20mm; line-height: 28px; font-size: 15px; }
 .qvsn-page::before { content: ''; position: absolute; top: 0; bottom: 0; left: 20mm; width: 1px; background: #fca5a5; }
@@ -60,7 +185,7 @@
 .qvsn-p { margin: 0; line-height: 28px; color: #1e3a8a; }
 .qvsn-ul { margin: 0; padding-left: 22px; line-height: 28px; color: #1e3a8a; }
 .qvsn-def { background: rgba(250,204,21,0.25); border-left: 3px solid #f59e0b; padding: 4px 10px; margin: 4px 0; border-radius: 4px; line-height: 28px; }
-.qvsn-formula { background: rgba(99,102,241,0.12); border: 1px dashed #6366f1; padding: 6px 12px; margin: 6px 0; border-radius: 6px; font-weight: 700; text-align: center; line-height: 28px; color: #4338ca; }
+.qvsn-formula { background: rgba(99,102,241,0.12); border: 1px dashed #6366f1; padding: 6px 12px; margin: 6px 0; border-radius: 6px; font-weight: 700; text-align: center; line-height: 28px; color: #4338ca; word-wrap: break-word; overflow-wrap: break-word; }
 .qvsn-diagram { display: flex; justify-content: center; margin: 8px 0; }
 .qvsn-diagram svg { width: 90px; height: 90px; }
 .qvsn-pen-black .qvsn-p, .qvsn-pen-black .qvsn-ul, .qvsn-pen-black .qvsn-page { color: #111827; }
@@ -93,6 +218,36 @@
     }
   }
 
+  /* ---------------- DYNAMIC LIBRARY LOADER ---------------- */
+  function qvsnLoadScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (document.querySelector('script[src="' + src + '"]')) {
+        resolve();
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error('Failed to load: ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  async function qvsnEnsureLibraries() {
+    // html2canvas
+    if (typeof html2canvas === 'undefined') {
+      await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    }
+    // jsPDF
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    }
+    // html-to-image
+    if (typeof htmlToImage === 'undefined') {
+      await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js');
+    }
+  }
+
   /* ---------------- HTML ---------------- */
   function qvsnRenderHTML() {
     return `
@@ -104,7 +259,8 @@
 
   <div class="qvsn-card">
     <label class="qvsn-label" for="qvsn-topic">📝 Topic</label>
-    <input type="text" id="qvsn-topic" class="qvsn-input" placeholder="e.g. Renewable Energy Sources" autocomplete="off" />
+    <input type="text" id="qvsn-topic" class="qvsn-input" placeholder="e.g. Single Phase Transformer" autocomplete="off" maxlength="200" />
+    <div class="qvsn-hint">💡 Tip: Sirf topic likho (max 200 characters). Ek baar me ek topic. AI khud detailed notes banayega.</div>
 
     <div class="qvsn-row">
       <div>
@@ -117,7 +273,7 @@
       </div>
       <div>
         <label class="qvsn-label" for="qvsn-subject">🎓 Subject (optional)</label>
-        <input type="text" id="qvsn-subject" class="qvsn-input" placeholder="e.g. Physics" autocomplete="off" />
+        <input type="text" id="qvsn-subject" class="qvsn-input" placeholder="e.g. Electrical Machines" autocomplete="off" maxlength="80" />
       </div>
     </div>
 
@@ -137,6 +293,7 @@
           <option value="2" selected>2 Pages</option>
           <option value="3">3 Pages</option>
           <option value="5">5 Pages</option>
+          <option value="7">7 Pages</option>
           <option value="10">10 Pages (Unlimited)</option>
         </select>
       </div>
@@ -223,6 +380,11 @@
       return;
     }
 
+    if (topic.length > 200) {
+      qvsnShowError('Topic bahut lamba hai. Sirf main topic likho (max 200 characters).');
+      return;
+    }
+
     qvsnShowStatus('🤖 AI notes bana raha hai...');
     qvsnHideError();
 
@@ -277,48 +439,20 @@
     }
   }
 
-  /* ---------------- PARSER (with thinking filter) ---------------- */
+  /* ---------------- PARSER ---------------- */
   function qvsnParseMarkdown(md) {
     const thinkingPatterns = [
-      /^wait\b/i,
-      /^check\b/i,
-      /^word count check/i,
-      /^self-correction/i,
-      /^final structure verification/i,
-      /^ensure\b/i,
-      /^hinglish check/i,
-      /^instead of/i,
-      /^i will just write/i,
-      /^i need to/i,
-      /^i initially thought/i,
-      /^one detail/i,
-      /^correction on/i,
-      /^i'll use/i,
-      /^i must\b/i,
-      /^let me\b/i,
-      /^now[, ]/i,
-      /^alright[, ]/i,
-      /^okay[, ]/i,
-      /^note:/i,
-      /^checking\b/i,
-      /^verify/i,
-      /^the content/i,
-      /^the rules/i,
-      /^my response/i,
-      /^my output/i,
-      /^i used/i,
-      /^as per/i,
-      /^following the/i,
-      /^based on the/i,
-      /^it looks/i,
-      /^the structure/i,
-      /^format check/i,
-      /^language check/i,
-      /^drafting:/i,
-      /^final answer/i,
-      /^actually[, ]/i,
-      /^hmm\b/i,
-      /^let's\b/i
+      /^wait\b/i, /^check\b/i, /^word count check/i, /^self-correction/i,
+      /^final structure verification/i, /^ensure\b/i, /^hinglish check/i,
+      /^instead of/i, /^i will just write/i, /^i need to/i,
+      /^i initially thought/i, /^one detail/i, /^correction on/i,
+      /^i'll use/i, /^i must\b/i, /^let me\b/i, /^now[, ]/i,
+      /^alright[, ]/i, /^okay[, ]/i, /^note:/i, /^checking\b/i,
+      /^verify/i, /^the content/i, /^the rules/i, /^my response/i,
+      /^my output/i, /^i used/i, /^as per/i, /^following the/i,
+      /^based on the/i, /^it looks/i, /^the structure/i,
+      /^format check/i, /^language check/i, /^drafting:/i,
+      /^final answer/i, /^actually[, ]/i, /^hmm\b/i, /^let's\b/i
     ];
 
     const lines = md.split('\n');
@@ -369,16 +503,11 @@
         continue;
       }
 
+      // FORMULA with LaTeX converter
       if (trimmed.startsWith('$$') && trimmed.endsWith('$$') && trimmed.length > 4) {
         if (inList) { html += '</ul>'; inList = false; }
         let formula = trimmed.slice(2, -2).trim();
-        formula = formula
-          .replace(/\\times/g, '×').replace(/\\rightarrow/g, '→')
-          .replace(/\\leftarrow/g, '←').replace(/\\cdot/g, '·')
-          .replace(/\\pm/g, '±').replace(/\\Delta/g, 'Δ')
-          .replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β')
-          .replace(/\\gamma/g, 'γ').replace(/\\pi/g, 'π')
-          .replace(/\\/g, '');
+        formula = qvsnConvertLatex(formula);
         html += '<div class="qvsn-formula">' + qvsnEsc(formula) + '</div>';
         continue;
       }
@@ -494,14 +623,15 @@
 
   /* ---------------- EXPORT PNG ---------------- */
   async function qvsnExportPNG() {
-    if (typeof htmlToImage === 'undefined') {
-      qvsnShowError('PNG library load nahi hui. Page refresh karo.');
-      return;
-    }
     qvsnShowStatus('🖼️ PNG bana raha hai (HD)...');
     try {
+      await qvsnEnsureLibraries();
+      if (typeof htmlToImage === 'undefined') {
+        throw new Error('PNG library load nahi hui.');
+      }
       const pages = document.querySelectorAll('.qvsn-page');
       for (let i = 0; i < pages.length; i++) {
+        qvsnShowStatus('🖼️ Page ' + (i + 1) + ' / ' + pages.length + ' export ho raha hai...');
         const dataUrl = await htmlToImage.toPng(pages[i], {
           pixelRatio: 3,
           backgroundColor: '#fefefe'
@@ -523,20 +653,34 @@
   async function qvsnExportPDF() {
     qvsnShowStatus('📄 PDF bana raha hai...');
     try {
+      await qvsnEnsureLibraries();
+
       if (!window.jspdf || !window.jspdf.jsPDF) {
         throw new Error('jsPDF library load nahi hui');
       }
       if (typeof html2canvas === 'undefined') {
         throw new Error('html2canvas library load nahi hui');
       }
+
       const jsPDF = window.jspdf.jsPDF;
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pages = document.querySelectorAll('.qvsn-page');
 
+      if (pages.length === 0) {
+        throw new Error('Pehle notes generate karo!');
+      }
+
       for (let i = 0; i < pages.length; i++) {
         if (i > 0) pdf.addPage();
-        const canvas = await html2canvas(pages[i], { scale: 2, backgroundColor: '#fefefe' });
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        qvsnShowStatus('📄 Page ' + (i + 1) + ' / ' + pages.length + ' process ho raha hai...');
+
+        const canvas = await html2canvas(pages[i], {
+          scale: 2,
+          backgroundColor: '#fefefe',
+          useCORS: true,
+          logging: false
+        });
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
         const pdfW = 210;
         const pdfH = (canvas.height * pdfW) / canvas.width;
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, Math.min(pdfH, 297));
@@ -573,6 +717,9 @@
   function qvsnInit() {
     qvsnInjectCSS();
     qvsnLoadDraft();
+
+    // Pre-load libraries in background
+    qvsnEnsureLibraries().catch(function (e) { /* silent */ });
 
     const genBtn = document.getElementById('qvsn-generate');
     const editBtn = document.getElementById('qvsn-edit');
