@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Full Final Working Code
+   Final Version (v2) — Clean output + Depth + Page limit
    ============================================================ */
 
 (function () {
@@ -13,10 +13,12 @@
     level: 'medium',
     subject: '',
     language: 'english',
+    depth: 'standard',
+    maxPages: '2',
     penColor: 'blue',
     rawText: '',
     isEditing: false,
-    draftKey: 'qvsn_draft_v1'
+    draftKey: 'qvsn_draft_v2'
   };
 
   /* ---------------- SVG DIAGRAMS ---------------- */
@@ -61,8 +63,8 @@
 .qvsn-formula { background: rgba(99,102,241,0.12); border: 1px dashed #6366f1; padding: 6px 12px; margin: 6px 0; border-radius: 6px; font-weight: 700; text-align: center; line-height: 28px; color: #4338ca; }
 .qvsn-diagram { display: flex; justify-content: center; margin: 8px 0; }
 .qvsn-diagram svg { width: 90px; height: 90px; }
-.qvsn-pen-black .qvsn-p, .qvsn-pen-black .qvsn-ul { color: #111827; }
-.qvsn-pen-green .qvsn-p, .qvsn-pen-green .qvsn-ul { color: #166534; }
+.qvsn-pen-black .qvsn-p, .qvsn-pen-black .qvsn-ul, .qvsn-pen-black .qvsn-page { color: #111827; }
+.qvsn-pen-green .qvsn-p, .qvsn-pen-green .qvsn-ul, .qvsn-pen-green .qvsn-page { color: #166534; }
 .qvsn-page[contenteditable="true"] { outline: 2px dashed #6366f1; outline-offset: 4px; }
 .qvsn-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 .qvsn-actions .qvsn-btn { margin-top: 0; }
@@ -108,14 +110,35 @@
       <div>
         <label class="qvsn-label" for="qvsn-level">📊 Detail Level</label>
         <select id="qvsn-level" class="qvsn-select">
-          <option value="short">Short (1 page)</option>
-          <option value="medium" selected>Medium (2-3 pages)</option>
-          <option value="detailed">Detailed (4-5 pages)</option>
+          <option value="short">Short (Concise)</option>
+          <option value="medium" selected>Medium (Balanced)</option>
+          <option value="detailed">Detailed (In-depth)</option>
         </select>
       </div>
       <div>
         <label class="qvsn-label" for="qvsn-subject">🎓 Subject (optional)</label>
         <input type="text" id="qvsn-subject" class="qvsn-input" placeholder="e.g. Physics" autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="qvsn-row">
+      <div>
+        <label class="qvsn-label" for="qvsn-depth">📖 Content Depth</label>
+        <select id="qvsn-depth" class="qvsn-select">
+          <option value="basic">Basic — Simple points</option>
+          <option value="standard" selected>Standard — With examples</option>
+          <option value="deep">Deep — Full explanation + extra facts</option>
+        </select>
+      </div>
+      <div>
+        <label class="qvsn-label" for="qvsn-pages-limit">📄 Max Pages</label>
+        <select id="qvsn-pages-limit" class="qvsn-select">
+          <option value="1">1 Page</option>
+          <option value="2" selected>2 Pages</option>
+          <option value="3">3 Pages</option>
+          <option value="5">5 Pages</option>
+          <option value="10">10 Pages (Unlimited)</option>
+        </select>
       </div>
     </div>
 
@@ -192,6 +215,8 @@
     const level = (document.getElementById('qvsn-level') || {}).value || 'medium';
     const subject = (document.getElementById('qvsn-subject') || {}).value || '';
     const language = (document.getElementById('qvsn-language') || {}).value || 'english';
+    const depth = (document.getElementById('qvsn-depth') || {}).value || 'standard';
+    const maxPages = (document.getElementById('qvsn-pages-limit') || {}).value || '2';
 
     if (!topic.trim()) {
       qvsnShowError('Bhai, pehle topic toh likho!');
@@ -213,7 +238,9 @@
           topic: topic.trim(),
           level: level,
           subject: subject.trim(),
-          language: language
+          language: language,
+          depth: depth,
+          maxPages: maxPages
         })
       });
 
@@ -233,6 +260,8 @@
       QVSN_STATE.level = level;
       QVSN_STATE.subject = subject.trim();
       QVSN_STATE.language = language;
+      QVSN_STATE.depth = depth;
+      QVSN_STATE.maxPages = maxPages;
 
       qvsnRenderPages(data.text);
       qvsnSaveDraft();
@@ -255,15 +284,19 @@
     let inList = false;
 
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmed = line.trim();
+      let line = lines[i];
+      let trimmed = line.trim();
 
       if (!trimmed) {
         if (inList) { html += '</ul>'; inList = false; }
         continue;
       }
 
-      const diagMatch = trimmed.match(/^\[DIAGRAM:\s*(\w+)\]/i);
+      // Remove markdown bold/italic
+      trimmed = trimmed.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
+
+      // Diagram (exact match only)
+      const diagMatch = trimmed.match(/^\[DIAGRAM:\s*(\w+)\s*\]\s*$/i);
       if (diagMatch) {
         if (inList) { html += '</ul>'; inList = false; }
         const key = diagMatch[1].toLowerCase();
@@ -273,32 +306,62 @@
         continue;
       }
 
-      if (trimmed.indexOf('# ') === 0) {
+      // H1 (but not ##)
+      if (trimmed.startsWith('# ') && !trimmed.startsWith('## ')) {
         if (inList) { html += '</ul>'; inList = false; }
         html += '<div class="qvsn-h1">' + qvsnEsc(trimmed.slice(2)) + '</div>';
         continue;
       }
-      if (trimmed.indexOf('## ') === 0) {
+
+      // H3 (before H2 check)
+      if (trimmed.startsWith('### ')) {
+        if (inList) { html += '</ul>'; inList = false; }
+        html += '<div class="qvsn-h2" style="font-size:15px;">' + qvsnEsc(trimmed.slice(4)) + '</div>';
+        continue;
+      }
+
+      // H2
+      if (trimmed.startsWith('## ')) {
         if (inList) { html += '</ul>'; inList = false; }
         html += '<div class="qvsn-h2">' + qvsnEsc(trimmed.slice(3)) + '</div>';
         continue;
       }
-      if (trimmed.indexOf('- ') === 0 || trimmed.indexOf('* ') === 0) {
+
+      // Formula (only if entire line is $$...$$)
+      if (trimmed.startsWith('$$') && trimmed.endsWith('$$') && trimmed.length > 4) {
+        if (inList) { html += '</ul>'; inList = false; }
+        let formula = trimmed.slice(2, -2).trim();
+        formula = formula
+          .replace(/\\times/g, '×')
+          .replace(/\\rightarrow/g, '→')
+          .replace(/\\leftarrow/g, '←')
+          .replace(/\\cdot/g, '·')
+          .replace(/\\pm/g, '±')
+          .replace(/\\Delta/g, 'Δ')
+          .replace(/\\alpha/g, 'α')
+          .replace(/\\beta/g, 'β')
+          .replace(/\\gamma/g, 'γ')
+          .replace(/\\pi/g, 'π')
+          .replace(/\\/g, '');
+        html += '<div class="qvsn-formula">' + qvsnEsc(formula) + '</div>';
+        continue;
+      }
+
+      // Bullet list
+      if (trimmed.startsWith('- ')) {
         if (!inList) { html += '<ul class="qvsn-ul">'; inList = true; }
         html += '<li>' + qvsnEsc(trimmed.slice(2)) + '</li>';
         continue;
       }
-      if (trimmed.indexOf('$$') === 0 && trimmed.lastIndexOf('$$') === trimmed.length - 2 && trimmed.length > 4) {
-        if (inList) { html += '</ul>'; inList = false; }
-        html += '<div class="qvsn-formula">' + qvsnEsc(trimmed.slice(2, -2)) + '</div>';
-        continue;
-      }
+
+      // Definition
       if (/^definition:/i.test(trimmed)) {
         if (inList) { html += '</ul>'; inList = false; }
         html += '<div class="qvsn-def">' + qvsnEsc(trimmed) + '</div>';
         continue;
       }
 
+      // Normal paragraph
       if (inList) { html += '</ul>'; inList = false; }
       html += '<div class="qvsn-p">' + qvsnEsc(trimmed) + '</div>';
     }
@@ -350,6 +413,8 @@
         level: QVSN_STATE.level,
         subject: QVSN_STATE.subject,
         language: QVSN_STATE.language,
+        depth: QVSN_STATE.depth,
+        maxPages: QVSN_STATE.maxPages,
         penColor: QVSN_STATE.penColor,
         rawText: QVSN_STATE.rawText
       }));
@@ -365,6 +430,8 @@
       if (d.level && document.getElementById('qvsn-level')) document.getElementById('qvsn-level').value = d.level;
       if (d.subject && document.getElementById('qvsn-subject')) document.getElementById('qvsn-subject').value = d.subject;
       if (d.language && document.getElementById('qvsn-language')) document.getElementById('qvsn-language').value = d.language;
+      if (d.depth && document.getElementById('qvsn-depth')) document.getElementById('qvsn-depth').value = d.depth;
+      if (d.maxPages && document.getElementById('qvsn-pages-limit')) document.getElementById('qvsn-pages-limit').value = d.maxPages;
       if (d.penColor && document.getElementById('qvsn-pen')) {
         document.getElementById('qvsn-pen').value = d.penColor;
         QVSN_STATE.penColor = d.penColor;
