@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES API PROXY
    File: api/study-notes-ai.js
-   Final Version (v10) — Sequential parts, no duplicate
+   Final Version (v11) — Updated models + working
    ============================================================ */
 
 export const config = {
@@ -54,11 +54,9 @@ export default async function handler(req, res) {
     const firstLine = userRequest.split('\n')[0].trim();
     const chapterTitle = firstLine.slice(0, 100);
 
-    // Build prompt based on part number
     let prompt;
 
     if (partNumber === 1) {
-      // PART 1 — Fresh start
       prompt = `You are an expert teacher creating handwritten-style study notes.
 
 USER'S REQUEST:
@@ -93,7 +91,6 @@ Generate PART 1 of study notes.
 
 Generate PART 1 now:`;
     } else {
-      // PART 2+ — Continue from previous
       const prevTail = previousContent.slice(-3000);
 
       prompt = `You are continuing to create study notes. This is PART ${partNumber}.
@@ -139,9 +136,10 @@ Generate PART ${partNumber} now (continue from previous, no repeats):`;
     }
 
     const models = [
-      'gemini-2.5-flash',
       'gemini-flash-latest',
-      'gemini-2.0-flash'
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+      'gemma-4-26b-a4b-it'
     ];
 
     let lastError = '';
