@@ -1,27 +1,18 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v6) — LaTeX converter + PDF auto-load
+   Final Version (v8) — Redesigned UI + Mega content
    ============================================================ */
 
 (function () {
   'use strict';
 
-  /* ---------------- STATE ---------------- */
   const QVSN_STATE = {
-    topic: '',
-    level: 'medium',
-    subject: '',
-    language: 'english',
-    depth: 'standard',
-    maxPages: '2',
-    penColor: 'blue',
-    rawText: '',
-    isEditing: false,
-    draftKey: 'qvsn_draft_v6'
+    topic: '', level: 'medium', subject: '', language: 'english',
+    depth: 'standard', maxPages: '2', penColor: 'blue',
+    rawText: '', isEditing: false, draftKey: 'qvsn_draft_v8'
   };
 
-  /* ---------------- SVG DIAGRAMS ---------------- */
   const QVSN_DIAGRAMS = {
     solar_panel: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="30" width="80" height="50" fill="#1e40af" stroke="#0f172a" stroke-width="2"/><line x1="30" y1="30" x2="30" y2="80" stroke="#0f172a" stroke-width="1"/><line x1="50" y1="30" x2="50" y2="80" stroke="#0f172a" stroke-width="1"/><line x1="70" y1="30" x2="70" y2="80" stroke="#0f172a" stroke-width="1"/><line x1="10" y1="55" x2="90" y2="55" stroke="#0f172a" stroke-width="1"/><circle cx="75" cy="20" r="8" fill="#fbbf24"/></svg>',
     circuit: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="40" width="60" height="20" fill="none" stroke="#1e40af" stroke-width="2"/><line x1="10" y1="50" x2="20" y2="50" stroke="#1e40af" stroke-width="2"/><line x1="80" y1="50" x2="90" y2="50" stroke="#1e40af" stroke-width="2"/><circle cx="50" cy="50" r="6" fill="#dc2626"/></svg>',
@@ -35,168 +26,195 @@
     water_cycle: '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="75" cy="25" r="10" fill="#fbbf24"/><path d="M10 60 Q30 40 50 60 Q70 80 90 60" fill="none" stroke="#3b82f6" stroke-width="2"/></svg>'
   };
 
-  /* ---------------- LaTeX TO UNICODE CONVERTER ---------------- */
   function qvsnConvertLatex(formula) {
     let f = formula;
+    const subMap = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ' };
+    const supMap = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','n':'ⁿ','i':'ⁱ','x':'ˣ','a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','g':'ᵍ','h':'ʰ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','o':'ᵒ','p':'ᵖ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','y':'ʸ','z':'ᶻ' };
 
-    const subMap = {
-      '0': '₀', '1': '₁', '2': '₂', '3': '₃', '4': '₄',
-      '5': '₅', '6': '₆', '7': '₇', '8': '₈', '9': '₉',
-      'a': 'ₐ', 'e': 'ₑ', 'h': 'ₕ', 'i': 'ᵢ', 'j': 'ⱼ',
-      'k': 'ₖ', 'l': 'ₗ', 'm': 'ₘ', 'n': 'ₙ', 'o': 'ₒ',
-      'p': 'ₚ', 'r': 'ᵣ', 's': 'ₛ', 't': 'ₜ', 'u': 'ᵤ',
-      'v': 'ᵥ', 'x': 'ₓ'
-    };
+    let prev = ''; let iter = 5;
+    while (f !== prev && iter > 0) { prev = f; f = f.replace(/\\?frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)'); iter--; }
+    prev = ''; iter = 5;
+    while (f !== prev && iter > 0) { prev = f; f = f.replace(/\\?sqrt\{([^{}]+)\}/g, '√($1)'); iter--; }
 
-    const supMap = {
-      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
-      '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
-      'n': 'ⁿ', 'i': 'ⁱ', 'x': 'ˣ', 'a': 'ᵃ', 'b': 'ᵇ',
-      'c': 'ᶜ', 'd': 'ᵈ', 'e': 'ᵉ', 'g': 'ᵍ', 'h': 'ʰ',
-      'j': 'ʲ', 'k': 'ᵏ', 'l': 'ˡ', 'm': 'ᵐ', 'o': 'ᵒ',
-      'p': 'ᵖ', 'r': 'ʳ', 's': 'ˢ', 't': 'ᵗ', 'u': 'ᵘ',
-      'v': 'ᵛ', 'w': 'ʷ', 'y': 'ʸ', 'z': 'ᶻ'
-    };
+    f = f.replace(/_\{([^}]+)\}/g, function (m, s) { return s.split('').map(function (c) { return subMap[c] || c; }).join(''); });
+    f = f.replace(/_([0-9a-zA-Z])/g, function (m, c) { return subMap[c] || ('_' + c); });
+    f = f.replace(/\^\{([^}]+)\}/g, function (m, s) { return s.split('').map(function (c) { return supMap[c] || ('^' + c); }).join(''); });
+    f = f.replace(/\^([0-9ni])/g, function (m, c) { return supMap[c] || ('^' + c); });
 
-    // Fractions (nested)
-    let prev = '';
-    let iter = 5;
-    while (f !== prev && iter > 0) {
-      prev = f;
-      f = f.replace(/\\?frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)');
-      iter--;
-    }
-
-    // Square roots (nested)
-    prev = '';
-    iter = 5;
-    while (f !== prev && iter > 0) {
-      prev = f;
-      f = f.replace(/\\?sqrt\{([^{}]+)\}/g, '√($1)');
-      iter--;
-    }
-
-    // Subscripts
-    f = f.replace(/_\{([^}]+)\}/g, function (m, s) {
-      return s.split('').map(function (c) { return subMap[c] || c; }).join('');
-    });
-    f = f.replace(/_([0-9a-zA-Z])/g, function (m, c) {
-      return subMap[c] || ('_' + c);
-    });
-
-    // Superscripts
-    f = f.replace(/\^\{([^}]+)\}/g, function (m, s) {
-      return s.split('').map(function (c) { return supMap[c] || ('^' + c); }).join('');
-    });
-    f = f.replace(/\^([0-9ni])/g, function (m, c) {
-      return supMap[c] || ('^' + c);
-    });
-
-    // LaTeX symbols
-    f = f
-      .replace(/\\times/g, ' × ')
-      .replace(/\\cdot/g, ' · ')
-      .replace(/\\div/g, ' ÷ ')
-      .replace(/\\pm/g, ' ± ')
-      .replace(/\\mp/g, ' ∓ ')
-      .replace(/\\leq/g, ' ≤ ')
-      .replace(/\\geq/g, ' ≥ ')
-      .replace(/\\neq/g, ' ≠ ')
-      .replace(/\\approx/g, ' ≈ ')
-      .replace(/\\equiv/g, ' ≡ ')
-      .replace(/\\propto/g, ' ∝ ')
-      .replace(/\\infty/g, ' ∞ ')
-      .replace(/\\rightarrow/g, ' → ')
-      .replace(/\\leftarrow/g, ' ← ')
-      .replace(/\\leftrightarrow/g, ' ↔ ')
-      .replace(/\\Rightarrow/g, ' ⇒ ')
-      .replace(/\\Leftarrow/g, ' ⇐ ')
-      .replace(/\\sum/g, ' Σ ')
-      .replace(/\\prod/g, ' ∏ ')
-      .replace(/\\int/g, ' ∫ ')
-      .replace(/\\partial/g, ' ∂ ')
-      .replace(/\\nabla/g, ' ∇ ')
-      .replace(/\\alpha/g, ' α ')
-      .replace(/\\beta/g, ' β ')
-      .replace(/\\gamma/g, ' γ ')
-      .replace(/\\delta/g, ' δ ')
-      .replace(/\\Delta/g, ' Δ ')
-      .replace(/\\epsilon/g, ' ε ')
-      .replace(/\\varepsilon/g, ' ε ')
-      .replace(/\\zeta/g, ' ζ ')
-      .replace(/\\eta/g, ' η ')
-      .replace(/\\theta/g, ' θ ')
-      .replace(/\\Theta/g, ' Θ ')
-      .replace(/\\iota/g, ' ι ')
-      .replace(/\\kappa/g, ' κ ')
-      .replace(/\\lambda/g, ' λ ')
-      .replace(/\\Lambda/g, ' Λ ')
-      .replace(/\\mu/g, ' μ ')
-      .replace(/\\nu/g, ' ν ')
-      .replace(/\\xi/g, ' ξ ')
-      .replace(/\\pi/g, ' π ')
-      .replace(/\\Pi/g, ' Π ')
-      .replace(/\\rho/g, ' ρ ')
-      .replace(/\\sigma/g, ' σ ')
-      .replace(/\\Sigma/g, ' Σ ')
-      .replace(/\\tau/g, ' τ ')
-      .replace(/\\upsilon/g, ' υ ')
-      .replace(/\\phi/g, ' φ ')
-      .replace(/\\Phi/g, ' Φ ')
-      .replace(/\\chi/g, ' χ ')
-      .replace(/\\psi/g, ' ψ ')
-      .replace(/\\Psi/g, ' Ψ ')
-      .replace(/\\omega/g, ' ω ')
-      .replace(/\\Omega/g, ' Ω ')
-      .replace(/\\text\{([^}]+)\}/g, '$1')
-      .replace(/\\mathrm\{([^}]+)\}/g, '$1')
-      .replace(/\\mathbf\{([^}]+)\}/g, '$1')
-      .replace(/\\left/g, '')
-      .replace(/\\right/g, '')
-      .replace(/\\/g, '');
+    f = f.replace(/\\times/g, ' × ').replace(/\\cdot/g, ' · ').replace(/\\div/g, ' ÷ ')
+      .replace(/\\pm/g, ' ± ').replace(/\\mp/g, ' ∓ ').replace(/\\leq/g, ' ≤ ').replace(/\\geq/g, ' ≥ ')
+      .replace(/\\neq/g, ' ≠ ').replace(/\\approx/g, ' ≈ ').replace(/\\equiv/g, ' ≡ ').replace(/\\propto/g, ' ∝ ')
+      .replace(/\\infty/g, ' ∞ ').replace(/\\rightarrow/g, ' → ').replace(/\\leftarrow/g, ' ← ')
+      .replace(/\\leftrightarrow/g, ' ↔ ').replace(/\\Rightarrow/g, ' ⇒ ').replace(/\\Leftarrow/g, ' ⇐ ')
+      .replace(/\\sum/g, ' Σ ').replace(/\\prod/g, ' ∏ ').replace(/\\int/g, ' ∫ ').replace(/\\partial/g, ' ∂ ')
+      .replace(/\\nabla/g, ' ∇ ').replace(/\\alpha/g, ' α ').replace(/\\beta/g, ' β ').replace(/\\gamma/g, ' γ ')
+      .replace(/\\delta/g, ' δ ').replace(/\\Delta/g, ' Δ ').replace(/\\epsilon/g, ' ε ').replace(/\\varepsilon/g, ' ε ')
+      .replace(/\\zeta/g, ' ζ ').replace(/\\eta/g, ' η ').replace(/\\theta/g, ' θ ').replace(/\\Theta/g, ' Θ ')
+      .replace(/\\iota/g, ' ι ').replace(/\\kappa/g, ' κ ').replace(/\\lambda/g, ' λ ').replace(/\\Lambda/g, ' Λ ')
+      .replace(/\\mu/g, ' μ ').replace(/\\nu/g, ' ν ').replace(/\\xi/g, ' ξ ').replace(/\\pi/g, ' π ')
+      .replace(/\\Pi/g, ' Π ').replace(/\\rho/g, ' ρ ').replace(/\\sigma/g, ' σ ').replace(/\\Sigma/g, ' Σ ')
+      .replace(/\\tau/g, ' τ ').replace(/\\upsilon/g, ' υ ').replace(/\\phi/g, ' φ ').replace(/\\Phi/g, ' Φ ')
+      .replace(/\\chi/g, ' χ ').replace(/\\psi/g, ' ψ ').replace(/\\Psi/g, ' Ψ ').replace(/\\omega/g, ' ω ')
+      .replace(/\\Omega/g, ' Ω ').replace(/\\text\{([^}]+)\}/g, '$1').replace(/\\mathrm\{([^}]+)\}/g, '$1')
+      .replace(/\\mathbf\{([^}]+)\}/g, '$1').replace(/\\left/g, '').replace(/\\right/g, '').replace(/\\/g, '');
 
     f = f.replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
     return f;
   }
 
-  /* ---------------- CSS ---------------- */
+  /* ---------------- REDESIGNED CSS ---------------- */
   const QVSN_CSS = `
-.qvsn-wrap { max-width: 900px; margin: 0 auto; padding: 16px; font-family: 'Kalam', cursive, sans-serif; }
-.qvsn-header { text-align: center; margin-bottom: 20px; }
-.qvsn-title { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.qvsn-sub { color: #9ca3af; font-size: 0.9rem; margin-top: 4px; }
-.qvsn-card { background: #151a3d; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid rgba(99,102,241,0.15); }
-.qvsn-label { display: block; font-size: 0.85rem; color: #c7d2fe; margin-bottom: 6px; font-weight: 600; }
-.qvsn-input, .qvsn-select { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(99,102,241,0.3); background: #0a0e27; color: #e5e7eb; font-size: 0.95rem; font-family: inherit; outline: none; box-sizing: border-box; }
-.qvsn-input:focus, .qvsn-select:focus { border-color: #6366f1; }
-.qvsn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-.qvsn-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%); color: #fff; margin-top: 16px; }
+.qvsn-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #e5e7eb;
+}
+.qvsn-header { text-align: center; margin-bottom: 24px; }
+.qvsn-title {
+  font-size: 1.9rem; font-weight: 800; letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #f472b6 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin: 0;
+}
+.qvsn-sub { color: #94a3b8; font-size: 0.9rem; margin-top: 8px; line-height: 1.5; }
+
+.qvsn-card {
+  background: linear-gradient(180deg, #1a1f4a 0%, #151a3d 100%);
+  border-radius: 20px; padding: 22px; margin-bottom: 18px;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+.qvsn-label {
+  display: block; font-size: 0.82rem; color: #c7d2fe;
+  margin-bottom: 8px; font-weight: 600; letter-spacing: 0.3px;
+}
+
+.qvsn-input, .qvsn-select, .qvsn-textarea {
+  width: 100%; padding: 13px 16px; border-radius: 12px;
+  border: 1.5px solid rgba(139, 92, 246, 0.25);
+  background: #0d1130; color: #f1f5f9;
+  font-size: 0.95rem; font-family: inherit; outline: none;
+  box-sizing: border-box; transition: all 0.2s ease;
+}
+.qvsn-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+.qvsn-input:focus, .qvsn-select:focus, .qvsn-textarea:focus {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+  background: #0f1435;
+}
+
+.qvsn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+
+.qvsn-btn {
+  width: 100%; padding: 15px; border: none; border-radius: 14px;
+  font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+  color: #fff; margin-top: 18px; letter-spacing: 0.3px;
+  transition: transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+}
+.qvsn-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4); }
 .qvsn-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-.qvsn-btn-secondary { background: #1f2547; color: #c7d2fe; border: 1px solid rgba(99,102,241,0.3); }
-.qvsn-status { text-align: center; padding: 12px; font-size: 0.9rem; color: #9ca3af; }
-.qvsn-error { background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.4); color: #fca5a5; padding: 12px; border-radius: 10px; margin-top: 12px; font-size: 0.9rem; }
-.qvsn-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 4px; line-height: 1.4; }
-.qvsn-pages { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
-.qvsn-page { background: #fefefe; color: #1e3a8a; width: 100%; aspect-ratio: 210 / 297; padding: 20mm 15mm 15mm 25mm; position: relative; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); font-family: 'Kalam', cursive, sans-serif; overflow: hidden; box-sizing: border-box; background-image: repeating-linear-gradient(transparent, transparent 27px, #e5e7eb 27px, #e5e7eb 28px); background-size: 100% 28px; background-position: 0 20mm; line-height: 28px; font-size: 15px; }
-.qvsn-page::before { content: ''; position: absolute; top: 0; bottom: 0; left: 20mm; width: 1px; background: #fca5a5; }
-.qvsn-page-num { position: absolute; bottom: 6mm; right: 10mm; font-size: 11px; color: #9ca3af; }
-.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 20px; margin: 0 0 8px; line-height: 28px; }
-.qvsn-h2 { color: #dc2626; font-weight: 700; font-size: 17px; margin: 12px 0 4px; line-height: 28px; }
+.qvsn-btn-secondary {
+  background: #1e2547; color: #c7d2fe;
+  border: 1.5px solid rgba(139, 92, 246, 0.3);
+  box-shadow: none;
+}
+.qvsn-btn-secondary:hover:not(:disabled) { background: #252c56; transform: none; box-shadow: none; }
+
+.qvsn-status {
+  text-align: center; padding: 14px; font-size: 0.9rem;
+  color: #a5b4fc; font-weight: 500;
+}
+
+.qvsn-error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5; padding: 14px 16px; border-radius: 12px;
+  margin-top: 14px; font-size: 0.88rem; line-height: 1.5;
+}
+
+.qvsn-hint {
+  font-size: 0.75rem; color: #64748b; margin-top: 6px;
+  line-height: 1.5; display: flex; align-items: flex-start; gap: 6px;
+}
+.qvsn-counter {
+  font-size: 0.7rem; color: #475569; text-align: right;
+  margin-top: 4px; font-variant-numeric: tabular-nums;
+}
+.qvsn-counter.warn { color: #f59e0b; }
+
+/* NOTEBOOK PAGES */
+.qvsn-pages { display: flex; flex-direction: column; gap: 24px; margin-top: 24px; }
+.qvsn-page {
+  background: #fefefe; color: #1e3a8a; width: 100%;
+  aspect-ratio: 210 / 297; padding: 20mm 15mm 15mm 25mm;
+  position: relative; border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  font-family: 'Kalam', cursive, sans-serif;
+  overflow: hidden; box-sizing: border-box;
+  background-image: repeating-linear-gradient(transparent, transparent 27px, #e5e7eb 27px, #e5e7eb 28px);
+  background-size: 100% 28px; background-position: 0 20mm;
+  line-height: 28px; font-size: 15px;
+}
+.qvsn-page::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 20mm;
+  width: 1.5px; background: #fca5a5;
+}
+.qvsn-page-num {
+  position: absolute; bottom: 6mm; right: 10mm;
+  font-size: 11px; color: #9ca3af; font-weight: 500;
+}
+.qvsn-h1 {
+  color: #dc2626; font-weight: 700; font-size: 21px;
+  margin: 0 0 10px; line-height: 28px;
+  border-bottom: 2px solid #fecaca; padding-bottom: 2px;
+}
+.qvsn-h2 {
+  color: #dc2626; font-weight: 700; font-size: 17px;
+  margin: 14px 0 6px; line-height: 28px;
+}
 .qvsn-p { margin: 0; line-height: 28px; color: #1e3a8a; }
-.qvsn-ul { margin: 0; padding-left: 22px; line-height: 28px; color: #1e3a8a; }
-.qvsn-def { background: rgba(250,204,21,0.25); border-left: 3px solid #f59e0b; padding: 4px 10px; margin: 4px 0; border-radius: 4px; line-height: 28px; }
-.qvsn-formula { background: rgba(99,102,241,0.12); border: 1px dashed #6366f1; padding: 6px 12px; margin: 6px 0; border-radius: 6px; font-weight: 700; text-align: center; line-height: 28px; color: #4338ca; word-wrap: break-word; overflow-wrap: break-word; }
-.qvsn-diagram { display: flex; justify-content: center; margin: 8px 0; }
+.qvsn-ul { margin: 0; padding-left: 24px; line-height: 28px; color: #1e3a8a; }
+.qvsn-ul li { margin-bottom: 2px; }
+.qvsn-def {
+  background: linear-gradient(90deg, rgba(250, 204, 21, 0.3) 0%, rgba(250, 204, 21, 0.15) 100%);
+  border-left: 4px solid #f59e0b;
+  padding: 8px 14px; margin: 6px 0; border-radius: 6px;
+  line-height: 28px; font-weight: 500;
+}
+.qvsn-formula {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border: 1.5px dashed #6366f1;
+  padding: 10px 14px; margin: 8px 0; border-radius: 8px;
+  font-weight: 700; text-align: center; line-height: 28px;
+  color: #4338ca; word-wrap: break-word; overflow-wrap: break-word;
+}
+.qvsn-diagram { display: flex; justify-content: center; margin: 10px 0; }
 .qvsn-diagram svg { width: 90px; height: 90px; }
+
 .qvsn-pen-black .qvsn-p, .qvsn-pen-black .qvsn-ul, .qvsn-pen-black .qvsn-page { color: #111827; }
 .qvsn-pen-green .qvsn-p, .qvsn-pen-green .qvsn-ul, .qvsn-pen-green .qvsn-page { color: #166534; }
-.qvsn-page[contenteditable="true"] { outline: 2px dashed #6366f1; outline-offset: 4px; }
-.qvsn-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.qvsn-page[contenteditable="true"] {
+  outline: 2px dashed #8b5cf6; outline-offset: 4px;
+}
+
+/* ACTIONS */
+.qvsn-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .qvsn-actions .qvsn-btn { margin-top: 0; }
+
 @media (max-width: 640px) {
-  .qvsn-row { grid-template-columns: 1fr; }
-  .qvsn-title { font-size: 1.4rem; }
-  .qvsn-page { padding: 12mm 8mm 12mm 15mm; font-size: 13px; line-height: 24px; background-size: 100% 24px; background-position: 0 12mm; }
+  .qvsn-wrap { padding: 16px 12px 32px; }
+  .qvsn-title { font-size: 1.5rem; }
+  .qvsn-card { padding: 18px; border-radius: 16px; }
+  .qvsn-row { grid-template-columns: 1fr; gap: 12px; }
+  .qvsn-page {
+    padding: 12mm 8mm 12mm 15mm; font-size: 13px; line-height: 24px;
+    background-size: 100% 24px; background-position: 0 12mm;
+  }
   .qvsn-page::before { left: 12mm; }
   .qvsn-h1 { font-size: 17px; line-height: 24px; }
   .qvsn-h2 { font-size: 15px; line-height: 24px; }
@@ -216,15 +234,18 @@
       link.href = 'https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap';
       document.head.appendChild(link);
     }
+    if (!document.getElementById('qvsn-inter')) {
+      const link2 = document.createElement('link');
+      link2.id = 'qvsn-inter';
+      link2.rel = 'stylesheet';
+      link2.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap';
+      document.head.appendChild(link2);
+    }
   }
 
-  /* ---------------- DYNAMIC LIBRARY LOADER ---------------- */
   function qvsnLoadScript(src) {
     return new Promise(function (resolve, reject) {
-      if (document.querySelector('script[src="' + src + '"]')) {
-        resolve();
-        return;
-      }
+      if (document.querySelector('script[src="' + src + '"]')) { resolve(); return; }
       const s = document.createElement('script');
       s.src = src;
       s.onload = function () { resolve(); };
@@ -234,21 +255,11 @@
   }
 
   async function qvsnEnsureLibraries() {
-    // html2canvas
-    if (typeof html2canvas === 'undefined') {
-      await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-    }
-    // jsPDF
-    if (!window.jspdf || !window.jspdf.jsPDF) {
-      await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-    }
-    // html-to-image
-    if (typeof htmlToImage === 'undefined') {
-      await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js');
-    }
+    if (typeof html2canvas === 'undefined') await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    if (!window.jspdf || !window.jspdf.jsPDF) await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    if (typeof htmlToImage === 'undefined') await qvsnLoadScript('https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js');
   }
 
-  /* ---------------- HTML ---------------- */
   function qvsnRenderHTML() {
     return `
 <div class="qvsn-wrap">
@@ -258,9 +269,10 @@
   </div>
 
   <div class="qvsn-card">
-    <label class="qvsn-label" for="qvsn-topic">📝 Topic</label>
-    <input type="text" id="qvsn-topic" class="qvsn-input" placeholder="e.g. Single Phase Transformer" autocomplete="off" maxlength="200" />
-    <div class="qvsn-hint">💡 Tip: Sirf topic likho (max 200 characters). Ek baar me ek topic. AI khud detailed notes banayega.</div>
+    <label class="qvsn-label" for="qvsn-topic">📝 Topic / Detailed Prompt</label>
+    <textarea id="qvsn-topic" class="qvsn-textarea" placeholder="e.g. Single Phase Transformer - Definition, Construction, Working, EMF Equation..." maxlength="2000"></textarea>
+    <div class="qvsn-counter" id="qvsn-counter">0 / 2000</div>
+    <div class="qvsn-hint">💡 Simple topic ya detailed prompt (max 2000 chars) — dono chalega.</div>
 
     <div class="qvsn-row">
       <div>
@@ -294,7 +306,8 @@
           <option value="3">3 Pages</option>
           <option value="5">5 Pages</option>
           <option value="7">7 Pages</option>
-          <option value="10">10 Pages (Unlimited)</option>
+          <option value="10">10 Pages</option>
+          <option value="15">15 Pages</option>
         </select>
       </div>
     </div>
@@ -338,35 +351,22 @@
 </div>`;
   }
 
-  /* ---------------- HELPERS ---------------- */
-  function qvsnShowStatus(msg) {
-    const el = document.getElementById('qvsn-status');
-    if (!el) return;
-    el.textContent = msg;
-    el.style.display = 'block';
-  }
-  function qvsnHideStatus() {
-    const el = document.getElementById('qvsn-status');
-    if (el) el.style.display = 'none';
-  }
-  function qvsnShowError(msg) {
-    const el = document.getElementById('qvsn-error');
-    if (!el) return;
-    el.textContent = msg;
-    el.style.display = 'block';
-  }
-  function qvsnHideError() {
-    const el = document.getElementById('qvsn-error');
-    if (el) el.style.display = 'none';
-  }
-  function qvsnEsc(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+  function qvsnShowStatus(msg) { const el = document.getElementById('qvsn-status'); if (el) { el.textContent = msg; el.style.display = 'block'; } }
+  function qvsnHideStatus() { const el = document.getElementById('qvsn-status'); if (el) el.style.display = 'none'; }
+  function qvsnShowError(msg) { const el = document.getElementById('qvsn-error'); if (el) { el.textContent = msg; el.style.display = 'block'; } }
+  function qvsnHideError() { const el = document.getElementById('qvsn-error'); if (el) el.style.display = 'none'; }
+  function qvsnEsc(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+  function qvsnUpdateCounter() {
+    const input = document.getElementById('qvsn-topic');
+    const counter = document.getElementById('qvsn-counter');
+    if (!input || !counter) return;
+    const len = input.value.length;
+    counter.textContent = len + ' / 2000';
+    if (len > 1800) counter.classList.add('warn');
+    else counter.classList.remove('warn');
   }
 
-  /* ---------------- AI CALL ---------------- */
   async function qvsnCallAI() {
     const topic = (document.getElementById('qvsn-topic') || {}).value || '';
     const level = (document.getElementById('qvsn-level') || {}).value || 'medium';
@@ -375,19 +375,11 @@
     const depth = (document.getElementById('qvsn-depth') || {}).value || 'standard';
     const maxPages = (document.getElementById('qvsn-pages-limit') || {}).value || '2';
 
-    if (!topic.trim()) {
-      qvsnShowError('Bhai, pehle topic toh likho!');
-      return;
-    }
+    if (!topic.trim()) { qvsnShowError('Bhai, pehle topic toh likho!'); return; }
+    if (topic.length > 2000) { qvsnShowError('Topic bahut lamba hai (max 2000 characters).'); return; }
 
-    if (topic.length > 200) {
-      qvsnShowError('Topic bahut lamba hai. Sirf main topic likho (max 200 characters).');
-      return;
-    }
-
-    qvsnShowStatus('🤖 AI notes bana raha hai...');
+    qvsnShowStatus('🤖 AI notes bana raha hai... (10-30 seconds lag sakte hain)');
     qvsnHideError();
-
     const genBtn = document.getElementById('qvsn-generate');
     if (genBtn) genBtn.disabled = true;
     document.getElementById('qvsn-pages').innerHTML = '';
@@ -396,26 +388,11 @@
       const res = await fetch('/api/study-notes-ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          topic: topic.trim(),
-          level: level,
-          subject: subject.trim(),
-          language: language,
-          depth: depth,
-          maxPages: maxPages
-        })
+        body: JSON.stringify({ topic: topic.trim(), level, subject: subject.trim(), language, depth, maxPages })
       });
-
       let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        throw new Error('Server response invalid (HTTP ' + res.status + ')');
-      }
-
-      if (!res.ok || !data.success || !data.text) {
-        throw new Error((data && data.error) || 'AI response empty');
-      }
+      try { data = await res.json(); } catch (e) { throw new Error('Server response invalid (HTTP ' + res.status + ')'); }
+      if (!res.ok || !data.success || !data.text) throw new Error((data && data.error) || 'AI response empty');
 
       QVSN_STATE.rawText = data.text;
       QVSN_STATE.topic = topic.trim();
@@ -429,9 +406,7 @@
       qvsnSaveDraft();
       qvsnShowStatus('✅ Notes ready! Ab export kar sakte ho.');
       document.getElementById('qvsn-actions-wrap').style.display = 'block';
-
       setTimeout(qvsnHideStatus, 2500);
-
     } catch (err) {
       qvsnShowError('❌ ' + err.message);
     } finally {
@@ -439,7 +414,6 @@
     }
   }
 
-  /* ---------------- PARSER ---------------- */
   function qvsnParseMarkdown(md) {
     const thinkingPatterns = [
       /^wait\b/i, /^check\b/i, /^word count check/i, /^self-correction/i,
@@ -463,10 +437,7 @@
       let line = lines[i];
       let trimmed = line.trim();
 
-      if (!trimmed) {
-        if (inList) { html += '</ul>'; inList = false; }
-        continue;
-      }
+      if (!trimmed) { if (inList) { html += '</ul>'; inList = false; } continue; }
 
       trimmed = trimmed.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
 
@@ -481,9 +452,7 @@
       if (diagMatch) {
         if (inList) { html += '</ul>'; inList = false; }
         const key = diagMatch[1].toLowerCase();
-        if (QVSN_DIAGRAMS[key]) {
-          html += '<div class="qvsn-diagram">' + QVSN_DIAGRAMS[key] + '</div>';
-        }
+        if (QVSN_DIAGRAMS[key]) html += '<div class="qvsn-diagram">' + QVSN_DIAGRAMS[key] + '</div>';
         continue;
       }
 
@@ -503,7 +472,6 @@
         continue;
       }
 
-      // FORMULA with LaTeX converter
       if (trimmed.startsWith('$$') && trimmed.endsWith('$$') && trimmed.length > 4) {
         if (inList) { html += '</ul>'; inList = false; }
         let formula = trimmed.slice(2, -2).trim();
@@ -532,7 +500,6 @@
     return html;
   }
 
-  /* ---------------- RENDER PAGES ---------------- */
   function qvsnRenderPages(md) {
     const container = document.getElementById('qvsn-pages');
     if (!container) return;
@@ -556,7 +523,6 @@
     }).join('');
   }
 
-  /* ---------------- EDIT ---------------- */
   function qvsnToggleEdit() {
     QVSN_STATE.isEditing = !QVSN_STATE.isEditing;
     const pages = document.querySelectorAll('.qvsn-page');
@@ -567,18 +533,12 @@
     if (btn) btn.textContent = QVSN_STATE.isEditing ? '💾 Save Edits' : '✏️ Edit Mode';
   }
 
-  /* ---------------- LOCALSTORAGE ---------------- */
   function qvsnSaveDraft() {
     try {
       localStorage.setItem(QVSN_STATE.draftKey, JSON.stringify({
-        topic: QVSN_STATE.topic,
-        level: QVSN_STATE.level,
-        subject: QVSN_STATE.subject,
-        language: QVSN_STATE.language,
-        depth: QVSN_STATE.depth,
-        maxPages: QVSN_STATE.maxPages,
-        penColor: QVSN_STATE.penColor,
-        rawText: QVSN_STATE.rawText
+        topic: QVSN_STATE.topic, level: QVSN_STATE.level, subject: QVSN_STATE.subject,
+        language: QVSN_STATE.language, depth: QVSN_STATE.depth, maxPages: QVSN_STATE.maxPages,
+        penColor: QVSN_STATE.penColor, rawText: QVSN_STATE.rawText
       }));
     } catch (e) {}
   }
@@ -606,6 +566,7 @@
         const aw = document.getElementById('qvsn-actions-wrap');
         if (aw) aw.style.display = 'block';
       }
+      qvsnUpdateCounter();
     } catch (e) {}
   }
 
@@ -619,23 +580,18 @@
     QVSN_STATE.rawText = '';
     qvsnHideStatus();
     qvsnHideError();
+    qvsnUpdateCounter();
   }
 
-  /* ---------------- EXPORT PNG ---------------- */
   async function qvsnExportPNG() {
     qvsnShowStatus('🖼️ PNG bana raha hai (HD)...');
     try {
       await qvsnEnsureLibraries();
-      if (typeof htmlToImage === 'undefined') {
-        throw new Error('PNG library load nahi hui.');
-      }
+      if (typeof htmlToImage === 'undefined') throw new Error('PNG library load nahi hui.');
       const pages = document.querySelectorAll('.qvsn-page');
       for (let i = 0; i < pages.length; i++) {
         qvsnShowStatus('🖼️ Page ' + (i + 1) + ' / ' + pages.length + ' export ho raha hai...');
-        const dataUrl = await htmlToImage.toPng(pages[i], {
-          pixelRatio: 3,
-          backgroundColor: '#fefefe'
-        });
+        const dataUrl = await htmlToImage.toPng(pages[i], { pixelRatio: 3, backgroundColor: '#fefefe' });
         const link = document.createElement('a');
         link.download = 'study-notes-' + (QVSN_STATE.topic.slice(0, 30) || 'notes') + '-page-' + (i + 1) + '.png';
         link.href = dataUrl;
@@ -649,37 +605,23 @@
     }
   }
 
-  /* ---------------- EXPORT PDF ---------------- */
   async function qvsnExportPDF() {
     qvsnShowStatus('📄 PDF bana raha hai...');
     try {
       await qvsnEnsureLibraries();
-
-      if (!window.jspdf || !window.jspdf.jsPDF) {
-        throw new Error('jsPDF library load nahi hui');
-      }
-      if (typeof html2canvas === 'undefined') {
-        throw new Error('html2canvas library load nahi hui');
-      }
+      if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF library load nahi hui');
+      if (typeof html2canvas === 'undefined') throw new Error('html2canvas library load nahi hui');
 
       const jsPDF = window.jspdf.jsPDF;
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pages = document.querySelectorAll('.qvsn-page');
 
-      if (pages.length === 0) {
-        throw new Error('Pehle notes generate karo!');
-      }
+      if (pages.length === 0) throw new Error('Pehle notes generate karo!');
 
       for (let i = 0; i < pages.length; i++) {
         if (i > 0) pdf.addPage();
         qvsnShowStatus('📄 Page ' + (i + 1) + ' / ' + pages.length + ' process ho raha hai...');
-
-        const canvas = await html2canvas(pages[i], {
-          scale: 2,
-          backgroundColor: '#fefefe',
-          useCORS: true,
-          logging: false
-        });
+        const canvas = await html2canvas(pages[i], { scale: 2, backgroundColor: '#fefefe', useCORS: true, logging: false });
         const imgData = canvas.toDataURL('image/jpeg', 0.92);
         const pdfW = 210;
         const pdfH = (canvas.height * pdfW) / canvas.width;
@@ -694,13 +636,9 @@
     }
   }
 
-  /* ---------------- PRINT ---------------- */
   function qvsnPrint() {
     const pagesEl = document.getElementById('qvsn-pages');
-    if (!pagesEl || !pagesEl.innerHTML.trim()) {
-      qvsnShowError('Pehle notes generate karo!');
-      return;
-    }
+    if (!pagesEl || !pagesEl.innerHTML.trim()) { qvsnShowError('Pehle notes generate karo!'); return; }
     const printWindow = window.open('', '_blank');
     printWindow.document.write(
       '<html><head><title>Study Notes</title>' +
@@ -713,13 +651,10 @@
     setTimeout(function () { printWindow.print(); }, 700);
   }
 
-  /* ---------------- INIT ---------------- */
   function qvsnInit() {
     qvsnInjectCSS();
     qvsnLoadDraft();
-
-    // Pre-load libraries in background
-    qvsnEnsureLibraries().catch(function (e) { /* silent */ });
+    qvsnEnsureLibraries().catch(function () {});
 
     const genBtn = document.getElementById('qvsn-generate');
     const editBtn = document.getElementById('qvsn-edit');
@@ -729,6 +664,7 @@
     const printBtn = document.getElementById('qvsn-print');
     const clearBtn = document.getElementById('qvsn-clear');
     const penSel = document.getElementById('qvsn-pen');
+    const topicInput = document.getElementById('qvsn-topic');
 
     if (genBtn) genBtn.addEventListener('click', qvsnCallAI);
     if (editBtn) editBtn.addEventListener('click', qvsnToggleEdit);
@@ -750,24 +686,19 @@
       });
     }
 
-    const topicInput = document.getElementById('qvsn-topic');
     if (topicInput) {
+      topicInput.addEventListener('input', qvsnUpdateCounter);
       topicInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') qvsnCallAI();
+        if (e.key === 'Enter' && e.ctrlKey) qvsnCallAI();
       });
     }
   }
 
-  /* ---------------- REGISTER ---------------- */
   window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
   window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
 
-  window.EXTRA_TOOL_RENDERERS['study-notes-generator'] = function () {
-    return qvsnRenderHTML();
-  };
-  window.EXTRA_TOOL_INITS['study-notes-generator'] = function () {
-    qvsnInit();
-  };
+  window.EXTRA_TOOL_RENDERERS['study-notes-generator'] = function () { return qvsnRenderHTML(); };
+  window.EXTRA_TOOL_INITS['study-notes-generator'] = function () { qvsnInit(); };
 
   qvsnInjectCSS();
 
