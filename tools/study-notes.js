@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v19) — PNG/PDF fix + Font size + Print match
+   Final Version (v20) — Autofit System
    ============================================================ */
 
 (function () {
@@ -19,7 +19,7 @@
     isGenerating: false,
     autoMode: false,
     isEditing: false,
-    draftKey: 'qvsn_draft_v19'
+    draftKey: 'qvsn_draft_v20'
   };
 
   const QVSN_DIAGRAMS = {
@@ -170,18 +170,18 @@
 }
 .qvsn-progress-text { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 6px; }
 
-/* PAGE — Print Match */
+/* PAGE — A4 with Autofit */
 .qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
-  aspect-ratio: 210 / 297; padding: 10mm 10mm 8mm 22mm;
+  aspect-ratio: 210 / 297; padding: 12mm 10mm 10mm 22mm;
   position: relative; border-radius: 6px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   font-family: 'Kalam', cursive, sans-serif;
   overflow: hidden; box-sizing: border-box;
-  background-image: repeating-linear-gradient(transparent, transparent 23px, #e5e7eb 23px, #e5e7eb 24px);
-  background-size: 100% 24px; background-position: 0 10mm;
-  line-height: 24px; font-size: 13px;
+  background-image: repeating-linear-gradient(transparent, transparent 25px, #e5e7eb 25px, #e5e7eb 26px);
+  background-size: 100% 26px; background-position: 0 12mm;
+  line-height: 26px; font-size: 14px;
 }
 .qvsn-page::before {
   content: ''; position: absolute; top: 0; bottom: 0; left: 20mm;
@@ -195,21 +195,21 @@
   font-size: 10px; color: #9ca3af; font-weight: 500;
   background: #fefefe; padding: 1px 4px;
 }
-.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 19px; margin: 0 0 8px; line-height: 24px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
-.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 16px; margin: 12px 0 4px; line-height: 24px; border-left: 4px solid #3b82f6; padding-left: 8px; }
-.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 14px; margin: 10px 0 4px; line-height: 24px; font-style: italic; }
-.qvsn-p { margin: 0; line-height: 24px; color: #1e3a8a; }
-.qvsn-ul { margin: 0; padding-left: 20px; line-height: 24px; color: #1e3a8a; }
+.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 20px; margin: 0 0 8px; line-height: 26px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
+.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 17px; margin: 12px 0 4px; line-height: 26px; border-left: 4px solid #3b82f6; padding-left: 8px; }
+.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 15px; margin: 10px 0 4px; line-height: 26px; font-style: italic; }
+.qvsn-p { margin: 0; line-height: 26px; color: #1e3a8a; }
+.qvsn-ul { margin: 0; padding-left: 20px; line-height: 26px; color: #1e3a8a; }
 .qvsn-def {
   background: linear-gradient(90deg, rgba(250,204,21,0.3) 0%, rgba(250,204,21,0.15) 100%);
   border-left: 4px solid #f59e0b; padding: 5px 10px; margin: 4px 0;
-  border-radius: 6px; line-height: 24px; color: #78350f; font-size: 12.5px;
+  border-radius: 6px; line-height: 26px; color: #78350f; font-size: 13.5px;
 }
 .qvsn-formula {
   background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(139,92,246,0.15) 100%);
   border: 1.5px dashed #3b82f6; padding: 6px 10px; margin: 6px 0;
-  border-radius: 6px; font-weight: 700; text-align: center; line-height: 24px;
-  color: #1e40af; word-wrap: break-word; overflow-wrap: break-word; font-size: 12.5px;
+  border-radius: 6px; font-weight: 700; text-align: center; line-height: 26px;
+  color: #1e40af; word-wrap: break-word; overflow-wrap: break-word; font-size: 13.5px;
 }
 .qvsn-diagram { display: flex; justify-content: center; margin: 6px 0; }
 .qvsn-diagram svg { width: 70px; height: 70px; }
@@ -228,17 +228,17 @@
   .qvsn-row { grid-template-columns: 1fr; gap: 8px; }
   .qvsn-row3 { grid-template-columns: 1fr 1fr; gap: 6px; }
   .qvsn-page {
-    padding: 8mm 6mm 6mm 16mm; font-size: 12px; line-height: 22px;
-    background-size: 100% 22px; background-position: 0 8mm;
+    padding: 10mm 8mm 8mm 18mm; font-size: 12.5px; line-height: 23px;
+    background-size: 100% 23px; background-position: 0 10mm;
   }
-  .qvsn-page::before { left: 14mm; }
-  .qvsn-page-content { padding-left: 4mm; }
-  .qvsn-h1 { font-size: 16px; line-height: 22px; }
-  .qvsn-h2 { font-size: 14px; line-height: 22px; }
-  .qvsn-h3 { font-size: 12px; line-height: 22px; }
-  .qvsn-p, .qvsn-ul { line-height: 22px; }
-  .qvsn-def { font-size: 11.5px; line-height: 22px; }
-  .qvsn-formula { font-size: 11.5px; line-height: 22px; }
+  .qvsn-page::before { left: 16mm; }
+  .qvsn-page-content { padding-left: 5mm; }
+  .qvsn-h1 { font-size: 17px; line-height: 23px; }
+  .qvsn-h2 { font-size: 15px; line-height: 23px; }
+  .qvsn-h3 { font-size: 13px; line-height: 23px; }
+  .qvsn-p, .qvsn-ul { line-height: 23px; }
+  .qvsn-def { font-size: 12px; line-height: 23px; }
+  .qvsn-formula { font-size: 12px; line-height: 23px; }
 }`;
 
   function qvsnInjectCSS() {
@@ -586,15 +586,48 @@
     return html;
   }
 
+  /* ---------------- AUTOFIT RENDERER ---------------- */
   function qvsnRenderPages(md) {
     const container = document.getElementById('qvsn-pages');
     if (!container) return;
 
     const penClass = 'qvsn-pen-' + QVSN_STATE.penColor;
     const contentLines = md.split('\n').filter(function (l) { return l.trim(); });
-    const MAX_LINES_PER_PAGE = 7;
+
+    // A4 page height (pixels at 96 DPI)
+    const A4_HEIGHT_PX = 1123;
+    const PADDING_TOP = 45;
+    const PADDING_BOTTOM = 38;
+    const AVAILABLE_HEIGHT = A4_HEIGHT_PX - PADDING_TOP - PADDING_BOTTOM;
+
+    // Line height in pixels (matches CSS)
+    const LINE_HEIGHT = 26;
+
+    // Har line ki actual height nikalo
+    function getLineHeight(line) {
+      const t = line.trim();
+      if (!t) return LINE_HEIGHT;
+      if (t.startsWith('# ')) return LINE_HEIGHT * 1.5;
+      if (t.startsWith('## ')) return LINE_HEIGHT * 1.3;
+      if (t.startsWith('### ')) return LINE_HEIGHT * 1.2;
+      if (t.startsWith('$$') && t.endsWith('$$')) return LINE_HEIGHT * 1.6;
+      if (t.startsWith('[DIAGRAM')) return LINE_HEIGHT * 3.2;
+      if (/^definition:/i.test(t)) return LINE_HEIGHT * 1.6;
+      // Bullet points wrap hote hain, isliye thoda extra
+      if (t.startsWith('- ')) {
+        const textLength = t.length;
+        const lines = Math.ceil(textLength / 45);
+        return LINE_HEIGHT * Math.max(1, lines);
+      }
+      // Normal paragraph wrap
+      const textLength = t.length;
+      const lines = Math.ceil(textLength / 50);
+      return LINE_HEIGHT * Math.max(1, lines);
+    }
+
     const pages = [];
     let currentPage = [];
+    let currentHeight = 0;
 
     function isSectionStart(line) {
       const t = line.trim();
@@ -603,17 +636,22 @@
     }
 
     for (let i = 0; i < contentLines.length; i++) {
-      currentPage.push(contentLines[i]);
+      const line = contentLines[i];
+      const lineHeight = getLineHeight(line);
 
-      if (currentPage.length >= MAX_LINES_PER_PAGE) {
-        const nextLine = contentLines[i + 1] || '';
-        const nextIsSection = isSectionStart(nextLine);
+      // Agar line fit nahi hoti, toh break karo
+      if (currentHeight + lineHeight > AVAILABLE_HEIGHT && currentPage.length > 0) {
+        // Section start pe break karo agar possible hai
+        const lastLine = currentPage[currentPage.length - 1];
+        const lastIsSection = isSectionStart(lastLine);
 
-        if (nextIsSection || currentPage.length >= 9) {
-          pages.push(currentPage.join('\n'));
-          currentPage = [];
-        }
+        pages.push(currentPage.join('\n'));
+        currentPage = [];
+        currentHeight = 0;
       }
+
+      currentPage.push(line);
+      currentHeight += lineHeight;
     }
 
     if (currentPage.length > 0) pages.push(currentPage.join('\n'));
@@ -712,10 +750,7 @@
           backgroundColor: '#fefefe',
           width: pages[i].offsetWidth,
           height: pages[i].scrollHeight,
-          style: {
-            transform: 'none',
-            overflow: 'visible'
-          }
+          style: { transform: 'none', overflow: 'visible' }
         });
         const link = document.createElement('a');
         link.download = 'study-notes-page-' + (i + 1) + '.png';
@@ -761,8 +796,6 @@
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
-
-        // Full A4 fit karo, content cut nahi hoga
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
       }
 
