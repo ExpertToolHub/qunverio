@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v13) — Cloudflare Worker URL updated
+   Final Version (v14) — Colored headings + clean output
    ============================================================ */
 
 (function () {
@@ -20,7 +20,7 @@
     isGenerating: false,
     autoMode: false,
     isEditing: false,
-    draftKey: 'qvsn_draft_v13'
+    draftKey: 'qvsn_draft_v14'
   };
 
   const QVSN_DIAGRAMS = {
@@ -72,6 +72,7 @@
     return f;
   }
 
+  /* ---------------- CSS WITH COLORFUL HEADINGS ---------------- */
   const QVSN_CSS = `
 .qvsn-wrap {
   max-width: 700px; margin: 0 auto; padding: 14px;
@@ -164,6 +165,7 @@
 }
 .qvsn-progress-text { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 6px; }
 
+/* NOTEBOOK PAGES — COLORFUL */
 .qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
@@ -184,21 +186,46 @@
   position: absolute; bottom: 5mm; right: 8mm;
   font-size: 10px; color: #9ca3af; font-weight: 500;
 }
-.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 19px; margin: 0 0 8px; line-height: 28px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
-.qvsn-h2 { color: #dc2626; font-weight: 700; font-size: 16px; margin: 12px 0 4px; line-height: 28px; }
+
+/* H1 — Red bold with underline */
+.qvsn-h1 {
+  color: #dc2626; font-weight: 700; font-size: 19px;
+  margin: 0 0 8px; line-height: 28px;
+  border-bottom: 2px solid #fecaca; padding-bottom: 2px;
+}
+
+/* H2 — Dark blue (different from H1) */
+.qvsn-h2 {
+  color: #1d4ed8; font-weight: 700; font-size: 16px;
+  margin: 14px 0 6px; line-height: 28px;
+  border-left: 4px solid #3b82f6; padding-left: 8px;
+}
+
+/* H3 — Purple (different from H1, H2) */
+.qvsn-h3 {
+  color: #7c3aed; font-weight: 700; font-size: 14px;
+  margin: 10px 0 4px; line-height: 28px;
+  font-style: italic;
+}
+
 .qvsn-p { margin: 0; line-height: 28px; color: #1e3a8a; }
 .qvsn-ul { margin: 0; padding-left: 22px; line-height: 28px; color: #1e3a8a; }
+
+/* Definition — yellow highlight */
 .qvsn-def {
   background: linear-gradient(90deg, rgba(250,204,21,0.3) 0%, rgba(250,204,21,0.15) 100%);
   border-left: 4px solid #f59e0b; padding: 6px 12px; margin: 4px 0;
-  border-radius: 6px; line-height: 28px;
+  border-radius: 6px; line-height: 28px; color: #78350f;
 }
+
+/* Formula — blue gradient box */
 .qvsn-formula {
-  background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.1) 100%);
-  border: 1.5px dashed #6366f1; padding: 8px 12px; margin: 6px 0;
+  background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(139,92,246,0.15) 100%);
+  border: 1.5px dashed #3b82f6; padding: 8px 12px; margin: 6px 0;
   border-radius: 6px; font-weight: 700; text-align: center; line-height: 28px;
-  color: #4338ca; word-wrap: break-word; overflow-wrap: break-word;
+  color: #1e40af; word-wrap: break-word; overflow-wrap: break-word;
 }
+
 .qvsn-diagram { display: flex; justify-content: center; margin: 8px 0; }
 .qvsn-diagram svg { width: 80px; height: 80px; }
 
@@ -222,6 +249,7 @@
   .qvsn-page::before { left: 12mm; }
   .qvsn-h1 { font-size: 16px; line-height: 24px; }
   .qvsn-h2 { font-size: 14px; line-height: 24px; }
+  .qvsn-h3 { font-size: 12px; line-height: 24px; }
   .qvsn-p, .qvsn-ul { line-height: 24px; }
 }`;
 
@@ -272,7 +300,7 @@
 
   <div class="qvsn-card">
     <label class="qvsn-label" for="qvsn-prompt">📝 Topic / Full Prompt</label>
-    <textarea id="qvsn-prompt" class="qvsn-textarea" placeholder="Yahan apna topic likho...&#10;&#10;Example:&#10;Single Phase Transformer - B.Tech Electrical Engineering" maxlength="2000"></textarea>
+    <textarea id="qvsn-prompt" class="qvsn-textarea" placeholder="Yahan apna topic likho..." maxlength="2000"></textarea>
     <div class="qvsn-counter" id="qvsn-counter">0 / 2000</div>
 
     <div class="qvsn-row3">
@@ -473,6 +501,7 @@
     }
   }
 
+  /* ---------------- STRONG PARSER (Anti-Thinking) ---------------- */
   function qvsnParseMarkdown(md) {
     const thinkingPatterns = [
       /^wait\b/i, /^check\b/i, /^word count check/i, /^self-correction/i,
@@ -485,7 +514,27 @@
       /^my output/i, /^i used/i, /^as per/i, /^following the/i,
       /^based on the/i, /^it looks/i, /^the structure/i,
       /^format check/i, /^language check/i, /^drafting:/i,
-      /^final answer/i, /^actually[, ]/i, /^hmm\b/i, /^let's\b/i
+      /^final answer/i, /^actually[, ]/i, /^hmm\b/i, /^let's\b/i,
+      /^start with #/i, /^## for sections/i, /^### for sub-sections/i,
+      /^final review/i, /^final check/i, /^drafting text/i,
+      /^refining content/i, /^example of forbidden/i, /^example of allowed/i,
+      /^intro: done/i, /^topic \d+:/i, /^part \d+ only/i,
+      /^no bold/i, /^no meta-commentary/i,
+      /^- start with #/i, /^- ## for/i, /^- ### for/i,
+      /^- final review/i, /^- final check/i, /^- drafting/i,
+      /^- example of/i, /^- no bold/i, /^- no meta/i,
+      /^- topic \d+/i, /^- part \d+/i, /^- intro: done/i,
+      /^- refining/i, /^allowed:/i, /^forbidden:/i,
+      /^sample text/i, /^output format/i, /^structure:/i,
+      /^rule \d+/i, /^section \d+/i,
+      /^i will now/i, /^i will write/i, /^i will use/i,
+      /^my plan/i, /^my strategy/i, /^my approach/i,
+      /^first[, ]/i, /^second[, ]/i, /^third[, ]/i,
+      /^then[, ]/i, /^next[, ]/i, /^finally[, ]/i,
+      /^to summarize/i, /^in summary/i, /^in conclusion/i,
+      /^the task/i, /^the goal/i, /^the objective/i,
+      /^the requirements/i, /^the instructions/i,
+      /^the user wants/i, /^the user asked/i
     ];
 
     const lines = md.split('\n');
@@ -522,7 +571,7 @@
       }
       if (trimmed.startsWith('### ')) {
         if (inList) { html += '</ul>'; inList = false; }
-        html += '<div class="qvsn-h2" style="font-size:14px;">' + qvsnEsc(trimmed.slice(4)) + '</div>';
+        html += '<div class="qvsn-h3">' + qvsnEsc(trimmed.slice(4)) + '</div>';
         continue;
       }
       if (trimmed.startsWith('## ')) {
