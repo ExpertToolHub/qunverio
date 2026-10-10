@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v15) — Page break fix + LaTeX clean
+   Final Version (v16) — Text cut/overlap fix
    ============================================================ */
 
 (function () {
@@ -19,7 +19,7 @@
     isGenerating: false,
     autoMode: false,
     isEditing: false,
-    draftKey: 'qvsn_draft_v15'
+    draftKey: 'qvsn_draft_v16'
   };
 
   const QVSN_DIAGRAMS = {
@@ -40,21 +40,16 @@
     const subMap = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ' };
     const supMap = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','n':'ⁿ','i':'ⁱ','x':'ˣ','a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','g':'ᵍ','h':'ʰ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','o':'ᵒ','p':'ᵖ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','y':'ʸ','z':'ᶻ' };
 
-    // Fractions (nested)
     let prev = ''; let iter = 5;
     while (f !== prev && iter > 0) { prev = f; f = f.replace(/\\?frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)'); iter--; }
     prev = ''; iter = 5;
     while (f !== prev && iter > 0) { prev = f; f = f.replace(/\\?sqrt\{([^{}]+)\}/g, '√($1)'); iter--; }
 
-    // Subscripts
     f = f.replace(/_\{([^}]+)\}/g, function (m, s) { return s.split('').map(function (c) { return subMap[c] || c; }).join(''); });
     f = f.replace(/_([0-9a-zA-Z])/g, function (m, c) { return subMap[c] || ('_' + c); });
-
-    // Superscripts
     f = f.replace(/\^\{([^}]+)\}/g, function (m, s) { return s.split('').map(function (c) { return supMap[c] || ('^' + c); }).join(''); });
     f = f.replace(/\^([0-9ni])/g, function (m, c) { return supMap[c] || ('^' + c); });
 
-    // Greek letters — LaTeX names to Unicode
     const greekMap = {
       'rho': 'ρ', 'sigma': 'σ', 'tau': 'τ', 'phi': 'φ',
       'theta': 'θ', 'alpha': 'α', 'beta': 'β', 'gamma': 'γ',
@@ -63,21 +58,17 @@
       'varepsilon': 'ε', 'zeta': 'ζ', 'iota': 'ι', 'kappa': 'κ',
       'xi': 'ξ', 'upsilon': 'υ', 'chi': 'χ', 'psi': 'ψ',
       'Delta': 'Δ', 'Omega': 'Ω', 'Sigma': 'Σ', 'Pi': 'Π',
-      'Phi': 'Φ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Gamma': 'Γ',
-      'Epsilon': 'Ε', 'Eta': 'Η', 'Mu': 'Μ', 'Nu': 'Ν'
+      'Phi': 'Φ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Gamma': 'Γ'
     };
 
-    // \rho, \sigma, etc. → Unicode
     f = f.replace(/\\([a-zA-Z]+)/g, function(m, name) {
       return greekMap[name] || m;
     });
 
-    // $...$ ke andar variables
     f = f.replace(/\$([a-zA-Z]+)\$/g, function(m, name) {
       return greekMap[name] || name;
     });
 
-    // Symbols
     f = f.replace(/\\times/g, ' × ').replace(/\\cdot/g, ' · ').replace(/\\div/g, ' ÷ ')
       .replace(/\\pm/g, ' ± ').replace(/\\mp/g, ' ∓ ').replace(/\\leq/g, ' ≤ ').replace(/\\geq/g, ' ≥ ')
       .replace(/\\neq/g, ' ≠ ').replace(/\\approx/g, ' ≈ ').replace(/\\equiv/g, ' ≡ ').replace(/\\propto/g, ' ∝ ')
@@ -88,16 +79,9 @@
       .replace(/\\text\{([^}]+)\}/g, '$1').replace(/\\mathrm\{([^}]+)\}/g, '$1')
       .replace(/\\mathbf\{([^}]+)\}/g, '$1').replace(/\\left/g, '').replace(/\\right/g, '');
 
-    // Backslash clean
     f = f.replace(/\\/g, '');
-
-    // Dollar signs clean
     f = f.replace(/\$/g, '');
-
-    // Curly braces clean
     f = f.replace(/[{}]/g, '');
-
-    // Extra spaces
     f = f.replace(/\s+/g, ' ').trim();
 
     return f;
@@ -198,14 +182,14 @@
 .qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
-  aspect-ratio: 210 / 297; padding: 18mm 12mm 12mm 22mm;
+  aspect-ratio: 210 / 297; padding: 14mm 10mm 10mm 18mm;
   position: relative; border-radius: 6px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   font-family: 'Kalam', cursive, sans-serif;
   overflow: hidden; box-sizing: border-box;
-  background-image: repeating-linear-gradient(transparent, transparent 27px, #e5e7eb 27px, #e5e7eb 28px);
-  background-size: 100% 28px; background-position: 0 18mm;
-  line-height: 28px; font-size: 14px;
+  background-image: repeating-linear-gradient(transparent, transparent 25px, #e5e7eb 25px, #e5e7eb 26px);
+  background-size: 100% 26px; background-position: 0 14mm;
+  line-height: 26px; font-size: 13px;
 }
 .qvsn-page::before {
   content: ''; position: absolute; top: 0; bottom: 0; left: 18mm;
@@ -215,24 +199,24 @@
   position: absolute; bottom: 5mm; right: 8mm;
   font-size: 10px; color: #9ca3af; font-weight: 500;
 }
-.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 19px; margin: 0 0 8px; line-height: 28px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
-.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 16px; margin: 14px 0 6px; line-height: 28px; border-left: 4px solid #3b82f6; padding-left: 8px; }
-.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 14px; margin: 10px 0 4px; line-height: 28px; font-style: italic; }
-.qvsn-p { margin: 0; line-height: 28px; color: #1e3a8a; }
-.qvsn-ul { margin: 0; padding-left: 22px; line-height: 28px; color: #1e3a8a; }
+.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 18px; margin: 0 0 8px; line-height: 26px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
+.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 15px; margin: 12px 0 4px; line-height: 26px; border-left: 4px solid #3b82f6; padding-left: 8px; }
+.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 13px; margin: 10px 0 4px; line-height: 26px; font-style: italic; }
+.qvsn-p { margin: 0; line-height: 26px; color: #1e3a8a; }
+.qvsn-ul { margin: 0; padding-left: 20px; line-height: 26px; color: #1e3a8a; }
 .qvsn-def {
   background: linear-gradient(90deg, rgba(250,204,21,0.3) 0%, rgba(250,204,21,0.15) 100%);
-  border-left: 4px solid #f59e0b; padding: 6px 12px; margin: 4px 0;
-  border-radius: 6px; line-height: 28px; color: #78350f;
+  border-left: 4px solid #f59e0b; padding: 5px 10px; margin: 4px 0;
+  border-radius: 6px; line-height: 26px; color: #78350f; font-size: 12.5px;
 }
 .qvsn-formula {
   background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(139,92,246,0.15) 100%);
-  border: 1.5px dashed #3b82f6; padding: 8px 12px; margin: 6px 0;
-  border-radius: 6px; font-weight: 700; text-align: center; line-height: 28px;
-  color: #1e40af; word-wrap: break-word; overflow-wrap: break-word;
+  border: 1.5px dashed #3b82f6; padding: 6px 10px; margin: 6px 0;
+  border-radius: 6px; font-weight: 700; text-align: center; line-height: 26px;
+  color: #1e40af; word-wrap: break-word; overflow-wrap: break-word; font-size: 12.5px;
 }
-.qvsn-diagram { display: flex; justify-content: center; margin: 8px 0; }
-.qvsn-diagram svg { width: 80px; height: 80px; }
+.qvsn-diagram { display: flex; justify-content: center; margin: 6px 0; }
+.qvsn-diagram svg { width: 70px; height: 70px; }
 
 .qvsn-pen-black .qvsn-p, .qvsn-pen-black .qvsn-ul, .qvsn-pen-black .qvsn-page { color: #111827; }
 .qvsn-pen-green .qvsn-p, .qvsn-pen-green .qvsn-ul, .qvsn-pen-green .qvsn-page { color: #166534; }
@@ -248,14 +232,16 @@
   .qvsn-row { grid-template-columns: 1fr; gap: 8px; }
   .qvsn-row3 { grid-template-columns: 1fr 1fr; gap: 6px; }
   .qvsn-page {
-    padding: 12mm 8mm 10mm 15mm; font-size: 12px; line-height: 24px;
-    background-size: 100% 24px; background-position: 0 12mm;
+    padding: 10mm 6mm 8mm 14mm; font-size: 11.5px; line-height: 22px;
+    background-size: 100% 22px; background-position: 0 10mm;
   }
-  .qvsn-page::before { left: 12mm; }
-  .qvsn-h1 { font-size: 16px; line-height: 24px; }
-  .qvsn-h2 { font-size: 14px; line-height: 24px; }
-  .qvsn-h3 { font-size: 12px; line-height: 24px; }
-  .qvsn-p, .qvsn-ul { line-height: 24px; }
+  .qvsn-page::before { left: 14mm; }
+  .qvsn-h1 { font-size: 15px; line-height: 22px; }
+  .qvsn-h2 { font-size: 13px; line-height: 22px; }
+  .qvsn-h3 { font-size: 11.5px; line-height: 22px; }
+  .qvsn-p, .qvsn-ul { line-height: 22px; }
+  .qvsn-def { font-size: 11px; line-height: 22px; }
+  .qvsn-formula { font-size: 11px; line-height: 22px; }
 }`;
 
   function qvsnInjectCSS() {
@@ -608,7 +594,7 @@
 
     const penClass = 'qvsn-pen-' + QVSN_STATE.penColor;
     const contentLines = md.split('\n').filter(function (l) { return l.trim(); });
-    const LINES_PER_PAGE = 18;
+    const LINES_PER_PAGE = 14;
     const pages = [];
     let currentPage = [];
 
@@ -624,14 +610,11 @@
       if (currentPage.length >= LINES_PER_PAGE) {
         const nextLine = contentLines[i + 1] || '';
         const nextIsSection = isSectionStart(nextLine);
-        const lastIsSection = isSectionStart(currentPage[currentPage.length - 1]);
 
-        if (!nextIsSection && !lastIsSection) {
-          continue;
+        if (nextIsSection || currentPage.length >= 16) {
+          pages.push(currentPage.join('\n'));
+          currentPage = [];
         }
-
-        pages.push(currentPage.join('\n'));
-        currentPage = [];
       }
     }
 
