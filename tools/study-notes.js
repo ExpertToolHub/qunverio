@@ -1,11 +1,14 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v11) — Smart page break + Ultra HD export
+   Final Version (v13) — Cloudflare Worker URL updated
    ============================================================ */
 
 (function () {
   'use strict';
+
+  /* ---------------- CLOUDFLARE WORKER URL ---------------- */
+  const QVSN_API_URL = 'https://qunverio-study-notes-study-notes1a1.rakeshyadav81098.workers.dev';
 
   const QVSN_STATE = {
     fullPrompt: '',
@@ -17,7 +20,7 @@
     isGenerating: false,
     autoMode: false,
     isEditing: false,
-    draftKey: 'qvsn_draft_v11'
+    draftKey: 'qvsn_draft_v13'
   };
 
   const QVSN_DIAGRAMS = {
@@ -69,7 +72,6 @@
     return f;
   }
 
-  /* ---------------- CSS ---------------- */
   const QVSN_CSS = `
 .qvsn-wrap {
   max-width: 700px; margin: 0 auto; padding: 14px;
@@ -102,10 +104,11 @@
   font-size: 0.88rem; font-family: inherit; outline: none;
   box-sizing: border-box; transition: border-color 0.15s;
 }
-.qvsn-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.qvsn-textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
 .qvsn-textarea:focus, .qvsn-input:focus, .qvsn-select:focus {
   border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
 }
+.qvsn-textarea::placeholder { color: #cbd5e1; font-style: italic; }
 
 .qvsn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .qvsn-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
@@ -161,7 +164,6 @@
 }
 .qvsn-progress-text { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 6px; }
 
-/* NOTEBOOK PAGES - A4 size */
 .qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
@@ -265,12 +267,12 @@
 <div class="qvsn-wrap">
   <div class="qvsn-header">
     <div class="qvsn-title">📚 AI Study Notes Generator</div>
-    <div class="qvsn-sub">Full prompt daalo → AI notes banayega → Auto ya Manual mode</div>
+    <div class="qvsn-sub">Topic daalo → AI notes banayega → PNG/PDF export karo</div>
   </div>
 
   <div class="qvsn-card">
-    <label class="qvsn-label" for="qvsn-prompt">📝 Full Prompt</label>
-    <textarea id="qvsn-prompt" class="qvsn-textarea" placeholder="Example:&#10;Single Phase Transformer&#10;B.Tech Electrical Engineering&#10;&#10;Topics: Definition, Construction, Working Principle, EMF Equation, Equivalent Circuit, Losses, Efficiency, Voltage Regulation" maxlength="2000"></textarea>
+    <label class="qvsn-label" for="qvsn-prompt">📝 Topic / Full Prompt</label>
+    <textarea id="qvsn-prompt" class="qvsn-textarea" placeholder="Yahan apna topic likho...&#10;&#10;Example:&#10;Single Phase Transformer - B.Tech Electrical Engineering" maxlength="2000"></textarea>
     <div class="qvsn-counter" id="qvsn-counter">0 / 2000</div>
 
     <div class="qvsn-row3">
@@ -369,13 +371,13 @@
     const depth = (document.getElementById('qvsn-depth') || {}).value || 'standard';
 
     if (isFirstPart && !fullPrompt.trim()) {
-      qvsnShowError('Bhai, pehle prompt toh likho!');
+      qvsnShowError('Pehle topic toh likho!');
       QVSN_STATE.isGenerating = false;
       return;
     }
 
     if (isFirstPart && fullPrompt.length > 2000) {
-      qvsnShowError('Prompt bahut lamba hai (max 2000 characters).');
+      qvsnShowError('Topic bahut lamba hai (max 2000 characters).');
       QVSN_STATE.isGenerating = false;
       return;
     }
@@ -385,7 +387,7 @@
 
     qvsnHideError();
     qvsnHideSuccess();
-    qvsnShowStatus(`🤖 Part ${nextPart} generate ho raha hai... (10-20 seconds)`);
+    qvsnShowStatus(`🤖 Part ${nextPart} generate ho raha hai...`);
     qvsnUpdateProgress(10, `Part ${nextPart} start...`);
 
     const genBtn = document.getElementById('qvsn-generate');
@@ -397,7 +399,7 @@
     try {
       qvsnUpdateProgress(30, `Part ${nextPart}: AI soch raha hai...`);
 
-      const res = await fetch('/api/study-notes-ai', {
+      const res = await fetch(QVSN_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -557,48 +559,17 @@
     return html;
   }
 
-  /* ---------------- SMART PAGE RENDERER ---------------- */
   function qvsnRenderPages(md) {
     const container = document.getElementById('qvsn-pages');
     if (!container) return;
 
     const penClass = 'qvsn-pen-' + QVSN_STATE.penColor;
-
-    // Smart page break: headings/definitions/formulas ko todta nahi
-    const allLines = md.split('\n').filter(function (l) { return l.trim(); });
+    const contentLines = md.split('\n').filter(function (l) { return l.trim(); });
     const LINES_PER_PAGE = 20;
     const pages = [];
-    let currentPage = [];
 
-    function isSectionStart(line) {
-      const t = line.trim();
-      return t.startsWith('# ') || t.startsWith('## ') || t.startsWith('### ') ||
-             /^definition:/i.test(t) || t.startsWith('$$') || t.startsWith('[DIAGRAM');
-    }
-
-    for (let i = 0; i < allLines.length; i++) {
-      currentPage.push(allLines[i]);
-
-      if (currentPage.length >= LINES_PER_PAGE) {
-        // Check karo agla line section start hai ya nahi
-        const nextLine = allLines[i + 1] || '';
-        const nextIsSection = isSectionStart(nextLine);
-        const lastIsSection = isSectionStart(currentPage[currentPage.length - 1]);
-
-        // Agar next section start nahi hai aur current page section pe end nahi ho raha
-        if (!nextIsSection && !lastIsSection) {
-          // Thoda aur wait karo — agla section start hone tak
-          continue;
-        }
-
-        pages.push(currentPage.join('\n'));
-        currentPage = [];
-      }
-    }
-
-    // Last page bacha hua
-    if (currentPage.length > 0) {
-      pages.push(currentPage.join('\n'));
+    for (let i = 0; i < contentLines.length; i += LINES_PER_PAGE) {
+      pages.push(contentLines.slice(i, i + LINES_PER_PAGE).join('\n'));
     }
     if (pages.length === 0) pages.push('');
 
@@ -671,7 +642,9 @@
     QVSN_STATE.rawText = '';
     QVSN_STATE.partNumber = 0;
     QVSN_STATE.fullPrompt = '';
-    if (document.getElementById('qvsn-prompt')) document.getElementById('qvsn-prompt').value = '';
+    if (document.getElementById('qvsn-prompt')) {
+      document.getElementById('qvsn-prompt').value = '';
+    }
     document.getElementById('qvsn-pages').innerHTML = '';
     document.getElementById('qvsn-actions-wrap').style.display = 'none';
     const progressWrap = document.getElementById('qvsn-progress-wrap');
@@ -680,48 +653,37 @@
     qvsnUpdateCounter();
   }
 
-  /* ---------------- ULTRA HD PNG EXPORT ---------------- */
   async function qvsnExportPNG() {
-    qvsnShowStatus('🖼️ PNG bana raha hai (Ultra HD 4x)...');
+    qvsnShowStatus('🖼️ PNG bana raha hai (HD)...');
     try {
       await qvsnEnsureLibraries();
       if (typeof htmlToImage === 'undefined') throw new Error('PNG library load nahi hui.');
       const pages = document.querySelectorAll('.qvsn-page');
       for (let i = 0; i < pages.length; i++) {
-        qvsnShowStatus('🖼️ Page ' + (i + 1) + ' / ' + pages.length + ' export ho raha hai (Ultra HD)...');
-        const dataUrl = await htmlToImage.toPng(pages[i], {
-          pixelRatio: 4,
-          backgroundColor: '#fefefe',
-          quality: 1
-        });
+        qvsnShowStatus('🖼️ Page ' + (i + 1) + ' / ' + pages.length + ' export ho raha hai...');
+        const dataUrl = await htmlToImage.toPng(pages[i], { pixelRatio: 3, backgroundColor: '#fefefe' });
         const link = document.createElement('a');
         link.download = 'study-notes-page-' + (i + 1) + '.png';
         link.href = dataUrl;
         link.click();
-        await new Promise(function (r) { setTimeout(r, 500); });
+        await new Promise(function (r) { setTimeout(r, 400); });
       }
-      qvsnShowStatus('✅ Ultra HD PNG download ho gaya!');
+      qvsnShowStatus('✅ PNG download ho gaya!');
       setTimeout(qvsnHideStatus, 2500);
     } catch (e) {
       qvsnShowError('PNG export fail: ' + e.message);
     }
   }
 
-  /* ---------------- ULTRA HD PDF EXPORT ---------------- */
   async function qvsnExportPDF() {
-    qvsnShowStatus('📄 PDF bana raha hai (High Quality)...');
+    qvsnShowStatus('📄 PDF bana raha hai...');
     try {
       await qvsnEnsureLibraries();
       if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF library load nahi hui');
       if (typeof html2canvas === 'undefined') throw new Error('html2canvas library load nahi hui');
 
       const jsPDF = window.jspdf.jsPDF;
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const pages = document.querySelectorAll('.qvsn-page');
       if (pages.length === 0) throw new Error('Pehle notes generate karo!');
 
@@ -730,34 +692,28 @@
 
       for (let i = 0; i < pages.length; i++) {
         if (i > 0) pdf.addPage();
-
         qvsnShowStatus('📄 Page ' + (i + 1) + ' / ' + pages.length + ' process ho raha hai...');
 
         const canvas = await html2canvas(pages[i], {
           scale: 3,
           backgroundColor: '#fefefe',
           useCORS: true,
-          logging: false,
-          allowTaint: true,
-          imageTimeout: 0
+          logging: false
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-        // Image ko A4 me fit karo — aspect ratio maintain karte hue
         const imgAspect = canvas.width / canvas.height;
         const pdfAspect = pdfW / pdfH;
 
         let drawW, drawH, offsetX, offsetY;
 
         if (imgAspect > pdfAspect) {
-          // Image wider hai — width fit karo
           drawW = pdfW;
           drawH = pdfW / imgAspect;
           offsetX = 0;
           offsetY = (pdfH - drawH) / 2;
         } else {
-          // Image taller hai — height fit karo
           drawH = pdfH;
           drawW = pdfH * imgAspect;
           offsetX = (pdfW - drawW) / 2;
@@ -768,7 +724,7 @@
       }
 
       pdf.save('study-notes.pdf');
-      qvsnShowStatus('✅ High Quality PDF download ho gaya!');
+      qvsnShowStatus('✅ PDF download ho gaya!');
       setTimeout(qvsnHideStatus, 2500);
     } catch (e) {
       qvsnShowError('PDF export fail: ' + e.message);
