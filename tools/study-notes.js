@@ -8,7 +8,7 @@
   'use strict';
 
   /* ---------------- CLOUDFLARE WORKER URL ---------------- */
-  const QVSN_API_URL = 'https://qunverio-study-notes-study-notes1a1.rakeshyadav81098.workers.dev';
+  const QVSN_API_URL = 'https://qunverio-study-notes.rakeshyadav81098.workers.dev';
 
   const QVSN_STATE = {
     fullPrompt: '',
