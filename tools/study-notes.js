@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v16) — Text cut/overlap fix
+   Final Version (v18) — Hindi + Hindi-English mix support
    ============================================================ */
 
 (function () {
@@ -19,7 +19,7 @@
     isGenerating: false,
     autoMode: false,
     isEditing: false,
-    draftKey: 'qvsn_draft_v16'
+    draftKey: 'qvsn_draft_v18'
   };
 
   const QVSN_DIAGRAMS = {
@@ -61,13 +61,8 @@
       'Phi': 'Φ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Gamma': 'Γ'
     };
 
-    f = f.replace(/\\([a-zA-Z]+)/g, function(m, name) {
-      return greekMap[name] || m;
-    });
-
-    f = f.replace(/\$([a-zA-Z]+)\$/g, function(m, name) {
-      return greekMap[name] || name;
-    });
+    f = f.replace(/\\([a-zA-Z]+)/g, function(m, name) { return greekMap[name] || m; });
+    f = f.replace(/\$([a-zA-Z]+)\$/g, function(m, name) { return greekMap[name] || name; });
 
     f = f.replace(/\\times/g, ' × ').replace(/\\cdot/g, ' · ').replace(/\\div/g, ' ÷ ')
       .replace(/\\pm/g, ' ± ').replace(/\\mp/g, ' ∓ ').replace(/\\leq/g, ' ≤ ').replace(/\\geq/g, ' ≥ ')
@@ -79,11 +74,7 @@
       .replace(/\\text\{([^}]+)\}/g, '$1').replace(/\\mathrm\{([^}]+)\}/g, '$1')
       .replace(/\\mathbf\{([^}]+)\}/g, '$1').replace(/\\left/g, '').replace(/\\right/g, '');
 
-    f = f.replace(/\\/g, '');
-    f = f.replace(/\$/g, '');
-    f = f.replace(/[{}]/g, '');
-    f = f.replace(/\s+/g, ' ').trim();
-
+    f = f.replace(/\\/g, '').replace(/\$/g, '').replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
     return f;
   }
 
@@ -182,37 +173,40 @@
 .qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
-  aspect-ratio: 210 / 297; padding: 14mm 10mm 10mm 18mm;
+  aspect-ratio: 210 / 297; padding: 14mm 12mm 12mm 24mm;
   position: relative; border-radius: 6px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   font-family: 'Kalam', cursive, sans-serif;
   overflow: hidden; box-sizing: border-box;
-  background-image: repeating-linear-gradient(transparent, transparent 25px, #e5e7eb 25px, #e5e7eb 26px);
-  background-size: 100% 26px; background-position: 0 14mm;
-  line-height: 26px; font-size: 13px;
+  background-image: repeating-linear-gradient(transparent, transparent 24px, #e5e7eb 24px, #e5e7eb 25px);
+  background-size: 100% 25px; background-position: 0 14mm;
+  line-height: 25px; font-size: 13px;
 }
 .qvsn-page::before {
-  content: ''; position: absolute; top: 0; bottom: 0; left: 18mm;
+  content: ''; position: absolute; top: 0; bottom: 0; left: 20mm;
   width: 1.5px; background: #fca5a5;
+}
+.qvsn-page-content {
+  padding-left: 6mm;
 }
 .qvsn-page-num {
   position: absolute; bottom: 5mm; right: 8mm;
   font-size: 10px; color: #9ca3af; font-weight: 500;
 }
-.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 18px; margin: 0 0 8px; line-height: 26px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
-.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 15px; margin: 12px 0 4px; line-height: 26px; border-left: 4px solid #3b82f6; padding-left: 8px; }
-.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 13px; margin: 10px 0 4px; line-height: 26px; font-style: italic; }
-.qvsn-p { margin: 0; line-height: 26px; color: #1e3a8a; }
-.qvsn-ul { margin: 0; padding-left: 20px; line-height: 26px; color: #1e3a8a; }
+.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 18px; margin: 0 0 8px; line-height: 25px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
+.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 15px; margin: 12px 0 4px; line-height: 25px; border-left: 4px solid #3b82f6; padding-left: 8px; }
+.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 13px; margin: 10px 0 4px; line-height: 25px; font-style: italic; }
+.qvsn-p { margin: 0; line-height: 25px; color: #1e3a8a; }
+.qvsn-ul { margin: 0; padding-left: 20px; line-height: 25px; color: #1e3a8a; }
 .qvsn-def {
   background: linear-gradient(90deg, rgba(250,204,21,0.3) 0%, rgba(250,204,21,0.15) 100%);
   border-left: 4px solid #f59e0b; padding: 5px 10px; margin: 4px 0;
-  border-radius: 6px; line-height: 26px; color: #78350f; font-size: 12.5px;
+  border-radius: 6px; line-height: 25px; color: #78350f; font-size: 12.5px;
 }
 .qvsn-formula {
   background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(139,92,246,0.15) 100%);
   border: 1.5px dashed #3b82f6; padding: 6px 10px; margin: 6px 0;
-  border-radius: 6px; font-weight: 700; text-align: center; line-height: 26px;
+  border-radius: 6px; font-weight: 700; text-align: center; line-height: 25px;
   color: #1e40af; word-wrap: break-word; overflow-wrap: break-word; font-size: 12.5px;
 }
 .qvsn-diagram { display: flex; justify-content: center; margin: 6px 0; }
@@ -232,10 +226,11 @@
   .qvsn-row { grid-template-columns: 1fr; gap: 8px; }
   .qvsn-row3 { grid-template-columns: 1fr 1fr; gap: 6px; }
   .qvsn-page {
-    padding: 10mm 6mm 8mm 14mm; font-size: 11.5px; line-height: 22px;
+    padding: 10mm 8mm 8mm 18mm; font-size: 11.5px; line-height: 22px;
     background-size: 100% 22px; background-position: 0 10mm;
   }
-  .qvsn-page::before { left: 14mm; }
+  .qvsn-page::before { left: 15mm; }
+  .qvsn-page-content { padding-left: 5mm; }
   .qvsn-h1 { font-size: 15px; line-height: 22px; }
   .qvsn-h2 { font-size: 13px; line-height: 22px; }
   .qvsn-h3 { font-size: 11.5px; line-height: 22px; }
@@ -299,7 +294,8 @@
         <label class="qvsn-label" for="qvsn-language">🌐 Language</label>
         <select id="qvsn-language" class="qvsn-select">
           <option value="english" selected>English</option>
-          <option value="hindi">Hindi</option>
+          <option value="hindi">हिन्दी (Hindi)</option>
+          <option value="hindi-english">हिन्दी + English</option>
           <option value="hinglish">Hinglish</option>
         </select>
       </div>
@@ -594,7 +590,7 @@
 
     const penClass = 'qvsn-pen-' + QVSN_STATE.penColor;
     const contentLines = md.split('\n').filter(function (l) { return l.trim(); });
-    const LINES_PER_PAGE = 14;
+    const MAX_LINES_PER_PAGE = 12;
     const pages = [];
     let currentPage = [];
 
@@ -607,11 +603,11 @@
     for (let i = 0; i < contentLines.length; i++) {
       currentPage.push(contentLines[i]);
 
-      if (currentPage.length >= LINES_PER_PAGE) {
+      if (currentPage.length >= MAX_LINES_PER_PAGE) {
         const nextLine = contentLines[i + 1] || '';
         const nextIsSection = isSectionStart(nextLine);
 
-        if (nextIsSection || currentPage.length >= 16) {
+        if (nextIsSection || currentPage.length >= 14) {
           pages.push(currentPage.join('\n'));
           currentPage = [];
         }
