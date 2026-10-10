@@ -1,13 +1,12 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v14) — Colored headings + clean output
+   Final Version (v15) — Page break fix + LaTeX clean
    ============================================================ */
 
 (function () {
   'use strict';
 
-  /* ---------------- CLOUDFLARE WORKER URL ---------------- */
   const QVSN_API_URL = 'https://qunverio-study-notes.rakeshyadav81098.workers.dev';
 
   const QVSN_STATE = {
@@ -20,7 +19,7 @@
     isGenerating: false,
     autoMode: false,
     isEditing: false,
-    draftKey: 'qvsn_draft_v14'
+    draftKey: 'qvsn_draft_v15'
   };
 
   const QVSN_DIAGRAMS = {
@@ -41,38 +40,69 @@
     const subMap = { '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉','a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ' };
     const supMap = { '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','n':'ⁿ','i':'ⁱ','x':'ˣ','a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','g':'ᵍ','h':'ʰ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','o':'ᵒ','p':'ᵖ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','y':'ʸ','z':'ᶻ' };
 
+    // Fractions (nested)
     let prev = ''; let iter = 5;
     while (f !== prev && iter > 0) { prev = f; f = f.replace(/\\?frac\{([^{}]+)\}\{([^{}]+)\}/g, '($1)/($2)'); iter--; }
     prev = ''; iter = 5;
     while (f !== prev && iter > 0) { prev = f; f = f.replace(/\\?sqrt\{([^{}]+)\}/g, '√($1)'); iter--; }
 
+    // Subscripts
     f = f.replace(/_\{([^}]+)\}/g, function (m, s) { return s.split('').map(function (c) { return subMap[c] || c; }).join(''); });
     f = f.replace(/_([0-9a-zA-Z])/g, function (m, c) { return subMap[c] || ('_' + c); });
+
+    // Superscripts
     f = f.replace(/\^\{([^}]+)\}/g, function (m, s) { return s.split('').map(function (c) { return supMap[c] || ('^' + c); }).join(''); });
     f = f.replace(/\^([0-9ni])/g, function (m, c) { return supMap[c] || ('^' + c); });
 
+    // Greek letters — LaTeX names to Unicode
+    const greekMap = {
+      'rho': 'ρ', 'sigma': 'σ', 'tau': 'τ', 'phi': 'φ',
+      'theta': 'θ', 'alpha': 'α', 'beta': 'β', 'gamma': 'γ',
+      'delta': 'δ', 'eta': 'η', 'mu': 'μ', 'nu': 'ν',
+      'pi': 'π', 'omega': 'ω', 'lambda': 'λ', 'epsilon': 'ε',
+      'varepsilon': 'ε', 'zeta': 'ζ', 'iota': 'ι', 'kappa': 'κ',
+      'xi': 'ξ', 'upsilon': 'υ', 'chi': 'χ', 'psi': 'ψ',
+      'Delta': 'Δ', 'Omega': 'Ω', 'Sigma': 'Σ', 'Pi': 'Π',
+      'Phi': 'Φ', 'Theta': 'Θ', 'Lambda': 'Λ', 'Gamma': 'Γ',
+      'Epsilon': 'Ε', 'Eta': 'Η', 'Mu': 'Μ', 'Nu': 'Ν'
+    };
+
+    // \rho, \sigma, etc. → Unicode
+    f = f.replace(/\\([a-zA-Z]+)/g, function(m, name) {
+      return greekMap[name] || m;
+    });
+
+    // $...$ ke andar variables
+    f = f.replace(/\$([a-zA-Z]+)\$/g, function(m, name) {
+      return greekMap[name] || name;
+    });
+
+    // Symbols
     f = f.replace(/\\times/g, ' × ').replace(/\\cdot/g, ' · ').replace(/\\div/g, ' ÷ ')
       .replace(/\\pm/g, ' ± ').replace(/\\mp/g, ' ∓ ').replace(/\\leq/g, ' ≤ ').replace(/\\geq/g, ' ≥ ')
       .replace(/\\neq/g, ' ≠ ').replace(/\\approx/g, ' ≈ ').replace(/\\equiv/g, ' ≡ ').replace(/\\propto/g, ' ∝ ')
       .replace(/\\infty/g, ' ∞ ').replace(/\\rightarrow/g, ' → ').replace(/\\leftarrow/g, ' ← ')
       .replace(/\\leftrightarrow/g, ' ↔ ').replace(/\\Rightarrow/g, ' ⇒ ').replace(/\\Leftarrow/g, ' ⇐ ')
       .replace(/\\sum/g, ' Σ ').replace(/\\prod/g, ' ∏ ').replace(/\\int/g, ' ∫ ').replace(/\\partial/g, ' ∂ ')
-      .replace(/\\nabla/g, ' ∇ ').replace(/\\alpha/g, ' α ').replace(/\\beta/g, ' β ').replace(/\\gamma/g, ' γ ')
-      .replace(/\\delta/g, ' δ ').replace(/\\Delta/g, ' Δ ').replace(/\\epsilon/g, ' ε ').replace(/\\varepsilon/g, ' ε ')
-      .replace(/\\zeta/g, ' ζ ').replace(/\\eta/g, ' η ').replace(/\\theta/g, ' θ ').replace(/\\Theta/g, ' Θ ')
-      .replace(/\\iota/g, ' ι ').replace(/\\kappa/g, ' κ ').replace(/\\lambda/g, ' λ ').replace(/\\Lambda/g, ' Λ ')
-      .replace(/\\mu/g, ' μ ').replace(/\\nu/g, ' ν ').replace(/\\xi/g, ' ξ ').replace(/\\pi/g, ' π ')
-      .replace(/\\Pi/g, ' Π ').replace(/\\rho/g, ' ρ ').replace(/\\sigma/g, ' σ ').replace(/\\Sigma/g, ' Σ ')
-      .replace(/\\tau/g, ' τ ').replace(/\\upsilon/g, ' υ ').replace(/\\phi/g, ' φ ').replace(/\\Phi/g, ' Φ ')
-      .replace(/\\chi/g, ' χ ').replace(/\\psi/g, ' ψ ').replace(/\\Psi/g, ' Ψ ').replace(/\\omega/g, ' ω ')
-      .replace(/\\Omega/g, ' Ω ').replace(/\\text\{([^}]+)\}/g, '$1').replace(/\\mathrm\{([^}]+)\}/g, '$1')
-      .replace(/\\mathbf\{([^}]+)\}/g, '$1').replace(/\\left/g, '').replace(/\\right/g, '').replace(/\\/g, '');
+      .replace(/\\nabla/g, ' ∇ ')
+      .replace(/\\text\{([^}]+)\}/g, '$1').replace(/\\mathrm\{([^}]+)\}/g, '$1')
+      .replace(/\\mathbf\{([^}]+)\}/g, '$1').replace(/\\left/g, '').replace(/\\right/g, '');
 
-    f = f.replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+    // Backslash clean
+    f = f.replace(/\\/g, '');
+
+    // Dollar signs clean
+    f = f.replace(/\$/g, '');
+
+    // Curly braces clean
+    f = f.replace(/[{}]/g, '');
+
+    // Extra spaces
+    f = f.replace(/\s+/g, ' ').trim();
+
     return f;
   }
 
-  /* ---------------- CSS WITH COLORFUL HEADINGS ---------------- */
   const QVSN_CSS = `
 .qvsn-wrap {
   max-width: 700px; margin: 0 auto; padding: 14px;
@@ -165,7 +195,6 @@
 }
 .qvsn-progress-text { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 6px; }
 
-/* NOTEBOOK PAGES — COLORFUL */
 .qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
@@ -186,46 +215,22 @@
   position: absolute; bottom: 5mm; right: 8mm;
   font-size: 10px; color: #9ca3af; font-weight: 500;
 }
-
-/* H1 — Red bold with underline */
-.qvsn-h1 {
-  color: #dc2626; font-weight: 700; font-size: 19px;
-  margin: 0 0 8px; line-height: 28px;
-  border-bottom: 2px solid #fecaca; padding-bottom: 2px;
-}
-
-/* H2 — Dark blue (different from H1) */
-.qvsn-h2 {
-  color: #1d4ed8; font-weight: 700; font-size: 16px;
-  margin: 14px 0 6px; line-height: 28px;
-  border-left: 4px solid #3b82f6; padding-left: 8px;
-}
-
-/* H3 — Purple (different from H1, H2) */
-.qvsn-h3 {
-  color: #7c3aed; font-weight: 700; font-size: 14px;
-  margin: 10px 0 4px; line-height: 28px;
-  font-style: italic;
-}
-
+.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 19px; margin: 0 0 8px; line-height: 28px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
+.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 16px; margin: 14px 0 6px; line-height: 28px; border-left: 4px solid #3b82f6; padding-left: 8px; }
+.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 14px; margin: 10px 0 4px; line-height: 28px; font-style: italic; }
 .qvsn-p { margin: 0; line-height: 28px; color: #1e3a8a; }
 .qvsn-ul { margin: 0; padding-left: 22px; line-height: 28px; color: #1e3a8a; }
-
-/* Definition — yellow highlight */
 .qvsn-def {
   background: linear-gradient(90deg, rgba(250,204,21,0.3) 0%, rgba(250,204,21,0.15) 100%);
   border-left: 4px solid #f59e0b; padding: 6px 12px; margin: 4px 0;
   border-radius: 6px; line-height: 28px; color: #78350f;
 }
-
-/* Formula — blue gradient box */
 .qvsn-formula {
   background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(139,92,246,0.15) 100%);
   border: 1.5px dashed #3b82f6; padding: 8px 12px; margin: 6px 0;
   border-radius: 6px; font-weight: 700; text-align: center; line-height: 28px;
   color: #1e40af; word-wrap: break-word; overflow-wrap: break-word;
 }
-
 .qvsn-diagram { display: flex; justify-content: center; margin: 8px 0; }
 .qvsn-diagram svg { width: 80px; height: 80px; }
 
@@ -501,7 +506,6 @@
     }
   }
 
-  /* ---------------- STRONG PARSER (Anti-Thinking) ---------------- */
   function qvsnParseMarkdown(md) {
     const thinkingPatterns = [
       /^wait\b/i, /^check\b/i, /^word count check/i, /^self-correction/i,
@@ -520,21 +524,11 @@
       /^refining content/i, /^example of forbidden/i, /^example of allowed/i,
       /^intro: done/i, /^topic \d+:/i, /^part \d+ only/i,
       /^no bold/i, /^no meta-commentary/i,
-      /^- start with #/i, /^- ## for/i, /^- ### for/i,
-      /^- final review/i, /^- final check/i, /^- drafting/i,
-      /^- example of/i, /^- no bold/i, /^- no meta/i,
-      /^- topic \d+/i, /^- part \d+/i, /^- intro: done/i,
-      /^- refining/i, /^allowed:/i, /^forbidden:/i,
+      /^allowed:/i, /^forbidden:/i,
       /^sample text/i, /^output format/i, /^structure:/i,
       /^rule \d+/i, /^section \d+/i,
       /^i will now/i, /^i will write/i, /^i will use/i,
-      /^my plan/i, /^my strategy/i, /^my approach/i,
-      /^first[, ]/i, /^second[, ]/i, /^third[, ]/i,
-      /^then[, ]/i, /^next[, ]/i, /^finally[, ]/i,
-      /^to summarize/i, /^in summary/i, /^in conclusion/i,
-      /^the task/i, /^the goal/i, /^the objective/i,
-      /^the requirements/i, /^the instructions/i,
-      /^the user wants/i, /^the user asked/i
+      /^my plan/i, /^my strategy/i, /^my approach/i
     ];
 
     const lines = md.split('\n');
@@ -614,12 +608,34 @@
 
     const penClass = 'qvsn-pen-' + QVSN_STATE.penColor;
     const contentLines = md.split('\n').filter(function (l) { return l.trim(); });
-    const LINES_PER_PAGE = 20;
+    const LINES_PER_PAGE = 18;
     const pages = [];
+    let currentPage = [];
 
-    for (let i = 0; i < contentLines.length; i += LINES_PER_PAGE) {
-      pages.push(contentLines.slice(i, i + LINES_PER_PAGE).join('\n'));
+    function isSectionStart(line) {
+      const t = line.trim();
+      return t.startsWith('# ') || t.startsWith('## ') || t.startsWith('### ') ||
+             /^definition:/i.test(t) || t.startsWith('$$') || t.startsWith('[DIAGRAM');
     }
+
+    for (let i = 0; i < contentLines.length; i++) {
+      currentPage.push(contentLines[i]);
+
+      if (currentPage.length >= LINES_PER_PAGE) {
+        const nextLine = contentLines[i + 1] || '';
+        const nextIsSection = isSectionStart(nextLine);
+        const lastIsSection = isSectionStart(currentPage[currentPage.length - 1]);
+
+        if (!nextIsSection && !lastIsSection) {
+          continue;
+        }
+
+        pages.push(currentPage.join('\n'));
+        currentPage = [];
+      }
+    }
+
+    if (currentPage.length > 0) pages.push(currentPage.join('\n'));
     if (pages.length === 0) pages.push('');
 
     container.innerHTML = pages.map(function (pageMd, idx) {
