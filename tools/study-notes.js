@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v18) — Hindi + Hindi-English mix support
+   Final Version (v19) — PNG/PDF fix + Font size + Print match
    ============================================================ */
 
 (function () {
@@ -19,7 +19,7 @@
     isGenerating: false,
     autoMode: false,
     isEditing: false,
-    draftKey: 'qvsn_draft_v18'
+    draftKey: 'qvsn_draft_v19'
   };
 
   const QVSN_DIAGRAMS = {
@@ -170,17 +170,18 @@
 }
 .qvsn-progress-text { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 6px; }
 
+/* PAGE — Print Match */
 .qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
-  aspect-ratio: 210 / 297; padding: 14mm 12mm 12mm 24mm;
+  aspect-ratio: 210 / 297; padding: 10mm 10mm 8mm 22mm;
   position: relative; border-radius: 6px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   font-family: 'Kalam', cursive, sans-serif;
   overflow: hidden; box-sizing: border-box;
-  background-image: repeating-linear-gradient(transparent, transparent 24px, #e5e7eb 24px, #e5e7eb 25px);
-  background-size: 100% 25px; background-position: 0 14mm;
-  line-height: 25px; font-size: 13px;
+  background-image: repeating-linear-gradient(transparent, transparent 23px, #e5e7eb 23px, #e5e7eb 24px);
+  background-size: 100% 24px; background-position: 0 10mm;
+  line-height: 24px; font-size: 13px;
 }
 .qvsn-page::before {
   content: ''; position: absolute; top: 0; bottom: 0; left: 20mm;
@@ -190,23 +191,24 @@
   padding-left: 6mm;
 }
 .qvsn-page-num {
-  position: absolute; bottom: 5mm; right: 8mm;
+  position: absolute; bottom: 4mm; right: 8mm;
   font-size: 10px; color: #9ca3af; font-weight: 500;
+  background: #fefefe; padding: 1px 4px;
 }
-.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 18px; margin: 0 0 8px; line-height: 25px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
-.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 15px; margin: 12px 0 4px; line-height: 25px; border-left: 4px solid #3b82f6; padding-left: 8px; }
-.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 13px; margin: 10px 0 4px; line-height: 25px; font-style: italic; }
-.qvsn-p { margin: 0; line-height: 25px; color: #1e3a8a; }
-.qvsn-ul { margin: 0; padding-left: 20px; line-height: 25px; color: #1e3a8a; }
+.qvsn-h1 { color: #dc2626; font-weight: 700; font-size: 19px; margin: 0 0 8px; line-height: 24px; border-bottom: 2px solid #fecaca; padding-bottom: 2px; }
+.qvsn-h2 { color: #1d4ed8; font-weight: 700; font-size: 16px; margin: 12px 0 4px; line-height: 24px; border-left: 4px solid #3b82f6; padding-left: 8px; }
+.qvsn-h3 { color: #7c3aed; font-weight: 700; font-size: 14px; margin: 10px 0 4px; line-height: 24px; font-style: italic; }
+.qvsn-p { margin: 0; line-height: 24px; color: #1e3a8a; }
+.qvsn-ul { margin: 0; padding-left: 20px; line-height: 24px; color: #1e3a8a; }
 .qvsn-def {
   background: linear-gradient(90deg, rgba(250,204,21,0.3) 0%, rgba(250,204,21,0.15) 100%);
   border-left: 4px solid #f59e0b; padding: 5px 10px; margin: 4px 0;
-  border-radius: 6px; line-height: 25px; color: #78350f; font-size: 12.5px;
+  border-radius: 6px; line-height: 24px; color: #78350f; font-size: 12.5px;
 }
 .qvsn-formula {
   background: linear-gradient(135deg, rgba(59,130,246,0.15) 0%, rgba(139,92,246,0.15) 100%);
   border: 1.5px dashed #3b82f6; padding: 6px 10px; margin: 6px 0;
-  border-radius: 6px; font-weight: 700; text-align: center; line-height: 25px;
+  border-radius: 6px; font-weight: 700; text-align: center; line-height: 24px;
   color: #1e40af; word-wrap: break-word; overflow-wrap: break-word; font-size: 12.5px;
 }
 .qvsn-diagram { display: flex; justify-content: center; margin: 6px 0; }
@@ -226,17 +228,17 @@
   .qvsn-row { grid-template-columns: 1fr; gap: 8px; }
   .qvsn-row3 { grid-template-columns: 1fr 1fr; gap: 6px; }
   .qvsn-page {
-    padding: 10mm 8mm 8mm 18mm; font-size: 11.5px; line-height: 22px;
-    background-size: 100% 22px; background-position: 0 10mm;
+    padding: 8mm 6mm 6mm 16mm; font-size: 12px; line-height: 22px;
+    background-size: 100% 22px; background-position: 0 8mm;
   }
-  .qvsn-page::before { left: 15mm; }
-  .qvsn-page-content { padding-left: 5mm; }
-  .qvsn-h1 { font-size: 15px; line-height: 22px; }
-  .qvsn-h2 { font-size: 13px; line-height: 22px; }
-  .qvsn-h3 { font-size: 11.5px; line-height: 22px; }
+  .qvsn-page::before { left: 14mm; }
+  .qvsn-page-content { padding-left: 4mm; }
+  .qvsn-h1 { font-size: 16px; line-height: 22px; }
+  .qvsn-h2 { font-size: 14px; line-height: 22px; }
+  .qvsn-h3 { font-size: 12px; line-height: 22px; }
   .qvsn-p, .qvsn-ul { line-height: 22px; }
-  .qvsn-def { font-size: 11px; line-height: 22px; }
-  .qvsn-formula { font-size: 11px; line-height: 22px; }
+  .qvsn-def { font-size: 11.5px; line-height: 22px; }
+  .qvsn-formula { font-size: 11.5px; line-height: 22px; }
 }`;
 
   function qvsnInjectCSS() {
@@ -590,7 +592,7 @@
 
     const penClass = 'qvsn-pen-' + QVSN_STATE.penColor;
     const contentLines = md.split('\n').filter(function (l) { return l.trim(); });
-    const MAX_LINES_PER_PAGE = 12;
+    const MAX_LINES_PER_PAGE = 7;
     const pages = [];
     let currentPage = [];
 
@@ -607,7 +609,7 @@
         const nextLine = contentLines[i + 1] || '';
         const nextIsSection = isSectionStart(nextLine);
 
-        if (nextIsSection || currentPage.length >= 14) {
+        if (nextIsSection || currentPage.length >= 9) {
           pages.push(currentPage.join('\n'));
           currentPage = [];
         }
@@ -705,7 +707,16 @@
       const pages = document.querySelectorAll('.qvsn-page');
       for (let i = 0; i < pages.length; i++) {
         qvsnShowStatus('🖼️ Page ' + (i + 1) + ' / ' + pages.length + ' export ho raha hai...');
-        const dataUrl = await htmlToImage.toPng(pages[i], { pixelRatio: 3, backgroundColor: '#fefefe' });
+        const dataUrl = await htmlToImage.toPng(pages[i], {
+          pixelRatio: 3,
+          backgroundColor: '#fefefe',
+          width: pages[i].offsetWidth,
+          height: pages[i].scrollHeight,
+          style: {
+            transform: 'none',
+            overflow: 'visible'
+          }
+        });
         const link = document.createElement('a');
         link.download = 'study-notes-page-' + (i + 1) + '.png';
         link.href = dataUrl;
@@ -739,32 +750,20 @@
         qvsnShowStatus('📄 Page ' + (i + 1) + ' / ' + pages.length + ' process ho raha hai...');
 
         const canvas = await html2canvas(pages[i], {
-          scale: 3,
+          scale: 2,
           backgroundColor: '#fefefe',
           useCORS: true,
-          logging: false
+          logging: false,
+          width: pages[i].offsetWidth,
+          height: pages[i].scrollHeight,
+          windowWidth: pages[i].scrollWidth,
+          windowHeight: pages[i].scrollHeight
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
-        const imgAspect = canvas.width / canvas.height;
-        const pdfAspect = pdfW / pdfH;
-
-        let drawW, drawH, offsetX, offsetY;
-
-        if (imgAspect > pdfAspect) {
-          drawW = pdfW;
-          drawH = pdfW / imgAspect;
-          offsetX = 0;
-          offsetY = (pdfH - drawH) / 2;
-        } else {
-          drawH = pdfH;
-          drawW = pdfH * imgAspect;
-          offsetX = (pdfW - drawW) / 2;
-          offsetY = 0;
-        }
-
-        pdf.addImage(imgData, 'JPEG', offsetX, offsetY, drawW, drawH, undefined, 'FAST');
+        // Full A4 fit karo, content cut nahi hoga
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
       }
 
       pdf.save('study-notes.pdf');
