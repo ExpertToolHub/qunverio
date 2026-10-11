@@ -1,7 +1,7 @@
 /* ============================================================
    QUNVERIO — AI STUDY NOTES GENERATOR
    File: tools/study-notes.js
-   Final Version (v20) — Autofit System
+   Final Version (v21) — PDF stretch fix
    ============================================================ */
 
 (function () {
@@ -19,7 +19,7 @@
     isGenerating: false,
     autoMode: false,
     isEditing: false,
-    draftKey: 'qvsn_draft_v20'
+    draftKey: 'qvsn_draft_v21'
   };
 
   const QVSN_DIAGRAMS = {
@@ -170,7 +170,6 @@
 }
 .qvsn-progress-text { text-align: center; font-size: 0.75rem; color: #64748b; margin-top: 6px; }
 
-/* PAGE — A4 with Autofit */
 .qvsn-pages { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
 .qvsn-page {
   background: #fefefe; color: #1e3a8a; width: 100%;
@@ -586,7 +585,6 @@
     return html;
   }
 
-  /* ---------------- AUTOFIT RENDERER ---------------- */
   function qvsnRenderPages(md) {
     const container = document.getElementById('qvsn-pages');
     if (!container) return;
@@ -594,16 +592,12 @@
     const penClass = 'qvsn-pen-' + QVSN_STATE.penColor;
     const contentLines = md.split('\n').filter(function (l) { return l.trim(); });
 
-    // A4 page height (pixels at 96 DPI)
     const A4_HEIGHT_PX = 1123;
     const PADDING_TOP = 45;
     const PADDING_BOTTOM = 38;
     const AVAILABLE_HEIGHT = A4_HEIGHT_PX - PADDING_TOP - PADDING_BOTTOM;
-
-    // Line height in pixels (matches CSS)
     const LINE_HEIGHT = 26;
 
-    // Har line ki actual height nikalo
     function getLineHeight(line) {
       const t = line.trim();
       if (!t) return LINE_HEIGHT;
@@ -613,15 +607,11 @@
       if (t.startsWith('$$') && t.endsWith('$$')) return LINE_HEIGHT * 1.6;
       if (t.startsWith('[DIAGRAM')) return LINE_HEIGHT * 3.2;
       if (/^definition:/i.test(t)) return LINE_HEIGHT * 1.6;
-      // Bullet points wrap hote hain, isliye thoda extra
       if (t.startsWith('- ')) {
-        const textLength = t.length;
-        const lines = Math.ceil(textLength / 45);
+        const lines = Math.ceil(t.length / 45);
         return LINE_HEIGHT * Math.max(1, lines);
       }
-      // Normal paragraph wrap
-      const textLength = t.length;
-      const lines = Math.ceil(textLength / 50);
+      const lines = Math.ceil(t.length / 50);
       return LINE_HEIGHT * Math.max(1, lines);
     }
 
@@ -629,22 +619,11 @@
     let currentPage = [];
     let currentHeight = 0;
 
-    function isSectionStart(line) {
-      const t = line.trim();
-      return t.startsWith('# ') || t.startsWith('## ') || t.startsWith('### ') ||
-             /^definition:/i.test(t) || t.startsWith('$$') || t.startsWith('[DIAGRAM');
-    }
-
     for (let i = 0; i < contentLines.length; i++) {
       const line = contentLines[i];
       const lineHeight = getLineHeight(line);
 
-      // Agar line fit nahi hoti, toh break karo
       if (currentHeight + lineHeight > AVAILABLE_HEIGHT && currentPage.length > 0) {
-        // Section start pe break karo agar possible hai
-        const lastLine = currentPage[currentPage.length - 1];
-        const lastIsSection = isSectionStart(lastLine);
-
         pages.push(currentPage.join('\n'));
         currentPage = [];
         currentHeight = 0;
@@ -765,6 +744,7 @@
     }
   }
 
+  /* ---------------- PDF EXPORT (STRETCH FIX) ---------------- */
   async function qvsnExportPDF() {
     qvsnShowStatus('📄 PDF bana raha hai...');
     try {
@@ -790,13 +770,21 @@
           useCORS: true,
           logging: false,
           width: pages[i].offsetWidth,
-          height: pages[i].scrollHeight,
+          height: pages[i].offsetHeight,
           windowWidth: pages[i].scrollWidth,
           windowHeight: pages[i].scrollHeight
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH, undefined, 'FAST');
+
+        // Aspect ratio maintain karo, stretch nahi
+        const ratio = Math.min(pdfW / canvas.width, pdfH / canvas.height);
+        const drawW = canvas.width * ratio;
+        const drawH = canvas.height * ratio;
+        const offsetX = (pdfW - drawW) / 2;
+        const offsetY = (pdfH - drawH) / 2;
+
+        pdf.addImage(imgData, 'JPEG', offsetX, offsetY, drawW, drawH, undefined, 'FAST');
       }
 
       pdf.save('study-notes.pdf');
