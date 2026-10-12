@@ -1,12 +1,13 @@
 /* ============================================================
    QUNVERIO — SARKARI PORTAL HUB (tools/sarkari-portal-hub.js)
    200+ Government Websites — Category-based redirect
+   FINAL VERSION — All bugs fixed
    ============================================================ */
 
 console.log('%cSarkari Portal Hub Loading...', 'color:#f59e0b;font-weight:bold');
 
 /* ============================================================
-   TOOL REGISTRATION (setup.js mein automatically add hoga)
+   TOOL REGISTRATION (setup.js ke EXTRA_TOOLS mein add hoga)
    ============================================================ */
 (function registerSarkariPortalHub() {
   if (!window.EXTRA_TOOLS) {
@@ -15,13 +16,11 @@ console.log('%cSarkari Portal Hub Loading...', 'color:#f59e0b;font-weight:bold')
     return;
   }
 
-  // Already registered? Skip
   if (window.EXTRA_TOOLS.find(t => t.id === 'sarkari-portal-hub')) {
     console.log('%c[SPH] Already registered ✅', 'color:#10b981');
     return;
   }
 
-  // Register tool
   window.EXTRA_TOOLS.push({
     id: 'sarkari-portal-hub',
     name: 'Sarkari Portal Hub',
@@ -29,14 +28,14 @@ console.log('%cSarkari Portal Hub Loading...', 'color:#f59e0b;font-weight:bold')
     icon: '🇮🇳',
     desc: '200+ government websites in one place — Aadhaar, PAN, VAHAN, Land Records & more',
     howto: 'Search box mein type karo (jaise "aadhaar" ya "vahan"). Category chip select karo. Card pe click karo — official website new tab mein khulegi.',
-    kw: ['sarkari', 'government', 'aadhaar', 'pan', 'vahan', 'land', 'bhulekh', 'gst', 'itr', 'epfo', 'passport', 'voter', 'ration', 'yojana', 'pm kisan', 'gov', 'govt', 'india']
+    kw: ['sarkari', 'government', 'aadhaar', 'pan', 'vahan', 'land', 'bhulekh', 'gst', 'itr', 'epfo', 'passport', 'voter', 'ration', 'yojana', 'pm kisan', 'gov', 'govt', 'india', 'portal', 'website']
   });
 
   console.log('%c[SPH] Tool registered ✅', 'color:#10b981;font-weight:bold');
 })();
 
 /* ============================================================
-   200+ GOVERNMENT WEBSITES DATA
+   224+ GOVERNMENT WEBSITES DATA
    ============================================================ */
 window.QVR_SPH_DATA = { categories: [
 { id:"identity", icon:"🆔", name:"Identity Documents", portals:[
@@ -311,12 +310,14 @@ window.QVR_SPH_DATA = { categories: [
 ]};
 
 /* ============================================================
-   RENDERER — Tool ka body HTML
+   RENDERER — Tool body HTML
    ============================================================ */
+window.EXTRA_TOOL_RENDERERS = window.EXTRA_TOOL_RENDERERS || {};
+
 window.EXTRA_TOOL_RENDERERS['sarkari-portal-hub'] = function() {
   const data = window.QVR_SPH_DATA;
   let total = 0;
-  data.categories.forEach(c => total += c.portals.length);
+  data.categories.forEach(function(c) { total += c.portals.length; });
 
   return `
     <style>
@@ -401,8 +402,10 @@ window.EXTRA_TOOL_RENDERERS['sarkari-portal-hub'] = function() {
 };
 
 /* ============================================================
-   INIT — Tool render hone ke baad ye chalega
+   INIT — FINAL WORKING VERSION
    ============================================================ */
+window.EXTRA_TOOL_INITS = window.EXTRA_TOOL_INITS || {};
+
 window.EXTRA_TOOL_INITS['sarkari-portal-hub'] = function() {
   const data = window.QVR_SPH_DATA;
   let activeCategory = null;
@@ -441,26 +444,31 @@ window.EXTRA_TOOL_INITS['sarkari-portal-hub'] = function() {
   }
 
   function renderList() {
-    const q = searchQuery.trim().toLowerCase();
+    const q = (searchQuery || '').trim().toLowerCase();
     let total = 0;
     let html = '';
 
     data.categories.forEach(function (cat) {
       if (activeCategory && cat.id !== activeCategory) return;
+
       const matched = cat.portals.filter(function (p) {
         if (!q) return true;
-        return p.name.toLowerCase().indexOf(q) > -1 ||
-               p.tags.toLowerCase().indexOf(q) > -1 ||
-               cat.name.toLowerCase().indexOf(q) > -1;
+        const name = (p.name || '').toLowerCase();
+        const tags = (p.tags || '').toLowerCase();
+        const catName = (cat.name || '').toLowerCase();
+        return name.indexOf(q) > -1 || tags.indexOf(q) > -1 || catName.indexOf(q) > -1;
       });
+
       if (!matched.length) return;
       total += matched.length;
+
       html += '<section class="qvr-sph-section" id="qvr-cat-' + cat.id + '">' +
               '<div class="qvr-sph-sectionhead">' +
               '<span class="qvr-sph-sectionicon">' + cat.icon + '</span>' +
               '<h3 class="qvr-sph-sectiontitle">' + cat.name + '</h3>' +
               '<span class="qvr-sph-sectioncount">' + matched.length + '</span>' +
               '</div><div class="qvr-sph-cards">';
+
       matched.forEach(function (p) {
         let host = '';
         try { host = new URL(p.url).hostname; } catch (e) {}
@@ -471,6 +479,7 @@ window.EXTRA_TOOL_INITS['sarkari-portal-hub'] = function() {
                 '<p class="qvr-sph-cardurl">' + host + '</p>' +
                 '</div><span class="qvr-sph-cardarrow">↗</span></a>';
       });
+
       html += '</div></section>';
     });
 
@@ -483,17 +492,33 @@ window.EXTRA_TOOL_INITS['sarkari-portal-hub'] = function() {
     }
   }
 
-  searchEl.addEventListener('input', function (e) {
-    searchQuery = e.target.value;
-    renderList();
-  });
+  /* ✅ Search — multiple events + category reset */
+  if (searchEl) {
+    const handleSearch = function (e) {
+      searchQuery = e.target.value || '';
+      // ✅ FIX: search karte waqt category reset karo
+      if (searchQuery.trim()) {
+        activeCategory = null;
+        // Re-render chips (visual update)
+        const chips = catsEl.querySelectorAll('.qvr-sph-cat-chip');
+        chips.forEach(function(c) {
+          c.classList.toggle('active', !c.dataset.cat);
+        });
+      }
+      renderList();
+    };
+    searchEl.addEventListener('input', handleSearch);
+    searchEl.addEventListener('keyup', handleSearch);
+    searchEl.addEventListener('change', handleSearch);
+  }
 
+  /* ✅ Quick buttons */
   document.querySelectorAll('.qvr-sph-quickbtn').forEach(function (btn) {
     btn.addEventListener('click', function () {
       const catId = btn.dataset.jump;
       activeCategory = catId;
       searchQuery = '';
-      searchEl.value = '';
+      if (searchEl) searchEl.value = '';
       renderCategories();
       renderList();
       setTimeout(function () {
@@ -503,7 +528,9 @@ window.EXTRA_TOOL_INITS['sarkari-portal-hub'] = function() {
     });
   });
 
+  /* ✅ Initial render */
   renderCategories();
   renderList();
-  console.log('%c[SPH] Initialized ✅', 'color:#10b981;font-weight:bold');
+
+  console.log('%c[SPH] Initialized ✅ — ' + data.categories.length + ' categories', 'color:#10b981;font-weight:bold');
 };
