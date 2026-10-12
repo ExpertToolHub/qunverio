@@ -506,6 +506,13 @@ const EXTRA_TOOLS = [
   howto: 'Topic daalo, detail level choose karo, AI notes banayega.',
   kw: ['study', 'notes', 'ai notes', 'handwriting', 'syllabus', 'exam']
 },
+{
+  id: 'sarkari',
+  name: 'Sarkari Kaam',
+  icon: '🏛️',
+  desc: 'Land records, PF, PM Yojana, ration card — sab kuch ek jagah',
+  color: '#f59e0b'   // ⚠️ Ye 'color' hai, 'gradient' nahi
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
