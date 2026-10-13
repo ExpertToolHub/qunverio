@@ -1160,5 +1160,26 @@ document.addEventListener('DOMContentLoaded', init);
   }, true);
 })();
 </script>
+<!-- SkillTrack Pro - External Tool Click Handler -->
+<script>
+(function() {
+  'use strict';
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.tool-card, .search-result-item, [data-extra-tool]');
+    if (!card) return;
+    
+    var toolId = card.getAttribute('data-extra-tool');
+    var cardText = (card.textContent || '').trim();
+    
+    // SkillTrack Pro check
+    if (toolId === 'skilltrack-pro' || cardText.indexOf('SkillTrack Pro') !== -1) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open('tools/skilltrack/skilltrack.html', '_blank');
+      return false;
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>
