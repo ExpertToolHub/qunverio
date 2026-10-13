@@ -1,39 +1,40 @@
-  put('skills',mk('skl',{name:'Sample: Explain basic inspection steps',category:'Quality Knowledge',equipmentId:e2.id,topicIds:[t4.id],confidence:2,status:'Learning',theory:'In Progress',practical:'Completed',assessment:'Not Assessed',verification:'Not Verified',officialAuth:'Not recorded'}));
-  put('revisions',mk('rev',{targetType:'topic',targetId:t1.id,targetName:t1.title,dueDate:addDays(T,1),status:'scheduled',type:'Review',notes:''}));
-  put('revisions',mk('rev',{targetType:'topic',targetId:t1.id,targetName:t1.title,dueDate:addDays(T,-4),status:'completed',completedDate:addDays(T,-4),type:'Review',confBefore:2,confAfter:4,notes:'Sample revision'}));
-  put('notes',mk('not',{title:'Sample: Study note',content:'# Sample note\n- This is **example** content\n- Replace it with your own notes\n[Example link](https://example.com)',category:'General',equipmentIds:[e1.id],topicIds:[t2.id],flowIds:[],tags:['sample'],fav:true,pinned:true}));
-  put('questions',mk('que',{type:'mcq',text:'Sample: Which item is a listed component of the sample conveyor?',options:['Belt','Rocket','Sail'],answer:'Belt',explanation:'Example only.',topicId:t1.id,equipmentId:e1.id}));
-  put('questions',mk('que',{type:'tf',text:'Sample: Completing a quiz grants official authorisation.',options:[],answer:'False',explanation:'Assessment scores never imply authorisation.',topicId:t1.id,equipmentId:e1.id}));
-  put('questions',mk('que',{type:'short',text:'Sample: Name one main component (type: frame)',options:[],answer:'frame|drive unit|belt|control panel',explanation:'',topicId:t1.id,equipmentId:e1.id}));
-  await D.tx(ops);D.log('Loaded sample data','sample','');toast('Sample data loaded (marked SAMPLE)');render()},
- async remove(){D.quiet=true;try{for(const [st] of [['topics'],['equipment'],['flows'],['sessions'],['skills'],['notes'],['questions'],['revisions'],['attempts'],['tasks']])for(const r of S[st].filter(x=>x.sample))await D.remove(st,r.id)}finally{D.quiet=false}D.log('Removed sample data','sample','');toast('Sample data removed');render()}};
-ACT.sampleLoad=()=>SAMPLE.load();ACT.sampleRemove=async()=>{if(await confirmDlg('<p>Remove all records marked SAMPLE? Your own records are not touched (any link from your records to sample items will be cleared).</p>',{danger:true,ok:'Remove sample data'}))SAMPLE.remove()};
-ACT.clearAll=async()=>{if(!await confirmDlg('<p>This <b>permanently deletes ALL records</b> stored in this browser (equipment, learning, flows, sessions, notes, assessments…). Preferences are kept.</p><p>Download a backup first if you might need this data.</p><p>Type <b>DELETE</b> to confirm.</p><input id="cfType" placeholder="DELETE">',{title:'Delete all data?',danger:true,ok:'Delete everything',type:'DELETE'}))return;
- try{await D.tx(STORES.map(s=>({op:'clear',store:s})));Flow.cur=null;toast('All data deleted');render()}catch(e){toast('Could not clear data: '+e.message,'err')}};
-ACT.catAdd=async()=>{const k=$('#cat_kind').value,n=$('#cat_name').value.trim();if(!n)return toast('Enter a category name','warn');await ensureCat(k,n);$('#cat_name').value='';render()};
-ACT.catDel=async({id})=>{await D.tx([{op:'del',store:'categories',id}]);render()};
-ACT.notifyEnable=async()=>{if(!('Notification' in window))return toast('This browser does not support notifications','err');const p=await Notification.requestPermission();if(p==='granted'){Pref.set('notify',true);toast('Notifications enabled');render()}else{Pref.set('notify',false);toast('Notification permission was not granted','warn');render()}};
-ACT.notifyOff=()=>{Pref.set('notify',false);render()};
-CHG.pref=({id,val})=>{if(id==='intervals'){const a=String(val).split(',').map(x=>parseInt(x,10)).filter(x=>x>0&&x<=3650);if(!a.length)return toast('Enter intervals like 1,3,7,15,30','err');Pref.set('intervals',[...new Set(a)].sort((x,y)=>x-y))}else if(id==='excludeOptionalDefault')Pref.set(id,!!val);else Pref.set(id,val);if(id==='theme')updateTheme();toast('Setting saved');render()};
-V.settings=()=>{const P=Pref.all();const hasS=['topics','equipment','flows','tasks'].some(k=>S[k].some(r=>r.sample));const catKinds=[['equipment','Equipment'],['topic','Learning topic'],['flow','Process flow'],['note','Note'],['skill','Skill']];
- const sel=(id,opts,v)=>`<select data-chg="pref" data-id="${id}">${Form.optHtml(opts,v)}</select>`;
- return`<div class="pagehead"><div><h1>Settings</h1></div></div><div class="grid g2"><div class="card"><h3>Preferences</h3><div class="fg"><div><label class="l">Theme</label>${sel('theme',[['dark','Dark'],['light','Light']],P.theme)}</div><div><label class="l">Default start page</label>${sel('defView',NAV.map(n=>[n[0],n[1]]),P.defView)}</div><div><label class="l">Date format</label>${sel('dateFmt',['DD MMM YYYY','DD/MM/YYYY','MM/DD/YYYY','YYYY-MM-DD'],P.dateFmt)}</div><div><label class="l">PDF page orientation (default)</label>${sel('pdfOrient',[['portrait','A4 portrait'],['landscape','A4 landscape']],P.pdfOrient)}</div><div class="full"><label class="l">Preferred revision intervals (days, comma-separated)</label><input data-chg="pref" data-id="intervals" value="${esc(P.intervals.join(', '))}"></div><div class="full"><label class="chk"><input type="checkbox" data-chg="pref" data-id="excludeOptionalDefault"${P.excludeOptionalDefault?' checked':''}> New topics exclude optional tasks from the completion denominator by default</label></div></div>
- <h4 class="mt">Due-item notifications (optional)</h4><p class="small muted">Shows one browser notification per day when revisions are due, only if you grant permission.</p>${P.notify&&window.Notification&&Notification.permission==='granted'?`<span class="badge ok">Enabled</span> ${btn('notifyOff','Turn off')}`:btn('notifyEnable','Enable notifications')}</div>
- <div class="card"><h3>Sample data</h3><p class="small muted">Demo records are clearly marked <span class="badge sample">SAMPLE</span> and contain only generic, invented text.</p><div class="row">${btn('sampleLoad','Load sample data',{icon:'plus'})}${hasS?btn('sampleRemove','Remove sample data',{icon:'trash',cls:'danger'}):''}</div>
- <h3 class="mt">Backup management</h3><p class="small muted">Last backup: ${Pref.get('lastBackup')?fmtTs(Pref.get('lastBackup')):'never'}</p><a class="btn" href="#/backup">Open Backup & Restore</a>
- <h3 class="mt">Clear data</h3><p class="small muted">Deletes every record in this browser (preferences are kept).</p>${btn('clearAll','Delete all my data…',{icon:'trash',cls:'danger'})}</div></div>
- <div class="card"><h3>Categories</h3><p class="small muted">Suggestions used in category fields. Deleting a category here does not change existing records.</p><div class="row"><select id="cat_kind" style="width:auto">${Form.optHtml(catKinds,'equipment')}</select><input id="cat_name" placeholder="New category name" style="max-width:260px">${btn('catAdd','Add',{icon:'plus'})}</div><div class="mt">${catKinds.map(([k,l])=>{const cs=S.categories.filter(c=>c.kind===k);return cs.length?`<div class="mt"><b>${l}:</b> ${cs.map(c=>`<span class="badge">${esc(c.name)} <a href="#" data-act="catDel" data-id="${c.id}" title="Remove" style="color:var(--danger)">×</a></span>`).join(' ')}</div>`:''}).join('')||'<p class="muted small">No custom categories saved yet. Categories typed into forms are saved automatically. Default skill categories: '+esc(DEF_SKILL_CATS.join(', '))+'.</p>'}</div></div>
- <div class="card"><h3>About</h3><dl class="kv"><dt>Application</dt><dd>${esc(APP.name)} — ${esc(APP.tag)}</dd><dt>Data schema</dt><dd>v${APP.schema}</dd><dt>Storage</dt><dd>${DB.mem?'In-memory only (IndexedDB unavailable)':'IndexedDB “'+APP.db+'” + localStorage for preferences'}</dd><dt>External libraries</dt><dd>Loaded only when needed, from cdnjs.cloudflare.com: jsPDF 2.5.1 and jsPDF-AutoTable 3.8.2 (PDF reports), SheetJS 0.18.5 (XLSX export). Everything else works offline.</dd><dt>Privacy</dt><dd>No account, no analytics, no uploads, no API keys. Your records never leave this browser unless you export them.</dd><dt>Disclaimer</dt><dd>A personal learning tracker — not an official document-control system. Enter technical details only from authorised training material; nothing here is an approved procedure or authorisation.</dd></dl></div>`};
-/* ============================================================
-   20. STARTUP
-   ============================================================ */
-function notifyCheck(){try{if(!Pref.get('notify')||!('Notification' in window)||Notification.permission!=='granted'||Pref.get('lastNotify')===today())return;const n=Calc.revDue().length;if(n){new Notification(APP.name,{body:n+' revision'+(n>1?'s':'')+' due'});Pref.set('lastNotify',today())}}catch(e){}}
-async function boot(){buildShell();await DB.init();try{await DB.loadAll()}catch(e){console.error(e);toast('Could not read stored data: '+e.message,'err')}
- try{if(!location.hash)history.replaceState(null,'','#/'+(Pref.get('defView')||'dashboard'))}catch(e){}render();notifyCheck();
- if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{})}
-window.addEventListener('error',e=>console.error('Unhandled error:',e.message));
-window.addEventListener('unhandledrejection',e=>{console.error('Unhandled rejection:',e.reason)});
-boot();
-</script>
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Qunverio SkillTrack Pro</title>
+<!-- Qunverio SkillTrack Pro — standalone local-first training & knowledge tracker.
+     External (optional) CDN libraries, loaded lazily only when needed: jsPDF + jsPDF-AutoTable (PDF reports), SheetJS (XLSX export).
+     No analytics, no uploads, no API keys. All data stays in this browser (IndexedDB). -->
+<style>
+:root{--bg:#0e1218;--panel:#161b23;--panel2:#1c222c;--border:#283040;--text:#e7ebf1;--muted:#8d97a8;--accent:#4c9aff;--accent-t:#14263d;--ok:#2fbf7a;--warn:#f0a43a;--danger:#ee5a5a;--info:#7c8cff;--shadow:0 1px 2px rgba(0,0,0,.35),0 6px 20px rgba(0,0,0,.25);--canvas:#10151c;--grid:#1a212b;--font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+[data-theme=light]{--bg:#f2f4f8;--panel:#fff;--panel2:#f6f8fb;--border:#d9dfe8;--text:#18202c;--muted:#5d6879;--accent:#1f6feb;--accent-t:#e6f0ff;--shadow:0 1px 2px rgba(20,30,50,.08),0 6px 18px rgba(20,30,50,.07);--canvas:#fbfcfe;--grid:#e8ecf2}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--text);font:14px/1.45 var(--font);-webkit-text-size-adjust:100%}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+h1,h2,h3,h4{margin:0 0 8px;line-height:1.25}h1{font-size:22px}h2{font-size:18px}h3{font-size:16px}h4{font-size:14px}
+.app{display:flex;min-height:100vh}
+#sidebar{width:236px;flex:none;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:width .15s;z-index:30}
+.collapsed #sidebar{width:62px}
+.brand{display:flex;gap:10px;align-items:center;padding:14px 14px 10px}
+.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),#2fbf7a);display:grid;place-items:center;color:#fff;font-weight:800;flex:none}
+.bt b{display:block;font-size:14px}.bt small{color:var(--muted);font-size:11px}
+.nav{padding:6px 0;flex:1}
+.nav a{display:flex;gap:11px;align-items:center;padding:9px 13px;margin:2px 8px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.nav a:hover{background:var(--panel2);text-decoration:none;color:var(--text)}
+.nav a.on{background:var(--accent-t);color:var(--accent);font-weight:600}
+.collapsed .nav a .l,.collapsed .bt{display:none}
+.sbfoot{padding:10px 14px;color:var(--muted);font-size:11px;border-top:1px solid var(--border)}
+.collapsed .sbfoot{display:none}
+.main-col{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:20;display:flex;gap:8px;align-items:center;padding:9px 16px;background:var(--bg);border-bottom:1px solid var(--border)}
+.gs{flex:1;max-width:520px;position:relative}
+.gs input{width:100%;padding-left:34px}
+.gs .ic{position:absolute;left:10px;top:9px;color:var(--muted)}
+#gres{position:absolute;top:40px;left:0;right:0;background:var(--panel);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);max-height:60vh;overflow:auto;display:none;z-index:50}
+#gres a{display:block;padding:8px 12px;color:var(--text);border-bottom:1px solid var(--border)}#gres a:hover{background:var(--panel2);text-decoration:none}
+#gres small{color:var(--muted)}
+#view{padding:18px 20px 70px;max-width:1500px;width:100%}
+.scrim{display:none}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px;min-width:0}
