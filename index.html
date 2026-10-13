@@ -1116,5 +1116,27 @@ document.addEventListener('DOMContentLoaded', init);
 <script src="tools/table-studio.js"></script>
 <script src="tools/study-notes.js"></script>
 <script src="tools/sarkari-portal-hub.js"></script>
+
+<!-- Smart Phone Finder - External Tool Click Handler -->
+<script>
+(function() {
+  'use strict';
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.tool-card, .search-result-item, [data-tool-id]');
+    if (!card) return;
+    
+    // Text content check karo
+    var cardText = (card.textContent || '').trim();
+    
+    // Smart Phone Finder check
+    if (cardText.indexOf('Smart Phone Finder') !== -1) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open('https://smartphone-finder-chi.vercel.app/', '_blank');
+      return false;
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>
