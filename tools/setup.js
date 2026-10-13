@@ -513,6 +513,16 @@ const EXTRA_TOOLS = [
   desc: 'Land records, PF, PM Yojana, ration card — sab kuch ek jagah',
   color: '#f59e0b'   // ⚠️ Ye 'color' hai, 'gradient' nahi
 },
+{
+  id: 'smartphone-finder',
+  name: 'Smart Phone Finder',
+  cat: 'digital',
+  icon: '📱',
+  desc: 'Find the perfect smartphone based on your needs and budget',
+  howto: 'Click karo aur best smartphone find karo.',
+  kw: ['smartphone', 'phone', 'mobile', 'finder', 'buy', 'compare'],
+  external: 'https://smartphone-finder-chi.vercel.app/'
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
