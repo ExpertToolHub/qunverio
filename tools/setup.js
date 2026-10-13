@@ -516,7 +516,7 @@ const EXTRA_TOOLS = [
 {
   id: 'smartphone-finder',
   name: 'Smart Phone Finder',
-  cat: 'digital',
+  cat: 'Students',
   icon: '📱',
   desc: 'Find the perfect smartphone based on your needs and budget',
   howto: 'Click karo aur best smartphone find karo.',
