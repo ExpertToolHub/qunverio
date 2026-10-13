@@ -523,6 +523,16 @@ const EXTRA_TOOLS = [
   kw: ['smartphone', 'phone', 'mobile', 'finder', 'buy', 'compare'],
   external: 'https://smartphone-finder-chi.vercel.app/'
 },
+{
+  id: 'skilltrack-pro',
+  name: 'SkillTrack Pro',
+  cat: 'students',
+  icon: '🎓',
+  desc: 'Personal learning tracker — equipment, topics, skills, revision, flows & reports',
+  howto: 'Track your learning progress, revisions, skills, and process flows. All data saved locally.',
+  kw: ['skill', 'tracker', 'learning', 'revision', 'training', 'study', 'flow', 'dashboard', 'skill matrix', 'quiz'],
+  external: 'tools/skilltrack/skilltrack.html'
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
