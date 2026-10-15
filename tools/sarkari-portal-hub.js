@@ -23,7 +23,7 @@ console.log('%cSarkari Portal Hub Loading...', 'color:#f59e0b;font-weight:bold')
 
   window.EXTRA_TOOLS.push({
     id: 'sarkari-portal-hub',
-    name: 'Rakesh Yadav',
+    name: 'Sarkari Portal',
     cat: 'sarkari',
     icon: '🇮🇳',
     desc: '200+ government websites in one place — Aadhaar, PAN, VAHAN, Land Records & more',
