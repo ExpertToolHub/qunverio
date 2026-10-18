@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Developer Studio</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<style>
+:root{--bg:#1e1e1e;--side:#252526;--bar:#2d2d30;--line:#3c3c3c;--tx:#d4d4d4;--mut:#8b8b8b;--acc:#3794ff;--ok:#4ec9b0;--warn:#e5c07b;--err:#f48771}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font:13px/1.4 -apple-system,"Segoe UI",system-ui,Roboto,sans-serif;overflow:hidden}
+body{display:flex;flex-direction:column;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
+button,input{font:inherit;color:inherit}
+button{background:#3a3d41;border:1px solid transparent;border-radius:4px;padding:6px 10px;cursor:pointer;white-space:nowrap}
+button:hover{background:#474b51}
+button.primary{background:var(--acc);color:#fff}
+button.primary:disabled{opacity:.6;cursor:wait}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+input{background:#3c3c3c;border:1px solid var(--line);border-radius:4px;padding:6px 8px;min-width:0}
+header{display:flex;gap:6px;align-items:center;background:var(--bar);border-bottom:1px solid var(--line);padding:6px 8px;overflow-x:auto;flex:none}
+.brand{font-weight:600;margin-right:8px;white-space:nowrap}
+.sp{flex:1}
+main{flex:1;min-height:0;display:grid;grid-template-columns:210px minmax(0,1fr) minmax(0,1fr)}
+.sidebar{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.sidebar h2,.tabs{font-size:12px;font-weight:600;color:var(--mut);padding:8px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.sidebar h2 button{padding:2px 8px}
+#flist{overflow:auto;flex:1;padding:4px 0}
+.f{display:flex;align-items:center;gap:8px;padding:7px 10px;cursor:pointer;border-left:2px solid transparent}
+.f:hover{background:#2a2d2e}
+.f.on{background:#37373d;border-left-color:var(--acc)}
+.f i{width:8px;height:8px;border-radius:50%;flex:none}
+.f span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f b{color:var(--warn);font-weight:400}
+.f button{background:none;padding:0 6px;color:var(--mut);opacity:0}
+.f:hover button,.f.on button{opacity:1}
+.editorPane,.rightPane{display:flex;flex-direction:column;min-width:0;min-height:0}
+.editorPane{border-right:1px solid var(--line)}
+.fbar{display:none;gap:6px;padding:6px 8px;background:var(--bar);border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:center}
+.fbar.open{display:flex}
+.fbar input{flex:1 1 110px}
+.fbar label{display:flex;gap:4px;align-items:center;color:var(--mut)}
+#cnt{color:var(--mut);min-width:48px}
+#cmWrap{flex:1;min-height:0;position:relative}
+.CodeMirror{height:100%;background:var(--bg);font:13px/1.5 "Cascadia Code","Fira Code",Consolas,Menlo,monospace}
+.CodeMirror-gutters{background:var(--bg);border-right:1px solid var(--line)}
+.status{display:flex;gap:14px;background:var(--acc);color:#fff;padding:3px 10px;font-size:12px;flex:none}
+.tabs{padding:0;gap:0;justify-content:flex-start}
+.tabs button{border-radius:0;background:none;padding:9px 14px;color:var(--mut);border-bottom:2px solid transparent}
+body[data-right=preview] .tabs [data-v=preview],body[data-right=api] .tabs [data-v=api]{color:var(--tx);border-bottom-color:var(--acc)}
+#frame{flex:1;width:100%;border:0;background:#fff}
+.apiPanel{display:none;flex:1;overflow:auto;padding:14px;flex-direction:column;gap:10px}
+body[data-right=api] .apiPanel{display:flex}
+body[data-right=api] #frame,body[data-right=preview] .apiPanel{display:none}
+.seg{display:flex;gap:0}
+.seg button{border-radius:0;flex:1}
+.seg button:first-child{border-radius:4px 0 0 4px}.seg button:last-child{border-radius:0 4px 4px 0}
+.seg button.on{background:var(--acc);color:#fff}
+.row{display:flex;gap:6px}.row input{flex:1}
+#apiStatus{min-height:18px;color:var(--mut)}
+#apiStatus.err{color:var(--err)}#apiStatus.ok{color:var(--ok)}
+.model{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;background:var(--side)}
+.model code{flex:1;word-break:break-all;font-family:Consolas,Menlo,monospace}
+.model small{color:var(--mut);text-align:right}
+.model.top{border-color:var(--ok);background:rgba(78,201,176,.12);box-shadow:0 0 0 1px var(--ok)}
+.model.top small{color:var(--ok)}
+.model.bad small{color:var(--err)}
+.badge{background:var(--ok);color:#102a25;font-weight:700;font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.hint{color:var(--mut);font-size:12px}
+nav{display:none;background:var(--bar);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);flex:none}
+nav button{flex:1;border-radius:0;background:none;padding:12px 4px;color:var(--mut)}
+nav button.on{color:var(--acc);box-shadow:inset 0 2px 0 var(--acc)}
+#toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);background:#111;border:1px solid var(--line);padding:8px 14px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:90vw}
+#toast.show{opacity:1}
+@media(max-width:900px){
+ main{display:block}
+ .sidebar,.editorPane,.rightPane{display:none;height:100%;width:100%;border:0}
+ body[data-view=files] .sidebar,body[data-view=editor] .editorPane{display:flex}
+ body[data-view=preview] .rightPane,body[data-view=api] .rightPane{display:flex}
+ .tabs{display:none}
+ nav{display:flex}
+ .f button{opacity:1}
+}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+</style>
+</head>
+<body data-view="editor" data-right="preview">
+<header>
+  <span class="brand">&lt;/&gt; Developer Studio</span>
+  <button id="bRun" class="primary">Run</button>
+  <button id="bSave">Save</button>
+  <button id="bClear">Clear</button>
+  <button id="bFind">Find &amp; Replace</button>
+  <button id="bZip">Upload ZIP</button>
+  <button id="bExport">Export ZIP</button>
+  <input type="file" id="zipIn" accept=".zip,application/zip" hidden>
+  <span class="sp"></span>
+  <label style="display:flex;gap:5px;align-items:center;white-space:nowrap"><input type="checkbox" id="auto" checked style="min-width:0"> Auto-run</label>
+</header>
+<main>
+  <aside class="sidebar">
+    <h2>FILES <button id="bAdd" title="Add file">+ New</button></h2>
+    <div id="flist"></div>
+  </aside>
+  <section class="editorPane">
+    <div class="fbar" id="fbar">
+      <input id="q" placeholder="Find" aria-label="Find">
+      <input id="r" placeholder="Replace with" aria-label="Replace with">
+      <button id="fPrev">Prev</button><button id="fNext">Next</button>
+      <button id="fRep">Replace</button><button id="fAll">Replace all</button>
+      <label><input type="checkbox" id="cs" style="min-width:0"> Aa</label>
+      <span id="cnt"></span>
+    </div>
+    <div id="cmWrap"></div>
+    <div class="status"><span id="sFile"></span><span id="sPos"></span><span id="sSave" style="margin-left:auto"></span></div>
+  </section>
+  <section class="rightPane">
+    <div class="tabs"><button data-v="preview">Preview</button><button data-v="api">API Tester</button></div>
+    <iframe id="frame" title="Live preview" sandbox="allow-scripts allow-modals allow-forms allow-popups"></iframe>
+    <div class="apiPanel">
+      <div class="seg" id="prov"><button data-p="gemini" class="on">Gemini</button><button data-p="groq">Groq</button></div>
+      <div class="row"><input id="key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your API key" aria-label="API key"><button id="showKey">Show</button></div>
+      <button id="testBtn" class="primary">Test key &amp; find best model</button>
+      <div id="apiStatus"></div>
+      <div id="models"></div>
+      <p class="hint">Requests go straight from your browser to the provider. The key is never saved.</p>
+    </div>
+  </section>
+</main>
+<nav>
+  <button data-nv="files">Files</button><button data-nv="editor" class="on">Editor</button><button data-nv="preview">Preview</button><button data-nv="api">API</button>
+</nav>
+<div id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+const $=s=>document.querySelector(s), LS='devstudio.files.v1';
+const TEXT=/\.(html?|css|js|mjs|json|txt|md|svg|xml|csv|ts|jsx|tsx|ya?ml|map)$/i;
+const MIME={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',ico:'image/x-icon',woff:'font/woff',woff2:'font/woff2',ttf:'font/ttf',mp3:'audio/mpeg',mp4:'video/mp4',pdf:'application/pdf'};
+const COLORS={html:'#e44d26',htm:'#e44d26',css:'#3794ff',js:'#e5c07b',mjs:'#e5c07b',json:'#4ec9b0',svg:'#c586c0'};
+const files={}; let active=null, timer;
+
+const DEFAULTS={
+'index.html':'<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>My Project</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <main>\n    <h1>Hello, Developer Studio</h1>\n    <p>Edit the files on the left and watch this preview update.</p>\n    <button id="btn">Clicked 0 times</button>\n  </main>\n  <script src="app.js"><\/script>\n</body>\n</html>',
+'style.css':'body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0f172a;color:#e2e8f0;font-family:system-ui,sans-serif;text-align:center}\nh1{margin:0 0 8px}\nbutton{margin-top:16px;padding:10px 18px;border:0;border-radius:8px;background:#38bdf8;color:#0f172a;font-weight:600;cursor:pointer}',
+'app.js':'let n=0;\nconst btn=document.getElementById("btn");\nbtn.addEventListener("click",()=>{\n  n++;\n  btn.textContent="Clicked "+n+(n===1?" time":" times");\n});'
+};
+
+const cm=CodeMirror($('#cmWrap'),{lineNumbers:true,theme:'material-darker',tabSize:2,indentUnit:2,autoCloseBrackets:true,autoCloseTags:true,matchBrackets:true,styleActiveLine:true,
+ extraKeys:{'Ctrl-S':save,'Cmd-S':save,'Ctrl-Enter':run,'Cmd-Enter':run,'Ctrl-F':()=>toggleFind(true),'Cmd-F':()=>toggleFind(true),Tab:c=>c.somethingSelected()?c.indentSelection('add'):c.replaceSelection('  ','end')}});
+
+function modeFor(n){const e=n.split('.').pop().toLowerCase();return({html:'htmlmixed',htm:'htmlmixed',css:'css',js:'javascript',mjs:'javascript',ts:'javascript',jsx:'javascript',json:{name:'javascript',json:true},svg:'xml',xml:'xml'})[e]||'text/plain'}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400)}
+function dirty(n){const f=files[n];return f&&f.t==='text'&&f.doc.getValue()!==f.saved}
+function addFile(n,text){files[n]={t:'text',doc:CodeMirror.Doc(text,modeFor(n)),saved:text}}
+
+function persist(){try{const o={};for(const k in files)if(files[k].t==='text')o[k]=files[k].saved;localStorage.setItem(LS,JSON.stringify(o))}catch(e){}}
+function restore(){try{const o=JSON.parse(localStorage.getItem(LS)||'null');if(o&&Object.keys(o).length){for(const k in o)addFile(k,o[k]);return}}catch(e){}for(const k in DEFAULTS)addFile(k,DEFAULTS[k])}
+
+function renderFiles(){
+ const l=$('#flist');l.textContent='';
+ Object.keys(files).sort().forEach(n=>{
+  const d=document.createElement('div');d.className='f'+(n===active?' on':'');d.tabIndex=0;
+  const dot=document.createElement('i');dot.style.background=COLORS[n.split('.').pop().toLowerCase()]||'#8b8b8b';
+  const s=document.createElement('span');s.textContent=n;s.title=n;
+  d.append(dot,s);
+  if(dirty(n)){const b=document.createElement('b');b.textContent='\u25CF';d.append(b)}
+  const x=document.createElement('button');x.textContent='\u2715';x.title='Delete file';x.setAttribute('aria-label','Delete '+n);
+  x.onclick=e=>{e.stopPropagation();delFile(n)};
+  d.append(x);
+  d.onclick=()=>{openFile(n);if(window.innerWidth<=900)setView('editor')};
+  d.onkeydown=e=>{if(e.key==='Enter')d.onclick()};
+  l.append(d);
+ });
+}
+function openFile(n){
+ if(!files[n])return;active=n;const f=files[n];
+ if(f.t==='text'){cm.swapDoc(f.doc);cm.setOption('readOnly',false)}
+ else{cm.swapDoc(CodeMirror.Doc('Binary file ('+f.size+' bytes).\nIt is available to the preview but cannot be edited.','text/plain'));cm.setOption('readOnly','nocursor')}
+ renderFiles();updStatus();cm.refresh();
+}
+function delFile(n){
+ if(!confirm('Delete '+n+'?'))return;
+ if(files[n].url)URL.revokeObjectURL(files[n].url);
+ delete files[n];persist();
+ const ks=Object.keys(files);
+ if(!ks.length){addFile('index.html','');}
+ if(active===n)openFile(Object.keys(files).sort()[0]);else renderFiles();
+ run();
+}
+function updStatus(){
+ const f=files[active];if(!f)return;
+ const c=cm.getCursor();
+ $('#sFile').textContent=active;
+ $('#sPos').textContent='Ln '+(c.line+1)+', Col '+(c.ch+1);
+ $('#sSave').textContent=f.t==='text'?(dirty(active)?'Unsaved changes':'Saved'):'';
+}
+cm.on('cursorActivity',updStatus);
+cm.on('change',()=>{updStatus();renderFiles();if($('#auto').checked){clearTimeout(timer);timer=setTimeout(run,450)}if($('#fbar').classList.contains('open'))count()});
+
+function save(){
+ const f=files[active];if(!f||f.t!=='text')return;
+ f.saved=f.doc.getValue();persist();renderFiles();updStatus();toast('Saved '+active);
+}
+function clearEditor(){
+ const f=files[active];if(!f||f.t!=='text')return;
+ if(!confirm('Clear all content in '+active+'?'))return;
+ cm.setValue('');cm.focus();
+}
+
+/* ---------- Preview ---------- */
+function norm(p){return p.split(/[?#]/)[0].replace(/^(\.\.?\/)+/,'').replace(/^\/+/,'')}
+function find(p){p=norm(p);if(files[p])return p;const b=p.split('/').pop();return Object.keys(files).find(k=>k.split('/').pop()===b)}
+const ext=s=>/^(https?:)?\/\//i.test(s)||/^(data:|blob:|#|mailto:|tel:)/i.test(s);
+function build(){
+ const entry=files['index.html']?'index.html':Object.keys(files).find(k=>/\.html?$/i.test(k));
+ if(!entry)return '<body style="font:14px system-ui;color:#999;background:#1e1e1e;padding:24px">No HTML file to preview. Add an index.html file.</body>';
+ let h=files[entry].doc.getValue();
+ h=h.replace(/\b(src|href|poster)=["']([^"']+)["']/gi,(m,a,s)=>{const k=!ext(s)&&find(s);return k&&files[k].t==='bin'?a+'="'+files[k].url+'"':m});
+ h=h.replace(/<link\b[^>]*>/gi,m=>{
+  if(!/stylesheet/i.test(m))return m;const r=/href=["']([^"']+)["']/i.exec(m);
+  if(!r||ext(r[1]))return m;const k=find(r[1]);
+  return k&&files[k].t==='text'?'<style>'+files[k].doc.getValue()+'</style>':m});
+ h=h.replace(/<script\b([^>]*?)\bsrc=["']([^"']+)["']([^>]*)>\s*<\/script>/gi,(m,a,s,b)=>{
+  if(ext(s))return m;const k=find(s);
+  return k&&files[k].t==='text'?'<script'+a+b+'>'+files[k].doc.getValue().replace(/<\/script/gi,'<\\/script')+'<\/script>':m});
+ return h;
+}
+function run(){$('#frame').srcdoc=build()}
+
+/* ---------- Find & Replace ---------- */
+function toggleFind(open){
+ const b=$('#fbar'),o=open===true?true:!b.classList.contains('open');
+ b.classList.toggle('open',o);cm.refresh();
+ if(o){const s=cm.getSelection();if(s&&!s.includes('\n'))$('#q').value=s;$('#q').focus();$('#q').select();count()}else cm.focus();
+}
+const cur=(p)=>cm.getSearchCursor($('#q').value,p,{caseFold:!$('#cs').checked});
+function count(){
+ const q=$('#q').value;if(!q){$('#cnt').textContent='';return}
+ const c=cur({line:0,ch:0});let n=0;while(c.findNext())n++;$('#cnt').textContent=n+' found';
+}
+function go(back){
+ const q=$('#q').value;if(!q||files[active].t!=='text')return;
+ let c=cur(back?cm.getCursor('from'):cm.getCursor('to'));
+ if(!(back?c.findPrevious():c.findNext())){
+  c=cur(back?{line:cm.lastLine(),ch:cm.getLine(cm.lastLine()).length}:{line:0,ch:0});
+  if(!(back?c.findPrevious():c.findNext())){$('#cnt').textContent='0 found';return}
+ }
+ cm.setSelection(c.from(),c.to());cm.scrollIntoView({from:c.from(),to:c.to()},80);
+}
+function rep(){
+ const q=$('#q').value;if(!q||files[active].t!=='text')return;
+ const s=cm.getSelection(),eq=$('#cs').checked?s===q:s.toLowerCase()===q.toLowerCase();
+ if(eq)cm.replaceSelection($('#r').value,'end');
+ go(false);count();
+}
+function repAll(){
+ const q=$('#q').value;if(!q||files[active].t!=='text')return;
+ let n=0;const r=$('#r').value;
+ cm.operation(()=>{const c=cur({line:0,ch:0});while(c.findNext()){c.replace(r);n++}});
+ toast(n+' replaced');count();
+}
+
+/* ---------- ZIP ---------- */
+async function loadZip(file){
+ try{
+  const z=await JSZip.loadAsync(file);
+  const ents=Object.values(z.files).filter(e=>!e.dir&&!/(^|\/)(__MACOSX|\.DS_Store|node_modules|\.git)(\/|$)/.test(e.name)).slice(0,300);
+  if(!ents.length)return toast('That ZIP has no files');
+  let root='';const p=ents[0].name.split('/');
+  if(p.length>1&&ents.every(e=>e.name.startsWith(p[0]+'/')))root=p[0]+'/';
+  for(const k in files){if(files[k].url)URL.revokeObjectURL(files[k].url);delete files[k]}
+  for(const e of ents){
+   const n=e.name.slice(root.length);
+   if(TEXT.test(n))addFile(n,await e.async('string'));
+   else{const ab=await e.async('arraybuffer'),blob=new Blob([ab],{type:MIME[n.split('.').pop().toLowerCase()]||'application/octet-stream'});files[n]={t:'bin',blob,url:URL.createObjectURL(blob),size:ab.byteLength}}
+  }
+  const ks=Object.keys(files).sort();
+  openFile(files['index.html']?'index.html':ks.find(k=>files[k].t==='text')||ks[0]);
+  persist();run();toast('Loaded '+ents.length+' files from ZIP');
+ }catch(e){toast('Could not read ZIP: '+e.message)}
+}
+async function exportZip(){
+ const z=new JSZip();
+ for(const k in files)z.file(k,files[k].t==='text'?files[k].doc.getValue():files[k].blob);
+ const b=await z.generateAsync({type:'blob'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='dev-studio-project.zip';
+ document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+/* ---------- API Tester ---------- */
+let prov='gemini';
+const PRIORITY={
+ gemini:['gemini-flash-latest','gemini-2.5-flash','gemini-2.0-flash','gemini-flash-lite-latest','gemini-2.5-flash-lite','gemini-pro-latest','gemini-2.5-pro'],
+ groq:['llama-3.3-70b-versatile','llama-3.3-70b','openai/gpt-oss-120b','llama-3.1-8b-instant','openai/gpt-oss-20b']
+};
+const rank=id=>{const i=PRIORITY[prov].findIndex(p=>id===p||id.startsWith(p));return i<0?999:i};
+function setStatus(m,c){const s=$('#apiStatus');s.textContent=m;s.className=c||''}
+async function jfetch(url,opt){
+ const r=await fetch(url,opt);let j={};try{j=await r.json()}catch(e){}
+ if(!r.ok)throw new Error((j.error&&(j.error.message||j.error))||('HTTP '+r.status));return j;
+}
+async function tryModel(id,key){
+ try{
+  if(prov==='gemini')await jfetch('https://generativelanguage.googleapis.com/v1beta/models/'+id+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{parts:[{text:'Reply with OK'}]}],generationConfig:{maxOutputTokens:16}})});
+  else await jfetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model:id,messages:[{role:'user',content:'Reply with OK'}],max_tokens:5})});
+  return {ok:true};
+ }catch(e){return {ok:false,msg:String(e.message).slice(0,90)}}
+}
+async function testApi(){
+ const key=$('#key').value.trim(),btn=$('#testBtn'),box=$('#models');
+ if(!key)return setStatus('Enter an API key first.','err');
+ btn.disabled=true;box.textContent='';setStatus('Fetching models\u2026');
+ try{
+  let ids;
+  if(prov==='gemini'){
+   const j=await jfetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',{headers:{'x-goog-api-key':key}});
+   ids=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace('models/',''));
+  }else{
+   const j=await jfetch('https://api.groq.com/openai/v1/models',{headers:{Authorization:'Bearer '+key}});
+   ids=(j.data||[]).filter(m=>m.active!==false&&!/whisper|guard|tts|orpheus|embed|playai/i.test(m.id)).map(m=>m.id);
+  }
+  if(!ids.length)return setStatus('Key accepted, but no chat models are available.','err');
+  ids.sort((a,b)=>rank(a)-rank(b)||a.localeCompare(b));
+  const cards={};
+  ids.forEach(id=>{
+   const d=document.createElement('div'),c=document.createElement('code'),s=document.createElement('small');
+   d.className='model';c.textContent=id;s.textContent=rank(id)<999?'priority':'available';d.append(c,s);box.append(d);cards[id]={d,s};
+  });
+  setStatus(ids.length+' models found. Checking which ones respond\u2026');
+  let top=null,n=0;
+  for(const id of ids){
+   if(n++>=8)break;
+   cards[id].s.textContent='testing\u2026';
+   const r=await tryModel(id,key);
+   if(r.ok){
+    top=id;const d=cards[id].d;d.classList.add('top');
+    const b=document.createElement('span');b.className='badge';b.textContent=rank(id)<999?'Top Priority':'Best Working';
+    d.insertBefore(b,d.firstChild);cards[id].s.textContent='working';
+    box.prepend(d);break;
+   }
+   cards[id].d.classList.add('bad');cards[id].s.textContent=r.msg||'failed';
+   if(/api key|permission|unauthor|invalid/i.test(r.msg||'')&&n===1){setStatus('The key was rejected: '+r.msg,'err');return}
+  }
+  top?setStatus('Working model: '+top,'ok'):setStatus('Key is valid but none of the tested models responded. Check quota or billing.','err');
+ }catch(e){setStatus('Failed: '+e.message,'err')}
+ finally{btn.disabled=false}
+}
+
+/* ---------- Views ---------- */
+function setView(v){
+ document.body.dataset.view=v;
+ if(v==='preview'||v==='api')document.body.dataset.right=v;
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.nv===v));
+ if(v==='editor')cm.refresh();
+}
+
+/* ---------- Wire up ---------- */
+$('#bRun').onclick=()=>{run();if(window.innerWidth<=900)setView('preview')};
+$('#bSave').onclick=save;
+$('#bClear').onclick=clearEditor;
+$('#bFind').onclick=()=>{if(window.innerWidth<=900)setView('editor');toggleFind()};
+$('#bZip').onclick=()=>$('#zipIn').click();
+$('#zipIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)loadZip(f)};
+$('#bExport').onclick=exportZip;
+$('#bAdd').onclick=()=>{
+ let n=(prompt('File name (for example utils.js or folder/page.html):')||'').trim().replace(/^\/+/,'');
+ if(!n)return;
+ if(files[n])return toast(n+' already exists');
+ if(!TEXT.test(n))n+='.txt';
+ addFile(n,'');openFile(n);persist();if(window.innerWidth<=900)setView('editor');cm.focus();
+};
+$('#q').oninput=count;$('#cs').onchange=count;
+$('#q').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go(e.shiftKey)}if(e.key==='Escape')toggleFind(false)};
+$('#r').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();rep()}if(e.key==='Escape')toggleFind(false)};
+$('#fNext').onclick=()=>go(false);$('#fPrev').onclick=()=>go(true);$('#fRep').onclick=rep;$('#fAll').onclick=repAll;
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>setView(b.dataset.v));
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>setView(b.dataset.nv));
+$('#prov').onclick=e=>{const b=e.target.closest('button');if(!b)return;prov=b.dataset.p;
+ document.querySelectorAll('#prov button').forEach(x=>x.classList.toggle('on',x===b));$('#models').textContent='';setStatus('')};
+$('#showKey').onclick=()=>{const k=$('#key'),s=k.type==='password';k.type=s?'text':'password';$('#showKey').textContent=s?'Hide':'Show'};
+$('#testBtn').onclick=testApi;
+$('#key').onkeydown=e=>{if(e.key==='Enter')testApi()};
+window.addEventListener('beforeunload',e=>{if(Object.keys(files).some(dirty)){e.preventDefault();e.returnValue=''}});
+window.addEventListener('resize',()=>cm.refresh());
+
+restore();
+openFile(files['index.html']?'index.html':Object.keys(files).sort()[0]);
+run();
+if(window.innerWidth>900)toggleFind(false);
+})();
+</script>
+</body>
+</html>
