@@ -540,7 +540,7 @@ const EXTRA_TOOLS = [
   icon: '💻',
   desc: 'Multi-file code editor with live preview, ZIP import and API key tester',
   howto: 'Files banao ya ZIP upload karo, code likho aur live preview dekho. API Tester mein Gemini ya Groq key daalo, best working model highlight ho jayega.',
-  kw: ['developer', 'code', 'editor', 'html', 'css', 'javascript', 'zip', 'preview', 'api', 'gemini', 'groq', 'playground', 'student', 'coding']
+  kw: ['developer', 'code', 'editor', 'html', 'css', 'javascript', 'zip', 'preview', 'api', 'gemini', 'groq', 'playground', 'students', 'coding']
 },
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
