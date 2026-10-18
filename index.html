@@ -1181,5 +1181,41 @@ document.addEventListener('DOMContentLoaded', init);
   }, true);
 })();
 </script>
+<button id="devStudioBtn" type="button" aria-label="Open Dev Studio">&lt;/&gt; Open Dev Studio</button>
+
+<style>
+#devStudioBtn{
+  position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:9999;
+  padding:12px 18px;border:0;border-radius:999px;cursor:pointer;
+  background:#3794ff;color:#fff;font:600 14px/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-shadow:0 6px 20px rgba(0,0,0,.35);transition:transform .15s ease,background .15s ease;
+}
+#devStudioBtn:hover{background:#2b86ee;transform:translateY(-2px)}
+#devStudioBtn:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media (prefers-reduced-motion:reduce){#devStudioBtn{transition:none}}
+</style>
+
+<script>
+document.getElementById('devStudioBtn').addEventListener('click', function () {
+  var url = 'tools/dev-studio.html';
+  var isMobile = window.matchMedia('(max-width: 900px)').matches ||
+                 /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (isMobile) {
+    window.open(url, '_blank');
+    return;
+  }
+
+  var features = 'popup=yes,left=0,top=0,width=' + screen.availWidth +
+                 ',height=' + screen.availHeight + ',resizable=yes,scrollbars=yes';
+  var win = window.open(url, 'devStudioWindow', features);
+
+  if (!win) {
+    window.open(url, '_blank'); // popup blocked: fall back to a new tab
+  } else if (win.focus) {
+    win.focus();
+  }
+});
+</script>
 </body>
 </html>
