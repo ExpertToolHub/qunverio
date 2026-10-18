@@ -533,6 +533,15 @@ const EXTRA_TOOLS = [
   kw: ['skill', 'tracker', 'learning', 'revision', 'training', 'study', 'flow', 'dashboard', 'skill matrix', 'quiz'],
   external: 'tools/skilltrack/skilltrack.html'
 },
+{
+  id: 'dev-studio',
+  name: 'Developer Studio',
+  cat: 'students',
+  icon: '💻',
+  desc: 'Multi-file code editor with live preview, ZIP import and API key tester',
+  howto: 'Files banao ya ZIP upload karo, code likho aur live preview dekho. API Tester mein Gemini ya Groq key daalo, best working model highlight ho jayega.',
+  kw: ['developer', 'code', 'editor', 'html', 'css', 'javascript', 'zip', 'preview', 'api', 'gemini', 'groq', 'playground', 'student', 'coding']
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
