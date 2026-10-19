@@ -1239,5 +1239,23 @@ document.getElementById('devStudioBtn').addEventListener('click', function () {
   }
 });
 </script>
+<script>
+(function() {
+  'use strict';
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.tool-card, .search-result-item, [data-extra-tool]');
+    if (!card) return;
+    var toolId = card.getAttribute('data-extra-tool');
+    
+    // FlowForge Handler
+    if (toolId === 'flowforge') {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open('tools/flowforge/flowforge.html', '_blank');
+      return false;
+    }
+  }, true);
+})();
+</script>
 </body>
 </html>
