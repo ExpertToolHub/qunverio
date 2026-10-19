@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FlowForge – Flowchart Maker | Qunverio</title>
+<style>
+/* FlowForge CSS - Same as provided, plus Back button */
+:root{--bg:#f4f5f7;--pn:#fff;--tx:#1b1f27;--mu:#6b7280;--bd:#d9dce2;--ac:#4f46e5;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14161a;--pn:#1e2127;--tx:#eceef2;--mu:#98a0ad;--bd:#343a44;--ac:#818cf8}}
+:root[data-theme="dark"]{--bg:#14161a;--pn:#1e2127;--tx:#eceef2;--mu:#98a0ad;--bd:#343a44;--ac:#818cf8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:14px system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;overflow:hidden}
+#tb{display:flex;gap:6px;padding:8px;background:var(--pn);border-bottom:1px solid var(--bd);overflow-x:auto;white-space:nowrap;flex:none}
+.b{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:8px 11px;font:inherit;cursor:pointer;flex:none}
+.b.on{background:var(--ac);color:#fff;border-color:var(--ac)}.b.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+.sep{width:1px;background:var(--bd);flex:none}
+#cv{flex:1;position:relative;min-height:0;background:#fbfbfd}
+svg#s{width:100%;height:100%;display:block;touch-action:none}
+#pr{flex:none;background:var(--pn);border-top:1px solid var(--bd);padding:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:52px}
+#pr input[type=text]{flex:1;min-width:140px;padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--bd);cursor:pointer;padding:0}.mu{color:var(--mu)}
+#ex{position:absolute;right:8px;top:56px;width:min(92vw,320px);background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:12px;display:none;z-index:5;box-shadow:0 8px 30px #0004}
+#ex.o{display:block}#ex h4{margin:0 0 8px}#ex .r{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}#ex select{padding:8px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;width:100%}
+#ts{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#111;color:#fff;padding:9px 14px;border-radius:20px;display:none;z-index:9;max-width:90vw}
+#tb{padding:10px;gap:8px;box-shadow:0 1px 10px #0001}.b{border-radius:10px;padding:9px 12px;font-weight:500;transition:.15s}.b:hover{border-color:var(--ac)}
+.br{font-weight:700;font-size:16px;color:var(--ac);display:flex;align-items:center;flex:none;padding:0 4px}
+#sh{position:absolute;left:8px;top:8px;width:min(94vw,350px);max-height:75%;overflow:auto;background:var(--pn);border:1px solid var(--bd);border-radius:14px;padding:10px;display:none;z-index:5;box-shadow:0 10px 34px #0004}#sh.o{display:block}
+#sh .gr{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}#sh button{background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:6px 2px;color:var(--tx);font:11px system-ui;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}#sh button:hover{border-color:var(--ac)}#sh svg{width:48px;height:34px}
+#zm{position:absolute;right:8px;bottom:8px;display:flex;gap:6px;z-index:3}#ex{top:8px}
+#pr{display:block;max-height:42vh;overflow-y:auto;padding:8px 10px}.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:4px 0}.row>label{color:var(--mu);font-size:12px;min-width:44px}
+.row input[type=color]{width:34px;height:32px;padding:0;border:1px solid var(--bd);border-radius:8px;background:none}.row select{padding:8px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit}
+/* Custom Back Button for Qunverio */
+.qv-back{position:fixed;top:10px;left:10px;z-index:100;background:var(--pn);border:1px solid var(--bd);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--tx);text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
+</style>
+</head>
+<body>
+<!-- Back Button -->
+<a href="../../index.html" class="qv-back" title="Back to Qunverio">←</a>
+
+<div id="tb">
+<span class="br" style="padding-left:50px;">🔀 FlowForge</span><button class="b p" id="shb">＋ Shapes</button><button class="b" id="al">✨ Auto layout</button><button class="b" id="sn">Snap</button><button class="b" id="mm">☑ Multi</button><button class="b" id="sa">Select all</button><select class="b" id="tp"><option value="">📋 Templates</option><option value="order">Order process</option><option value="ticket">Support ticket</option><option value="release">Software release</option></select>
+<span class="sep"></span><button class="b" id="cn">↗ Connect</button><button class="b" id="un">↶</button><button class="b" id="re">↷</button><button class="b" id="fit">Fit</button><button class="b" id="gd">Grid</button><button class="b" id="th">Theme</button>
+<span class="sep"></span><button class="b p" id="exb">⬇ Export</button></div>
+<div id="cv"><svg id="s" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="gp" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#e3e6ec" stroke-width="1"/></pattern></defs><g id="g"><rect id="gr" x="-6000" y="-6000" width="12000" height="12000" fill="url(#gp)"/><g id="L"></g></g></svg>
+<div id="sh"></div><div id="zm"><button class="b" id="zo">−</button><button class="b" id="zp">+</button></div><div id="ex"><h4>Export</h4><label class="mu">Quality</label><select id="q"><option value="1">Standard (1×)</option><option value="2">HD (2×)</option><option value="4" selected>Ultra HD (4×)</option><option value="8">Max (8×)</option></select>
+<div class="r"><label><input type="checkbox" id="tr"> Transparent background</label><label>Page color <input type="color" id="bg" value="#ffffff"></label></div>
+<div class="r"><button class="b p" id="xp">PNG</button><button class="b p" id="xf">PDF</button><button class="b" id="xs">SVG</button></div>
+<div class="r"><button class="b" id="xj">Save project (.json)</button><label class="b">Open project<input type="file" id="fi" accept=".json" hidden></label><button class="b" id="xe">Load example</button><button class="b" id="xc">Clear</button></div></div></div>
+<div id="pr"></div><div id="ts"></div>
+
+<script>
+// Pura JavaScript code yahan paste karo jo tumne diya hai
+const $=s=>document.querySelector(s),svg=$('#s'),G=$('#g'),L=$('#L');
+const FONT='system-ui,-apple-system,Segoe UI,Arial,sans-serif',COL=['#ffffff','#dbeafe','#dcfce7','#fef9c3','#fee2e2','#f3e8ff','#ffedd5'];
+const DEF={start:[140,56,'Start'],proc:[160,70,'Process'],dec:[170,100,'Decision?'],io:[180,64,'Input / Output'],conn:[44,44,'']};
+let S={n:[],e:[]},sel=null,selE=null,mode='sel',conn=null,SN=true,grid=true,view={x:300,y:60,k:1},hist=[],fut=[],drag=null,pinch=0;const P=new Map();
+const byId=id=>S.n.find(n=>n.id==id),uid=()=>Math.random().toString(36).slice(2,8);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('#ts');t.textContent=m;t.style.display='block';clearTimeout(toast.i);toast.i=setTimeout(()=>t.style.display='none',2600)}
+function H(){hist.push(JSON.stringify(S));if(hist.length>80)hist.shift();fut=[]}
+function save(){try{localStorage.setItem('ff',JSON.stringify(S))}catch(e){}}
+function wrap(t,m){const o=[];for(const p of String(t).split('\n')){let l='';for(const w of p.split(' ')){if((l+' '+w).trim().length>m&&l){o.push(l);l=w}else l=(l+' '+w).trim()}o.push(l)}return o}
+function nodeSVG(n,sl){const{x,y,w,h}=n,a=w/2,b=h/2,st=`fill="${n.c}" stroke="${sl?'#4f46e5':'#334155'}" stroke-width="${sl?3:2}"`;let s;
+if(n.t=='dec')s=`<polygon points="${x},${y-b} ${x+a},${y} ${x},${y+b} ${x-a},${y}" ${st}/>`;
+else if(n.t=='io')s=`<polygon points="${x-a+18},${y-b} ${x+a},${y-b} ${x+a-18},${y+b} ${x-a},${y+b}" ${st}/>`;
+else if(n.t=='conn')s=`<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}" ${st}/>`;
+else s=`<rect x="${x-a}" y="${y-b}" width="${w}" height="${h}" rx="${n.t=='start'?b:8}" ${st}/>`;
+const T=wrap(n.s,Math.max(4,Math.floor((w-(n.t=='dec'?76:34))/7.6)));
+return s+`<text x="${x}" y="${y}" text-anchor="middle" font-size="14" fill="#111827" font-family="${FONT}">`+T.map((l,i)=>`<tspan x="${x}" dy="${i?17:-(T.length-1)*8.5+5}">${esc(l)}</tspan>`).join('')+'</text>'}
+function bd(n,tx,ty){const dx=tx-n.x,dy=ty-n.y,a=n.w/2,b=n.h/2;if(!dx&&!dy)return{x:n.x,y:n.y};let t;
+if(n.t=='dec')t=1/(Math.abs(dx)/a+Math.abs(dy)/b);else if(n.t=='conn')t=1/Math.hypot(dx/a,dy/b);else t=Math.min(a/Math.abs(dx||1e-9),b/Math.abs(dy||1e-9));return{x:n.x+dx*t,y:n.y+dy*t}}
+function edgeSVG(e,sl,hit){const a=byId(e.a),b=byId(e.b);if(!a||!b)return'';const p=bd(a,b.x,b.y),q=bd(b,a.x,a.y),c=sl?'#4f46e5':'#475569';
+let s=`<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" stroke="${c}" stroke-width="2" marker-end="url(#${sl?'ars':'ar'})"/>`;
+if(hit)s+=`<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}" stroke="transparent" stroke-width="18"/>`;
+if(e.l){const mx=(p.x+q.x)/2,my=(p.y+q.y)/2,tw=e.l.length*7.4+10;s+=`<rect x="${mx-tw/2}" y="${my-10}" width="${tw}" height="20" rx="4" fill="#fff" stroke="${c}"/><text x="${mx}" y="${my+4.5}" text-anchor="middle" font-size="13" fill="#111827" font-family="${FONT}">${esc(e.l)}</text>`}return s}
+const DEFS=`<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker><marker id="ars" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#4f46e5"/></marker></defs>`;
+function render(){G.setAttribute('transform',`translate(${view.x} ${view.y}) scale(${view.k})`);$('#gr').style.display=grid?'':'none';
+L.innerHTML=DEFS+S.e.map(e=>`<g data-e="${e.id}">${edgeSVG(e,e.id==selE,1)}</g>`).join('')+S.n.map(n=>`<g data-id="${n.id}" style="cursor:move">${nodeSVG(n,n.id==sel||MS.has(n.id))}</g>`).join('');
+$('#cn').classList.toggle('on',mode=='conn');$('#gd').classList.toggle('on',grid);save()}
+function props(){const p=$('#pr');p.innerHTML='';const mk=(h)=>{const d=document.createElement('div');d.innerHTML=h;return d.firstElementChild};
+const btn=(t,f)=>{const b=mk(`<button class="b">${t}</button>`);b.onclick=f;p.appendChild(b);return b};
+if(mode=='conn'){p.innerHTML=`<span class="mu">${conn?'Now tap the target shape':'Tap the source shape, then the target shape'}</span>`;return}
+const n=byId(sel),e=S.e.find(x=>x.id==selE);
+if(n){const i=mk(`<input type="text" placeholder="Shape text" value="${esc(n.s)}">`);i.onfocus=H;i.oninput=()=>{n.s=i.value;render()};p.appendChild(i);
+COL.forEach(c=>{const s=mk(`<button class="sw" style="background:${c}"></button>`);s.onclick=()=>{H();n.c=c;render()};p.appendChild(s)});
+btn('Connect',()=>{mode='conn';conn=n.id;render();props()});btn('Copy',()=>{H();const m={...n,id:uid(),x:n.x+30,y:n.y+30};S.n.push(m);sel=m.id;render();props()});
+btn('A−',()=>{H();n.w*=.9;n.h*=.9;render()});btn('A+',()=>{H();n.w*=1.1;n.h*=1.1;render()});btn('🗑',del)}
+else if(e){const i=mk(`<input type="text" placeholder="Arrow label (Yes / No)" value="${esc(e.l||'')}">`);i.onfocus=H;i.oninput=()=>{e.l=i.value;render()};p.appendChild(i);
+btn('⇄ Reverse',()=>{H();[e.a,e.b]=[e.b,e.a];render()});btn('🗑',del)}
+else p.innerHTML='<span class="mu">Add shapes from the top bar. Tap a shape to edit. Use Connect to link two shapes. Drag empty space to pan, pinch or scroll to zoom.</span>'}
+function del(){H();if(sel){S.e=S.e.filter(e=>e.a!=sel&&e.b!=sel);S.n=S.n.filter(n=>n.id!=sel)}else if(selE)S.e=S.e.filter(e=>e.id!=selE);sel=selE=null;render();props()}
+function sn(v){return SN?Math.round(v/20)*20:v}
+function toW(e){const r=svg.getBoundingClientRect();return{x:(e.clientX-r.left-view.x)/view.k,y:(e.clientY-r.top-view.y)/view.k}}
+function zoomAt(cx,cy,f){const k0=view.k,k=Math.min(3,Math.max(.2,k0*f)),wx=(cx-view.x)/k0,wy=(cy-view.y)/k0;view.k=k;view.x=cx-wx*k;view.y=cy-wy*k}
+function addNode(t){H();const r=svg.getBoundingClientRect(),c=toW({clientX:r.left+r.width/2,clientY:r.top+r.height/2}),d=DEF[t],j=S.n.length%5*20;
+const n={id:uid(),t,x:sn(c.x+j),y:sn(c.y+j),w:d[0],h:d[1],s:d[2],c:'#ffffff'};S.n.push(n);sel=n.id;selE=null;render();props()}
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>addNode(b.dataset.add));
+$('#cn').onclick=()=>{mode=mode=='conn'?'sel':'conn';conn=mode=='conn'&&sel?sel:null;render();props()};
+function undo(){if(!hist.length)return;fut.push(JSON.stringify(S));S=JSON.parse(hist.pop());sel=selE=null;render();props()}
+function redo(){if(!fut.length)return;hist.push(JSON.stringify(S));S=JSON.parse(fut.pop());sel=selE=null;render();props()}
+$('#un').onclick=undo;$('#re').onclick=redo;$('#gd').onclick=()=>{grid=!grid;render()};
+$('#th').onclick=()=>{const r=document.documentElement,d=r.dataset.theme=='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme:dark)').matches);r.dataset.theme=d?'light':'dark'};
+function bounds(){if(!S.n.length)return null;let a=1e9,b=1e9,c=-1e9,d=-1e9;S.n.forEach(n=>{a=Math.min(a,n.x-n.w/2);b=Math.min(b,n.y-n.h/2);c=Math.max(c,n.x+n.w/2);d=Math.max(d,n.y+n.h/2)});return{x:a-40,y:b-40,w:c-a+80,h:d-b+80}}
+function fit(){const b=bounds(),r=svg.getBoundingClientRect();if(!b){view={x:r.width/2,y:80,k:1};render();return}const k=Math.min(1.5,r.width/b.w,r.height/b.h);view.k=k;view.x=(r.width-b.w*k)/2-b.x*k;view.y=(r.height-b.h*k)/2-b.y*k;render()}
+$('#fit').onclick=fit;
+svg.addEventListener('pointerdown',e=>{svg.setPointerCapture(e.pointerId);P.set(e.pointerId,{x:e.clientX,y:e.clientY});$('#ex').classList.remove('o');
+if(P.size==2){drag=null;const[a,b]=[...P.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y);return}
+const g=e.target.closest('[data-id]'),ed=e.target.closest('[data-e]'),w=toW(e);
+if(g){const n=byId(g.dataset.id);if((e.shiftKey||MM)&&mode!='conn'){if(sel)MS.add(sel);if(MS.has(n.id))MS.delete(n.id);else MS.add(n.id);sel=selE=null;if(MS.size==1){sel=[...MS][0];MS.clear()}render();props();return}if(!MS.has(n.id))MS.clear();
+if(mode=='conn'){if(!conn||conn==n.id){conn=n.id;sel=n.id}else{H();const x={id:uid(),a:conn,b:n.id,l:''};S.e.push(x);conn=null;mode='sel';sel=null;selE=x.id}selE=mode=='conn'?null:selE;render();props();return}
+sel=MS.has(n.id)?null:n.id;selE=null;drag={n,dx:w.x-n.x,dy:w.y-n.y,m:0}}
+else if(ed&&mode!='conn'){selE=ed.dataset.e;sel=null}
+else{if(mode!='conn'){sel=selE=null;if(!MM)MS.clear()}drag={pan:1,sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y}}
+render();props()});
+svg.addEventListener('pointermove',e=>{if(!P.has(e.pointerId))return;P.set(e.pointerId,{x:e.clientX,y:e.clientY});
+if(P.size==2){const[a,b]=[...P.values()],d=Math.hypot(a.x-b.x,a.y-b.y),r=svg.getBoundingClientRect();if(pinch)zoomAt((a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top,d/pinch);pinch=d;render();return}
+if(!drag)return;if(drag.pan){view.x=drag.vx+e.clientX-drag.sx;view.y=drag.vy+e.clientY-drag.sy}
+else{const w=toW(e);if(!drag.m){H();drag.m=1}const nx=sn(w.x-drag.dx),ny=sn(w.y-drag.dy),ox=drag.n.x,oy=drag.n.y;drag.n.x=nx;drag.n.y=ny;if(MS.has(drag.n.id))S.n.forEach(m=>{if(m!==drag.n&&MS.has(m.id)){m.x+=nx-ox;m.y+=ny-oy}})}render()});
+const up=e=>{P.delete(e.pointerId);pinch=0;if(!P.size)drag=null};svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
+svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect();zoomAt(e.clientX-r.left,e.clientY-r.top,e.deltaY<0?1.1:.91);render()},{passive:false});
+svg.addEventListener('dblclick',e=>{const i=$('#pr input');if(i&&sel)i.focus()});
+addEventListener('keydown',e=>{if(/INPUT|SELECT/.test(e.target.tagName))return;if((e.key=='Delete'||e.key=='Backspace')&&(sel||selE))del();
+if((e.ctrlKey||e.metaKey)&&e.key=='z'){e.preventDefault();e.shiftKey?redo():undo()}if((e.ctrlKey||e.metaKey)&&e.key=='y')redo()});
+/* v2: more shapes, styles, edge types, auto layout */
+Object.assign(DEF,{db:[120,90,'Database'],doc:[150,80,'Document'],pre:[170,70,'Subprocess'],dly:[150,70,'Delay'],hex:[170,76,'Prepare'],tri:[110,100,''],pen:[110,100,''],star:[120,120,''],trp:[170,70,'Manual op'],man:[170,70,'Manual input'],arr:[160,80,'Next'],crs:[100,100,''],txt:[160,40,'Text'],cir:[90,90,''],nte:[160,90,'Note']});
+const PL={dec:[[0,-1],[1,0],[0,1],[-1,0]],io:[[-.8,-1],[1,-1],[.8,1],[-1,1]],hex:[[-1,0],[-.6,-1],[.6,-1],[1,0],[.6,1],[-.6,1]],tri:[[0,-1],[1,1],[-1,1]],trp:[[-.7,-1],[.7,-1],[1,1],[-1,1]],man:[[-1,-.5],[1,-1],[1,1],[-1,1]],arr:[[-1,-.45],[.2,-.45],[.2,-1],[1,0],[.2,1],[.2,.45],[-1,.45]],crs:[[-.35,-1],[.35,-1],[.35,-.35],[1,-.35],[1,.35],[.35,.35],[.35,1],[-.35,1],[-.35,.35],[-1,.35],[-1,-.35],[-.35,-.35]],nte:[[-1,-1],[.7,-1],[1,-.6],[1,1],[-1,1]]};
+PL.star=[...Array(10)].map((_,i)=>{const r=i%2?.42:1,a=-Math.PI/2+i*Math.PI/5;return[r*Math.cos(a),r*Math.sin(a)]});PL.pen=[...Array(5)].map((_,i)=>{const a=-Math.PI/2+i*2*Math.PI/5;return[Math.cos(a),Math.sin(a)]});
+function rayPoly(n,dx,dy){const q=PL[n.t].map(p=>[n.x+p[0]*n.w/2,n.y+p[1]*n.h/2]);let best=1e9;for(let i=0;i<q.length;i++){const a=q[i],b=q[(i+1)%q.length],ex=b[0]-a[0],ey=b[1]-a[1],d=dx*ey-dy*ex;if(!d)continue;const t=((a[0]-n.x)*ey-(a[1]-n.y)*ex)/d,u=((a[0]-n.x)*dy-(a[1]-n.y)*dx)/d;if(t>0&&u>=0&&u<=1&&t<best)best=t}return best}
+function bd(n,tx,ty){const dx=tx-n.x,dy=ty-n.y,a=n.w/2,b=n.h/2;if(!dx&&!dy)return{x:n.x,y:n.y};let t;if(PL[n.t]){t=rayPoly(n,dx,dy);if(t>1e8)t=.5}else if(n.t=='conn'||n.t=='cir')t=1/Math.hypot(dx/a,dy/b);else t=Math.min(a/Math.abs(dx||1e-9),b/Math.abs(dy||1e-9));return{x:n.x+dx*t,y:n.y+dy*t}}
+function shp(n,st){const{x,y,w,h,t}=n,a=w/2,b=h/2,k=n.k||'#334155';
+if(PL[t])return `<polygon points="${PL[t].map(p=>(x+p[0]*a)+','+(y+p[1]*b)).join(' ')}" ${st}/>`;
+if(t=='conn'||t=='cir')return `<ellipse cx="${x}" cy="${y}" rx="${a}" ry="${b}" ${st}/>`;
+if(t=='db'){const r=b*.28;return `<path d="M${x-a} ${y-b+r}A${a} ${r} 0 0 1 ${x+a} ${y-b+r}V${y+b-r}A${a} ${r} 0 0 1 ${x-a} ${y+b-r}Z" ${st}/><path d="M${x-a} ${y-b+r}A${a} ${r} 0 0 0 ${x+a} ${y-b+r}" fill="none" stroke="${k}" stroke-width="2"/>`}
+if(t=='doc')return `<path d="M${x-a} ${y-b}H${x+a}V${y+b-9}Q${x+a/2} ${y+b+9} ${x} ${y+b-9}T${x-a} ${y+b-9}Z" ${st}/>`;
+if(t=='dly')return `<path d="M${x-a} ${y-b}H${x}A${a} ${b} 0 0 1 ${x} ${y+b}H${x-a}Z" ${st}/>`;
+if(t=='pre')return `<rect x="${x-a}" y="${y-b}" width="${w}" height="${h}" rx="4" ${st}/><path d="M${x-a+14} ${y-b}V${y+b}M${x+a-14} ${y-b}V${y+b}" stroke="${k}" stroke-width="2"/>`;
+if(t=='txt')return `<rect x="${x-a}" y="${y-b}" width="${w}" height="${h}" ${st}/>`;
+return `<rect x="${x-a}" y="${y-b}" width="${w}" height="${h}" rx="${t=='start'?b:8}" ${st}/>`}
+function nodeSVG(n,sl){const f=n.f||14,lh=f*1.22,tx=n.t=='txt',st=`fill="${tx?'transparent':n.c}" stroke="${sl?'#4f46e5':tx?'none':(n.k||'#334155')}" stroke-width="${sl?3:(n.bw||2)}"${n.ds||(tx&&sl)?' stroke-dasharray="7 5"':''}`,nar=['dec','tri','pen','star','hex','arr','crs'].includes(n.t),T=wrap(n.s,Math.max(3,Math.floor((n.w*(nar?.65:1)-24)/(f*.56))));
+return shp(n,st)+`<text x="${n.x}" y="${n.y}" text-anchor="middle" font-size="${f}"${n.b?' font-weight="700"':''} fill="${n.tc||'#111827'}" font-family="${FONT}">`+T.map((l,i)=>`<tspan x="${n.x}" dy="${i?lh:-(T.length-1)*lh/2+f*.35}">${esc(l)}</tspan>`).join('')+'</text>'}
+function edgeSVG(e,sl,hit){const a=byId(e.a),b=byId(e.b);if(!a||!b)return'';const c=sl?'#4f46e5':'#475569',m=e.m||'s';let p,q,d,mx,my;
+if(m=='o'){const hz=Math.abs(b.x-a.x)>Math.abs(b.y-a.y),sx=Math.sign(b.x-a.x)||1,sy=Math.sign(b.y-a.y)||1;p=hz?{x:a.x+sx*a.w/2,y:a.y}:{x:a.x,y:a.y+sy*a.h/2};q=hz?{x:b.x-sx*b.w/2,y:b.y}:{x:b.x,y:b.y-sy*b.h/2};d=hz?`M${p.x} ${p.y}H${(p.x+q.x)/2}V${q.y}H${q.x}`:`M${p.x} ${p.y}V${(p.y+q.y)/2}H${q.x}V${q.y}`;mx=(p.x+q.x)/2;my=(p.y+q.y)/2}
+else{p=bd(a,b.x,b.y);q=bd(b,a.x,a.y);if(m=='c'){const cx=(p.x+q.x)/2-(q.y-p.y)*.25,cy=(p.y+q.y)/2+(q.x-p.x)*.25;d=`M${p.x} ${p.y}Q${cx} ${cy} ${q.x} ${q.y}`;mx=.25*p.x+.5*cx+.25*q.x;my=.25*p.y+.5*cy+.25*q.y}else{d=`M${p.x} ${p.y}L${q.x} ${q.y}`;mx=(p.x+q.x)/2;my=(p.y+q.y)/2}}
+const mk=`url(#${sl?'ars':'ar'})`;let s=`<path d="${d}" fill="none" stroke="${c}" stroke-width="2"${e.ds?' stroke-dasharray="7 5"':''}${e.h=='n'?'':` marker-end="${mk}"`}${e.h=='b'?` marker-start="${mk}"`:''}/>`;
+if(hit)s+=`<path d="${d}" fill="none" stroke="transparent" stroke-width="18"/>`;
+if(e.l){const tw=e.l.length*7.4+10;s+=`<rect x="${mx-tw/2}" y="${my-10}" width="${tw}" height="20" rx="4" fill="#fff" stroke="${c}"/><text x="${mx}" y="${my+4.5}" text-anchor="middle" font-size="13" fill="#111827" font-family="${FONT}">${esc(e.l)}</text>`}return s}
+function dup(){const n=byId(sel);if(!n)return;H();const m={...n,id:uid(),x:n.x+30,y:n.y+30};S.n.push(m);sel=m.id;render();props()}
+let ldir=0;
+function autoLayout(dir){H();const lv={},inc=new Set(S.e.map(e=>e.b)),roots=S.n.filter(n=>!inc.has(n.id)).map(n=>n.id);
+(roots.length?roots:[S.n[0].id]).concat(S.n.map(n=>n.id)).forEach(r=>{if(lv[r]!=null)return;lv[r]=0;const Q=[r];while(Q.length){const u=Q.shift();S.e.filter(e=>e.a==u).forEach(e=>{if(lv[e.b]==null){lv[e.b]=lv[u]+1;Q.push(e.b)}})}});
+const rows={};S.n.forEach(n=>(rows[lv[n.id]]=rows[lv[n.id]]||[]).push(n));const H0=Math.max(...S.n.map(n=>n.h)),W0=Math.max(...S.n.map(n=>n.w));
+Object.keys(rows).forEach(k=>{const r=rows[k];let c=-r.reduce((s,n)=>s+(dir?n.h:n.w)+50,-50)/2;r.forEach(n=>{const s=dir?n.h:n.w,pos=c+s/2;c+=s+50;if(dir){n.x=sn(k*(W0+90));n.y=sn(pos)}else{n.y=sn(k*(H0+70));n.x=sn(pos)}})});fit();props()}
+function props(){const p=$('#pr');p.innerHTML='';
+const R=l=>{const r=document.createElement('div');r.className='row';if(l)r.innerHTML=`<label>${l}</label>`;p.appendChild(r);return r};
+const X=(r,h)=>{const d=document.createElement('div');d.innerHTML=h;const i=d.firstElementChild;r.appendChild(i);return i};
+const B=(r,t,f,on)=>{const b=X(r,`<button class="b${on?' on':''}">${t}</button>`);b.onclick=f;return b};
+const I=(r,h,f)=>{const i=X(r,h);i.oninput=()=>{if(!i._h){H();i._h=1}f(i.value);render()};i.onblur=()=>i._h=0;return i};
+const O=(o,v)=>o.map(([k,t])=>`<option value="${k}"${k==v?' selected':''}>${t}</option>`).join('');
+if(mode=='conn'){R().innerHTML=`<span class="mu">${conn?'Now tap the target shape':'Tap the source shape, then the target shape'}</span>`;return}
+const n=byId(sel),e=S.e.find(x=>x.id==selE);
+if(n){I(R(),`<input type="text" placeholder="Shape text" value="${esc(n.s)}">`,v=>n.s=v);
+let r=R('Fill');COL.forEach(c=>{X(r,`<button class="sw" style="background:${c}"></button>`).onclick=()=>{H();n.c=c;render();props()}});I(r,`<input type="color" value="${n.c}">`,v=>n.c=v);
+r=R('Border');I(r,`<input type="color" value="${n.k||'#334155'}">`,v=>n.k=v);I(r,`<select>${O([[1,'Thin'],[2,'Normal'],[4,'Bold']],n.bw||2)}</select>`,v=>n.bw=+v);B(r,'Dashed',()=>{H();n.ds=!n.ds;render();props()},n.ds);
+r=R('Text');I(r,`<input type="color" value="${n.tc||'#111827'}">`,v=>n.tc=v);I(r,`<select>${O([[11,'S'],[14,'M'],[18,'L'],[24,'XL'],[32,'XXL']],n.f||14)}</select>`,v=>n.f=+v);B(r,'<b>B</b>',()=>{H();n.b=!n.b;render();props()},n.b);
+r=R('Size');[['W−',()=>n.w=Math.max(30,n.w*.9)],['W+',()=>n.w*=1.1],['H−',()=>n.h=Math.max(24,n.h*.9)],['H+',()=>n.h*=1.1]].forEach(([t,f])=>B(r,t,()=>{H();f();render()}));
+r=R();B(r,'↗ Connect',()=>{mode='conn';conn=n.id;render();props()});B(r,'Duplicate',dup);B(r,'To front',()=>{H();S.n.push(S.n.splice(S.n.indexOf(n),1)[0]);render()});B(r,'To back',()=>{H();S.n.unshift(S.n.splice(S.n.indexOf(n),1)[0]);render()});B(r,'🗑',del)}
+else if(e){I(R(),`<input type="text" placeholder="Arrow label (Yes / No)" value="${esc(e.l||'')}">`,v=>e.l=v);let r=R('Line');
+I(r,`<select>${O([['s','Straight'],['c','Curved'],['o','Elbow']],e.m||'s')}</select>`,v=>e.m=v);I(r,`<select>${O([['a','Arrow'],['b','Both ends'],['n','No arrow']],e.h||'a')}</select>`,v=>e.h=v);B(r,'Dashed',()=>{H();e.ds=!e.ds;render();props()},e.ds);
+r=R();B(r,'⇄ Reverse',()=>{H();[e.a,e.b]=[e.b,e.a];render()});B(r,'🗑',del)}
+else R().innerHTML=`<span class="mu">Shapes: ${S.n.length} · Connections: ${S.e.length}. Tap ＋ Shapes to add. Tap a shape or arrow to style it. Arrow keys nudge, Ctrl+D duplicates.</span>`}
+const SHP=[['start','Terminator'],['proc','Process'],['dec','Decision'],['io','Input/Output'],['conn','Connector'],['cir','Circle'],['db','Database'],['doc','Document'],['pre','Subprocess'],['dly','Delay'],['hex','Prepare'],['trp','Manual op'],['man','Manual input'],['arr','Arrow'],['tri','Triangle'],['pen','Pentagon'],['star','Star'],['crs','Cross'],['nte','Note'],['txt','Text']];
+$('#sh').innerHTML='<div class="gr">'+SHP.map(([t,l])=>`<button data-t="${t}"><svg viewBox="-60 -40 120 80">${t=='txt'?'<text y="9" text-anchor="middle" font-size="28" fill="currentColor">Aa</text>':shp({t,x:0,y:0,w:100,h:64,k:'#4f46e5'},'fill="#e0e7ff" stroke="#4f46e5" stroke-width="3"')}</svg>${l}</button>`).join('')+'</div><p class="mu" style="margin:8px 0 0;font-size:12px">No limit: tap a shape as many times as you like.</p>';
+$('#sh').onclick=e=>{const b=e.target.closest('[data-t]');if(b)addNode(b.dataset.t)};$('#shb').onclick=()=>{$('#ex').classList.remove('o');$('#sh').classList.toggle('o')};
+svg.addEventListener('pointerdown',()=>{$('#sh').classList.remove('o');$('#ex').classList.remove('o')},true);
+const zc=f=>{const r=svg.getBoundingClientRect();zoomAt(r.width/2,r.height/2,f);render()};$('#zp').onclick=()=>zc(1.2);$('#zo').onclick=()=>zc(.83);
+$('#sn').classList.add('on');$('#sn').onclick=()=>{SN=!SN;$('#sn').classList.toggle('on',SN)};
+$('#al').onclick=()=>{if(S.n.length<2)return toast('Add more shapes first');autoLayout(ldir);toast(ldir?'Layout: left to right':'Layout: top to bottom (tap again to flip)');ldir^=1};
+addEventListener('keydown',e=>{if(/INPUT|SELECT/.test(e.target.tagName))return;const n=byId(sel);if(!n)return;const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key],s=e.shiftKey?20:2;if(d){e.preventDefault();n.x+=d[0]*s;n.y+=d[1]*s;render()}if((e.ctrlKey||e.metaKey)&&e.key=='d'){e.preventDefault();dup()}});
+/* export */
+function svgStr(tr){const b=bounds();if(!b)return null;return{w:b.w,h:b.h,s:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${b.x} ${b.y} ${b.w} ${b.h}" width="${b.w}" height="${b.h}">${DEFS}${tr?'':`<rect x="${b.x}" y="${b.y}" width="${b.w}" height="${b.h}" fill="${$('#bg').value}"/>`}${S.e.map(e=>edgeSVG(e,0,0)).join('')}${S.n.map(n=>nodeSVG(n,0)).join('')}</svg>`}}
+async function canvas(tr,sc){const o=svgStr(tr);if(!o)return null;const k=Math.min(sc,16000/Math.max(o.w,o.h)),im=new Image();im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(o.s);await im.decode();
+const c=document.createElement('canvas');c.width=Math.round(o.w*k);c.height=Math.round(o.h*k);const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(im,0,0,c.width,c.height);return{c,o,k}}
+async function dl(name,data){const b=data instanceof Blob?data:new Blob([data]),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);toast('Saved '+name)}
+const sc=()=>+$('#q').value;
+$('#exb').onclick=()=>$('#ex').classList.toggle('o');
+$('#xp').onclick=async()=>{if(!S.n.length)return toast('Add some shapes first');toast('Rendering…');const r=await canvas($('#tr').checked,sc());r.c.toBlob(b=>b?dl(`flowchart-${r.c.width}x${r.c.height}.png`,b):toast('Too large, pick a lower quality'),'image/png')};
+$('#xf').onclick=async()=>{if(!S.n.length)return toast('Add some shapes first');toast('Building PDF…');const r=await canvas(false,Math.max(3,sc())),w=r.o.w,h=r.o.h,jb=Uint8Array.from(atob(r.c.toDataURL('image/jpeg',.95).split(',')[1]),c=>c.charCodeAt(0));
+const enc=new TextEncoder(),parts=[],off=[];let len=0;const add=x=>{const b=typeof x=='string'?enc.encode(x):x;parts.push(b);len+=b.length};
+const obj=(n,body)=>{off[n]=len;add(n+' 0 obj\n');body.forEach(add);add('\nendobj\n')};
+add('%PDF-1.4\n');obj(1,['<</Type/Catalog/Pages 2 0 R>>']);obj(2,['<</Type/Pages/Kids[3 0 R]/Count 1>>']);
+obj(3,[`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${w} ${h}]/Resources<</XObject<</I 4 0 R>>>>/Contents 5 0 R>>`]);
+obj(4,[`<</Type/XObject/Subtype/Image/Width ${r.c.width}/Height ${r.c.height}/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${jb.length}>>\nstream\n`,jb,'\nendstream']);
+const ct=`q ${w} 0 0 ${h} 0 0 cm /I Do Q`;obj(5,[`<</Length ${ct.length}>>\nstream\n${ct}\nendstream`]);
+const xr=len;add('xref\n0 6\n0000000000 65535 f \n'+[1,2,3,4,5].map(n=>String(off[n]).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n${xr}\n%%EOF`);
+dl('flowchart.pdf',new Blob(parts,{type:'application/pdf'}))};
+$('#xs').onclick=()=>{const o=svgStr($('#tr').checked);o?dl('flowchart.svg',o.s):toast('Add some shapes first')};
+$('#xj').onclick=()=>dl('flowchart-project.json',JSON.stringify(S,null,1));
+$('#fi').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d.n)||!Array.isArray(d.e))throw 0;H();S=d;sel=selE=null;fit();props()}catch(x){toast('Invalid project file')}e.target.value=''};
+function example(){H();const N=(id,t,x,y,s,c)=>({id,t,x,y,w:DEF[t][0],h:DEF[t][1],s,c:c||'#ffffff'});
+S={n:[N('a','start',0,0,'Start','#dcfce7'),N('b','io',0,100,'Enter email and password','#dbeafe'),N('c','dec',0,240,'Credentials valid?','#fef9c3'),N('d','proc',0,380,'Show dashboard'),N('f','start',0,480,'End','#fee2e2'),N('g','proc',280,240,'Show error','#fee2e2')],
+e:[['a','b',''],['b','c',''],['c','d','Yes'],['d','f',''],['c','g','No'],['g','b','Retry']].map(x=>({id:uid(),a:x[0],b:x[1],l:x[2]}))};sel=selE=null;fit();props()}
+$('#xe').onclick=example;$('#xc').onclick=()=>{if(S.n.length){H();S={n:[],e:[]};sel=selE=null;render();props()}};
+/* v3: multi-select, align, copy/paste, templates */
+const MS=new Set();let MM=false,CB=null;
+function copy(){const ids=MS.size?MS:new Set(sel?[sel]:[]);if(!ids.size)return;CB={n:S.n.filter(n=>ids.has(n.id)).map(n=>({...n})),e:S.e.filter(e=>ids.has(e.a)&&ids.has(e.b)).map(e=>({...e}))}}
+function paste(){if(!CB)return;H();const mp={},nn=CB.n.map(n=>{const id=uid();mp[n.id]=id;return{...n,id,x:n.x+40,y:n.y+40}});S.n.push(...nn);const ne=CB.e.map(e=>({...e,id:uid(),a:mp[e.a],b:mp[e.b]}));S.e.push(...ne);CB={n:nn.map(n=>({...n})),e:ne.map(e=>({...e}))};MS.clear();sel=selE=null;if(nn.length==1)sel=nn[0].id;else nn.forEach(n=>MS.add(n.id));render();props()}
+function del(){H();if(MS.size){S.e=S.e.filter(e=>!MS.has(e.a)&&!MS.has(e.b));S.n=S.n.filter(n=>!MS.has(n.id));MS.clear()}else if(sel){S.e=S.e.filter(e=>e.a!=sel&&e.b!=sel);S.n=S.n.filter(n=>n.id!=sel)}else if(selE)S.e=S.e.filter(e=>e.id!=selE);sel=selE=null;render();props()}
+const _props=props;
+props=function(){if(MS.size<2)return _props();const p=$('#pr');p.innerHTML='';const R=()=>{const r=document.createElement('div');r.className='row';p.appendChild(r);return r};
+const B=(r,t,f)=>{const b=document.createElement('button');b.className='b';b.innerHTML=t;b.onclick=()=>{H();f();render();props()};r.appendChild(b)};const it=()=>S.n.filter(n=>MS.has(n.id));
+let r=R();r.innerHTML=`<span class="mu">${MS.size} shapes selected. Drag one to move all.</span>`;r=R();
+[['⇤ Left',a=>{const m=Math.min(...a.map(n=>n.x-n.w/2));a.forEach(n=>n.x=m+n.w/2)}],['⇹ Center',a=>{const m=a.reduce((s,n)=>s+n.x,0)/a.length;a.forEach(n=>n.x=m)}],['⇥ Right',a=>{const m=Math.max(...a.map(n=>n.x+n.w/2));a.forEach(n=>n.x=m-n.w/2)}],
+['⤒ Top',a=>{const m=Math.min(...a.map(n=>n.y-n.h/2));a.forEach(n=>n.y=m+n.h/2)}],['⇳ Middle',a=>{const m=a.reduce((s,n)=>s+n.y,0)/a.length;a.forEach(n=>n.y=m)}],['⤓ Bottom',a=>{const m=Math.max(...a.map(n=>n.y+n.h/2));a.forEach(n=>n.y=m-n.h/2)}],
+['Spread H',a=>{a.sort((p,q)=>p.x-q.x);const f=a[0].x,l=a[a.length-1].x;a.forEach((n,i)=>n.x=f+(l-f)*i/(a.length-1))}],['Spread V',a=>{a.sort((p,q)=>p.y-q.y);const f=a[0].y,l=a[a.length-1].y;a.forEach((n,i)=>n.y=f+(l-f)*i/(a.length-1))}]].forEach(([t,f])=>B(r,t,()=>f(it())));
+r=R();B(r,'Duplicate',()=>{copy();paste()});B(r,'🗑',del);const c=document.createElement('input');c.type='color';c.value='#dbeafe';c.oninput=()=>{it().forEach(n=>n.c=c.value);render()};c.onfocus=H;r.appendChild(c)};
+$('#mm').onclick=()=>{MM=!MM;$('#mm').classList.toggle('on',MM);toast(MM?'Multi mode: tap shapes to select. Turn off to drag':'Multi mode off')};
+$('#sa').onclick=()=>{sel=selE=null;S.n.forEach(n=>MS.add(n.id));render();props()};
+addEventListener('keydown',e=>{if(/INPUT|SELECT/.test(e.target.tagName))return;const c=e.ctrlKey||e.metaKey,k=e.key.toLowerCase();
+if(c&&k=='a'){e.preventDefault();$('#sa').onclick()}else if(c&&k=='c')copy();else if(c&&k=='v'){e.preventDefault();paste()}else if(c&&k=='d'&&MS.size){e.preventDefault();copy();paste()}
+else if(k=='escape'){MS.clear();sel=selE=null;mode='sel';conn=null;render();props()}else if((k=='delete'||k=='backspace')&&MS.size)del()});
+const TP={order:[[['a','start','Start','#dcfce7'],['b','proc','Receive order'],['c','dec','In stock?','#fef9c3'],['d','proc','Pack and ship'],['e','proc','Order from supplier'],['f','proc','Send invoice'],['g','start','End','#fee2e2']],[['a','b'],['b','c'],['c','d','Yes'],['c','e','No'],['e','d'],['d','f'],['f','g']]],
+ticket:[[['a','start','Start','#dcfce7'],['b','io','New ticket'],['c','dec','Urgent?','#fef9c3'],['d','proc','Escalate'],['e','proc','Assign agent'],['f','proc','Resolve'],['g','dec','Customer happy?','#fef9c3'],['h','start','End','#fee2e2']],[['a','b'],['b','c'],['c','d','Yes'],['c','e','No'],['d','f'],['e','f'],['f','g'],['g','h','Yes'],['g','f','Reopen']]],
+release:[[['a','start','Start','#dcfce7'],['b','proc','Plan'],['c','proc','Develop'],['d','proc','Test'],['e','dec','Tests pass?','#fef9c3'],['f','proc','Fix bugs','#fee2e2'],['g','proc','Deploy'],['h','start','End','#fee2e2']],[['a','b'],['b','c'],['c','d'],['d','e'],['e','g','Yes'],['e','f','No'],['f','d'],['g','h']]]};
+$('#tp').onchange=e=>{const t=TP[e.target.value];e.target.value='';if(!t)return;H();S={n:t[0].map(([id,ty,s,c])=>({id,t:ty,x:0,y:0,w:DEF[ty][0],h:DEF[ty][1],s,c:c||'#ffffff'})),e:t[1].map(x=>({id:uid(),a:x[0],b:x[1],l:x[2]||''}))};sel=selE=null;MS.clear();autoLayout(0)};
+try{const t=JSON.parse(localStorage.getItem('ff')||'null');if(t&&t.n&&t.n.length)S=t}catch(e){}
+if(S.n.length){fit()}else example();props();
+</script>
+</body>
+</html>
