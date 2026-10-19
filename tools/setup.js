@@ -542,6 +542,16 @@ const EXTRA_TOOLS = [
   howto: 'Files banao ya ZIP upload karo, code likho aur live preview dekho. API Tester mein Gemini ya Groq key daalo, best working model highlight ho jayega.',
   kw: ['developer', 'code', 'editor', 'html', 'css', 'javascript', 'zip', 'preview', 'api', 'gemini', 'groq', 'playground', 'students', 'coding']
 },
+{
+  id: 'flowforge',
+  name: 'FlowForge - Flowchart Maker',
+  cat: 'utilities',
+  icon: '🔀',
+  desc: 'Create professional flowcharts with templates, auto-layout, and Ultra HD export.',
+  howto: 'Tap shapes to add, connect them, and export as PNG, PDF, or SVG.',
+  kw: ['flowchart', 'diagram', 'flow', 'process', 'chart', 'maker', 'draw', 'mindmap'],
+  external: 'tools/flowforge/flowforge.html'
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
