@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="hi" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SuperAI Pro | Qunverio</title>
+<style>
+/* CSS (Same as before, no changes) */
+:root{--bg:#0e1117;--sb:#12151c;--card:#1a1e27;--bd:#262b36;--tx:#e8eaf0;--mu:#8a93a6;--g:linear-gradient(135deg,#8b5cf6,#4f46e5);--glass:rgba(26,30,39,.72);color-scheme:dark}
+[data-theme=light]{--bg:#f5f6fb;--sb:#fff;--card:#fff;--bd:#e2e5ee;--tx:#1a1d29;--mu:#6b7385;--glass:rgba(255,255,255,.72);color-scheme:light}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,-apple-system,sans-serif;display:flex;overflow:hidden;transition:background .3s,color .3s}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+textarea,input{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;width:100%;outline:0}
+#sb{position:fixed;inset:0 auto 0 0;width:280px;background:var(--sb);border-right:1px solid var(--bd);transform:translateX(-100%);transition:transform .3s;z-index:30;display:flex;flex-direction:column;gap:12px;padding:14px;padding-top:calc(14px + env(safe-area-inset-top))}
+body.sbo #sb{transform:none}
+#scrim{position:fixed;inset:0;background:#0008;opacity:0;pointer-events:none;transition:.3s;z-index:25}
+body.sbo #scrim{opacity:1;pointer-events:auto}
+.brand{font-weight:700;font-size:18px;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+.grad{background:var(--g);color:#fff;padding:10px 14px;border-radius:12px;display:flex;gap:8px;align-items:center;justify-content:center;font-weight:600;transition:.2s}
+.grad:hover{filter:brightness(1.1);transform:translateY(-1px)}
+#lst{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.it{display:flex;align-items:center;gap:6px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:.2s;color:var(--mu)}
+.it:hover{background:var(--card);color:var(--tx)}
+.it.on{background:var(--g);color:#fff}
+.nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac{display:none;gap:2px}
+.it:hover .ac,.it.on .ac{display:flex}
+@media(hover:none){.ac{display:flex}}
+.ac button{padding:3px;opacity:.85}
+main{flex:1;min-width:0;height:100dvh;position:relative;display:flex;flex-direction:column;transition:margin .3s;padding-top:env(safe-area-inset-top)}
+@media(min-width:800px){body.sbo main{margin-left:280px}#scrim{display:none}}
+header{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--bd)}
+#ti{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.ic{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:10px;color:var(--mu);transition:.2s}
+.ic:hover{background:var(--card);color:var(--tx)}
+#chat{flex:1;overflow-y:auto}
+.w{max-width:760px;margin:0 auto;padding:8px 16px 230px}
+.msg{display:flex;gap:10px;margin:18px 0;animation:in .35s ease both}
+@keyframes in{from{opacity:0;transform:translateY(12px)}}
+.msg.u{justify-content:flex-end}
+.bub{background:var(--g);color:#fff;padding:10px 14px;border-radius:20px 20px 4px 20px;max-width:85%;white-space:pre-wrap;word-break:break-word}
+.bub img{display:block;max-width:100%;max-height:220px;border-radius:12px;margin-bottom:6px}
+.fc{display:inline-block;background:#fff3;border-radius:8px;padding:2px 8px;font-size:12px;margin:0 6px 6px 0}
+.av{flex:none;width:28px;height:28px;border-radius:9px;background:var(--g);display:grid;place-items:center;color:#fff;margin-top:2px}
+.bd{min-width:0;flex:1}
+.tx{white-space:pre-wrap;word-break:break-word}
+.tx h3,.tx h4{margin:10px 0 4px}
+.tx li{margin-left:1.3em;display:list-item}
+.tx a{color:#8b9dff}
+.tx code{background:var(--card);border:1px solid var(--bd);padding:1px 5px;border-radius:6px;font-size:13px}
+.cb{margin:10px 0;border-radius:12px;overflow:hidden;background:#0d1117;border:1px solid var(--bd);white-space:normal}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:6px 12px;background:#161b22;color:#9aa4b2;font-size:12px}
+.cc{display:flex;gap:4px;align-items:center;color:#9aa4b2;font-size:12px}
+.cb pre{overflow-x:auto;white-space:pre;margin:0}
+.cb pre code{display:block;background:none!important;border:0!important;padding:12px!important;font-size:13px;color:#c9d1d9}
+.ft{display:flex;align-items:center;gap:2px;margin-top:4px}
+.ft small{margin-left:8px;font-size:11px;color:var(--mu)}
+.rg{display:none!important}
+.last .rg{display:inline-grid!important}
+.dots{display:flex;gap:5px;padding:12px 0}
+.dots i{width:8px;height:8px;border-radius:50%;background:var(--g);animation:b 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{40%{transform:translateY(-6px);opacity:.5}}
+.n{text-align:center;color:var(--mu);font-size:12px;margin:8px 0}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px;margin:12px 0 12px 38px;animation:in .35s ease both}
+.card a{color:#8b9dff}
+.card iframe{width:100%;height:340px;border:0;background:#fff;border-radius:10px;margin-top:8px}
+.card img{width:100%;border-radius:10px;margin-top:8px}
+#hero{text-align:center;margin-top:12vh}
+#hero h1{font-size:32px;background:var(--g);-webkit-background-clip:text;background-clip:text;color:transparent}
+#hero p{color:var(--mu);margin:6px 0 18px}
+.sg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.sg button{border:1px solid var(--bd);background:var(--card);border-radius:14px;padding:8px 12px;font-size:13px;transition:.2s}
+.sg button:hover{border-color:#8b5cf6;transform:translateY(-2px)}
+#ib{position:absolute;left:0;right:0;bottom:0;padding:30px 12px calc(12px + env(safe-area-inset-bottom));pointer-events:none;background:linear-gradient(transparent,var(--bg) 55%)}
+.pill{pointer-events:auto;max-width:760px;margin:0 auto;background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--bd);border-radius:26px;box-shadow:0 12px 40px #0005;padding:10px 12px;transition:.2s}
+.pill:focus-within{border-color:#8b5cf6}
+#q{background:none;border:0;resize:none;padding:6px 4px;max-height:160px;display:block}
+#pv{display:flex;gap:8px;overflow-x:auto;margin-bottom:6px}
+#pv:empty{display:none}
+.pc{position:relative;flex:none;height:56px;min-width:56px;max-width:170px;border-radius:12px;border:1px solid var(--bd);overflow:hidden;display:flex;align-items:center;padding:0 12px;font-size:12px;background:var(--card)}
+.pc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pc button{position:absolute;top:3px;right:3px;background:#000b;color:#fff;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;z-index:1;font-size:12px}
+.row{display:flex;align-items:center;gap:6px;margin-top:4px}
+.tg{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--bd);color:var(--mu);font-size:13px;transition:.2s;white-space:nowrap}
+.sw{width:24px;height:14px;border-radius:9px;background:var(--bd);position:relative;transition:.2s}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:.2s}
+.tg.on{color:var(--tx);border-color:#8b5cf6}
+.tg.on .sw{background:var(--g)}
+.tg.on .sw::after{left:12px}
+.send{width:40px;height:40px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;transition:.2s}
+.send:hover{transform:scale(1.08)}
+.send:disabled{opacity:.5}
+dialog{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:16px;width:94%;max-width:520px;max-height:88dvh;overflow-y:auto;padding:16px}
+dialog::backdrop{background:#0009}
+.pv{margin:12px 0;display:grid;gap:6px}
+.pv .r3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.pv input{font-size:12px}
+.kp{display:grid;gap:8px;margin:14px 0}
+.kc{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px 12px;display:grid;gap:6px}
+.kc.off{opacity:.55}
+.kh{display:flex;align-items:center;gap:10px}
+.kav{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:700;background:var(--g)}
+.st{margin-left:auto;font-size:12px;padding:2px 10px;border-radius:99px;background:#22c55e22;color:#22c55e}
+.kc.off .st{background:var(--bd);color:var(--mu)}
+.kr{display:flex;align-items:center;gap:8px;font:12px ui-monospace,monospace;color:var(--mu)}
+.kr button{margin-left:auto}
+.hint{font-size:12px;color:var(--mu)}
+#add{display:grid;gap:8px;margin-top:10px}
+select{width:100%;background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px}
+.mp{display:flex;align-items:center;padding:6px 10px;border-radius:10px;background:var(--card);border:1px solid var(--bd);font-size:13px;max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;cursor:pointer;transition:.2s}
+.mi:hover{background:var(--card)}
+.mi.on{background:var(--g);color:#fff}
+.mg{font-size:12px;color:var(--mu);margin:12px 4px 2px}
+@media(max-width:600px){#ti{display:none}.mp{margin-right:auto;max-width:none}}
+.ic.act{color:#8b5cf6}
+.rec{color:#ef4444!important;animation:pl 1s infinite}
+@keyframes pl{50%{opacity:.35}}
+[hidden]{display:none!important}
+.co{display:flex;gap:4px;align-items:center;color:#9aa4b2;font-size:12px}
+.tg{padding:6px 8px;gap:4px}
+.row{gap:4px;flex-wrap:wrap}
+#cvs{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+@media(min-width:900px){#cvs{left:auto;width:48%;border-left:1px solid var(--bd);box-shadow:-10px 0 40px #0005}}
+.cvh{display:flex;align-items:center;gap:2px;padding:6px 10px;border-bottom:1px solid var(--bd)}
+#cvv{flex:1;min-height:120px;border:0;border-radius:0;background:#0d1117;color:#c9d1d9;font:13px/1.5 ui-monospace,monospace;resize:none;white-space:pre;overflow:auto;padding:12px}
+#cvo{flex:1;min-height:120px;border-top:1px solid var(--bd);overflow:auto;background:var(--card)}
+#cvo iframe{width:100%;height:100%;border:0;background:#fff}
+#cvo pre{padding:12px;white-space:pre-wrap;font-size:13px}
+.cai{display:flex;gap:8px;padding:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--bd)}
+.stt{color:var(--mu);font-size:13px;align-self:center}
+.bd .stt{margin-top:4px;align-self:auto}
+.stt:empty{display:none}
+.stp{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 8px 38px;padding:8px 12px;border-radius:12px;background:var(--card);border:1px solid var(--bd);font-size:13px;color:var(--mu);animation:in .3s ease both}
+.stp b{color:#22c55e}.stp.er b{color:#ef4444}
+.spn{width:14px;height:14px;border-radius:50%;border:2px solid var(--bd);border-top-color:#8b5cf6;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(1turn)}}
+.stp details{width:100%}
+.stp pre{white-space:pre-wrap;font-size:12px;max-height:160px;overflow:auto;margin-top:4px;color:var(--tx)}
+.qv-back{position:fixed;top:10px;left:10px;z-index:100;background:var(--card);border:1px solid var(--bd);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--tx);text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,0.2);}
+</style>
+</head>
+<body>
+<a href="../../index.html" class="qv-back" title="Back to Qunverio">←</a>
+
+<aside id="sb">
+ <div class="brand" style="padding-left:36px;">⚡ SuperAI Pro</div>
+ <button class="grad" id="nc" data-i="plus">New chat</button>
+ <div id="lst"></div>
+</aside>
+<div id="scrim"></div>
+<main>
+ <header>
+  <button class="ic" id="mb" data-i="menu"></button>
+  <span id="ti">SuperAI</span>
+  <button class="mp" id="mp">⚡ Auto ▾</button>
+  <button class="ic" id="nc2" data-i="plus"></button>
+  <button class="ic" id="th"></button>
+  <button class="ic" id="ky" data-i="key"></button>
+ </header>
+ <div id="chat"><div class="w" id="ct"></div></div>
+ <div id="ib"><div class="pill">
+  <div id="pv"></div>
+  <textarea id="q" rows="1" placeholder="Kuch bhi poochho..."></textarea>
+  <div class="row">
+   <button class="ic" id="at" data-i="clip" title="Attach"></button>
+   <button class="ic" id="mc2" data-i="mic" title="Bolkar likho (long-press: language)"></button>
+   <input type="file" id="fi" multiple hidden accept="image/*,.pdf,.docx,.txt,.md,.csv,.json,.js,.py,.html,.css">
+   <button class="tg" id="tk"><span data-i="spark" data-s="14"></span>Think<i class="sw"></i></button>
+   <button class="tg" id="tw"><span data-i="globe" data-s="14"></span>Search<i class="sw"></i></button>
+   <span style="flex:1"></span>
+   <button class="send" id="go" data-i="send"></button>
+  </div>
+ </div></div>
+</main>
+<div id="cvs" hidden>
+ <div class="cvh"><b id="cvt" style="flex:1">Canvas</b><button class="ic" id="cvr" data-i="play" title="Run / Preview"></button><button class="ic" id="cvc" data-i="copy" title="Copy"></button><button class="ic" id="cvd" data-i="dl" title="Download"></button><button class="ic" id="cvx" data-i="x" title="Close"></button></div>
+ <textarea id="cvv" spellcheck="false" autocapitalize="off"></textarea>
+ <div id="cvo" hidden></div>
+ <div class="cai"><input id="cvi" placeholder="AI se kaho: isme ye badlo..."><button class="send" id="cvs2" data-i="send"></button></div>
+</div>
+<dialog id="mdlg">
+ <div style="display:flex;justify-content:space-between;align-items:center"><h3>Model chuno</h3><button class="ic" id="mc">✕</button></div>
+ <input id="ms" placeholder="Model search karo..." style="margin:8px 0">
+ <div id="ml"></div>
+</dialog>
+<dialog id="dlg">
+ <h3>API Keys</h3>
+ <p style="color:var(--mu);font-size:13px;margin:6px 0">Key paste karo, provider aur uske models apne aap pehchane jate hain.</p>
+ <div id="set"></div>
+ <button class="grad" id="cls" style="width:100%">Done</button>
+</dialog>
+<script>
+/* ---------------------------------------------------
+   JS CODE START
+   --------------------------------------------------- */
+const $=id=>document.getElementById(id);
+const ls=(k,v)=>{try{return v===undefined?localStorage.getItem(k):localStorage.setItem(k,v)}catch(e){}};
+const CDN='https://cdnjs.cloudflare.com/ajax/libs/';
+const ic={menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',plus:'<path d="M12 5v14M5 12h14"/>',clip:'<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>',send:'<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',moon:'<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',spk:'<path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/>',ref:'<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',spark:'<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',key:'<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M16 7l3 3"/>',pin:'<path d="M12 17v5M9 3h6l-1 7 3 3H7l3-3z"/>',edit:'<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',trash:'<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',chk:'<path d="M20 6 9 17l-5-5"/>',x:'<path d="M18 6 6 18M6 6l12 12"/>',play:'<path d="m6 3 14 9-14 9z"/>',dl:'<path d="M12 3v12m-5-5 5 5 5-5M5 21h14"/>',mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/>',up:'<path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/>',dn:'<path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/>'};
+const I=(n,s=18)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic[n]}</svg>`;
+document.querySelectorAll('[data-i]').forEach(e=>e.insertAdjacentHTML('afterbegin',I(e.dataset.i,+e.dataset.s||18)));
+
+const PROV={
+ Gemini:{u:'https://generativelanguage.googleapis.com/v1beta/openai'},
+ Claude:{u:'https://api.anthropic.com/v1',t:'a'},
+ OpenAI:{u:'https://api.openai.com/v1'},
+ OpenRouter:{u:'https://openrouter.ai/api/v1'},
+ Groq:{u:'https://api.groq.com/openai/v1'},
+ GitHub:{u:'https://models.github.ai/inference',lu:'https://models.github.ai/catalog/models'},
+ OpenCode:{u:'https://opencode.ai/zen/v1'},
+ Cerebras:{u:'https://api.cerebras.ai/v1'},
+ Mistral:{u:'https://api.mistral.ai/v1'},
+ xAI:{u:'https://api.x.ai/v1'},
+ NVIDIA:{u:'https://integrate.api.nvidia.com/v1'},
+ Pollinations:{u:'https://gen.pollinations.ai'}};
+const MODELS=[
+ {p:'Claude',m:'claude-opus-5-5',c:10,r:10,g:10,v:1,w:1},
+ {p:'Claude',m:'claude-sonnet-5-5',c:9,r:9,g:9,v:1,w:1},
+ {p:'Claude',m:'claude-haiku-5-5',c:7,r:6,g:7,v:1,w:1},
+ {p:'OpenAI',m:'gpt-5',c:10,r:10,g:10,v:1},
+ {p:'OpenAI',m:'gpt-5-mini',c:8,r:8,g:8,v:1},
+ {p:'OpenAI',m:'o4-mini',c:8,r:9,g:7},
+ {p:'OpenAI',m:'gpt-4o',c:7,r:6,g:8,v:1},
+ {p:'OpenAI',m:'gpt-4o-search-preview',c:5,r:5,g:6,s:1},
+ {p:'Gemini',m:'gemini-2.5-pro',c:9,r:9,g:9,v:1},
+ {p:'Gemini',m:'gemini-2.5-flash',c:7,r:7,g:8,v:1},
+ {p:'Gemini',m:'gemini-2.5-flash-lite',c:5,r:5,g:6,v:1},
+ {p:'xAI',m:'grok-4',c:10,r:10,g:10,v:1},
+ {p:'Mistral',m:'mistral-large-latest',c:8,r:8,g:8},
+ {p:'Mistral',m:'codestral-latest',c:9,r:8,g:6},
+ {p:'Groq',m:'openai/gpt-oss-120b',c:7.5,r:9,g:7.5},
+ {p:'Groq',m:'llama-3.3-70b-versatile',c:6.5,r:5,g:6.5},
+ {p:'Cerebras',m:'gpt-oss-120b',c:7.5,r:9,g:7.5},
+ {p:'GitHub',m:'openai/gpt-4.1',c:8,r:8,g:8,v:1}];
+function who(k){
+ if(/^sk-ant-/.test(k))return'Claude';if(/^sk-or-/.test(k))return'OpenRouter';if(/^(AIza|AQ\.)/.test(k))return'Gemini';
+ if(/^gsk_/.test(k))return'Groq';if(/^csk-/.test(k))return'Cerebras';if(/^xai-/.test(k))return'xAI';if(/^nvapi-/.test(k))return'NVIDIA';
+ if(/^(ghp_|gho_|ghu_|github_pat_)/.test(k))return'GitHub';if(/^(pk|sk)_/.test(k))return'Pollinations';if(/^sk-/.test(k))return'OpenAI';return null}
+function tok(l){let n=null;const m=l.match(/^(\w+)\s*[:=]\s*(\S+)$/);if(m){n=Object.keys(PROV).find(x=>x.toLowerCase()===m[1].toLowerCase());if(n)l=m[2]}return{k:l,n:n||who(l)}}
+const getL=()=>(ls('keys')||'').split('\n').map(x=>x.trim()).filter(Boolean),setL=a=>ls('keys',a.join('\n'));
+const parseKeys=()=>getL().map(tok);
+if(!ls('keys')){try{const o=JSON.parse(ls('sai2')||ls('sai')||'[]');const ks=o.flatMap(p=>(p.k||'').split('\n').map(x=>x.trim()).filter(Boolean).map(k=>(who(k)?'':p.n+':')+k));if(ks.length)ls('keys',ks.join('\n'))}catch(e){}}
+let C=[];try{C=JSON.parse(ls('sc')||'[]')}catch(e){}
+const persist=()=>ls('sc',JSON.stringify(C,(k,v)=>k==='imgs'?undefined:v));
+let cur=null,think=0,web=0,files=[],busy=0,cool=(()=>{try{const o=JSON.parse(ls('cool')||'{}');for(const k in o)if(o[k]<Date.now())delete o[k];return o}catch(e){return{}}})();
+let setSt=()=>{},SEL=null;try{SEL=JSON.parse(ls('sel')||'null')}catch(e){}
+
+const SYS=`You are SuperAI, a capable agent in a phone browser. Reply in the user's language. Use markdown and fenced code blocks. To act, put tool tags in your reply (several allowed); results return as TOOL_RESULT. Tools:
+<tool name="run_js">javascript code (async ok, console.log for output)</tool>
+<tool name="save_file" arg="filename.ext">full file content</tool>
+<tool name="preview_html">complete self-contained HTML (inline CSS/JS)</tool>
+<tool name="make_pdf" arg="name.pdf">HTML body content for the PDF (simple HTML + inline CSS, dark text on white, no scripts or external images)</tool>
+<tool name="gen_image">detailed english image prompt</tool>
+Before each tool call write one short sentence telling the user what you are about to do. No shell, Python or video generation here; say so if asked. Write complete working code, then finish with a short answer without tool tags.`;
+const RX=/<tool name="(\w+)"(?: arg="([^"]*)")?\s*>([\s\S]*?)<\/tool>/g;
+
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const bot=()=>$('chat').scrollTo({top:1e9,behavior:'smooth'});
+const ld=u=>new Promise((r,j)=>{const s=document.createElement('script');s.src=u;s.onload=r;s.onerror=()=>j(Error('library load nahi hui (internet?)'));document.head.append(s)});
+const copy=async t=>{try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.append(a);a.select();document.execCommand('copy');a.remove()}};
+function md(s){
+ const bl=[];
+ s=s.replace(/```(\w*)\n?([\s\S]*?)```/g,(_,l,c)=>{bl.push([l,c.replace(/\n$/,'')]);return '\u0000'+(bl.length-1)+'\u0000'});
+ s=esc(s).replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/(^|[\s(])\*([^*\n]+)\*/g,'$1<i>$2</i>').replace(/^### (.*)$/gm,'<h4>$1</h4>').replace(/^#{1,2} (.*)$/gm,'<h3>$1</h3>').replace(/^[-*] (.*)$/gm,'<li>$1</li>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+ s=s.replace(/\u0000(\d+)\u0000/g,(_,i)=>{const[l,c]=bl[i];return `<div class="cb"><div class="ch"><span>${l||'code'}</span><span style="display:flex;gap:14px"><button class="co">${I('edit',14)} Canvas</button><button class="cc">${I('copy',14)} Copy code</button></span></div><pre><code class="language-${l||'plaintext'}">${esc(c)}</code></pre></div>`});
+ return s.replace(/(<\/h[34]>|<\/li>|<\/div>)\n/g,'$1');
+}
+async function hl(d){
+ if(!d.querySelector('pre code'))return;
+ if(!window.hljs){if(!window._hl){window._hl=ld(CDN+'highlight.js/11.9.0/highlight.min.js');const l=document.createElement('link');l.rel='stylesheet';l.href=CDN+'highlight.js/11.9.0/styles/github-dark.min.css';document.head.append(l)}try{await window._hl}catch(e){return}}
+ d.querySelectorAll('pre code').forEach(c=>{if(!c.dataset.highlighted)hljs.highlightElement(c)});
+}
+function speak(t){
+ if(speechSynthesis.speaking){speechSynthesis.cancel();return}
+ const u=new SpeechSynthesisUtterance(t.replace(/```[\s\S]*?```/g,' code block '));
+ u.lang=/[\u0900-\u097F]/.test(t)?'hi-IN':'en-US';speechSynthesis.speak(u);
+}
+function flash(b){const h=b.innerHTML;b.innerHTML=I('chk',15)+(b.classList.contains('cc')?' Copied':'');setTimeout(()=>b.innerHTML=h,1200)}
+
+function note(t){const d=document.createElement('div');d.className='n';d.textContent=t;$('ct').append(d);bot()}
+function card(h){const d=document.createElement('div');d.className='card';d.innerHTML=h;$('ct').append(d);bot();return d}
+const dl=(n,b)=>`<a download="${n}" href="${URL.createObjectURL(b)}">⬇ ${n}</a>`;
+function addMsg(m,quiet,na){
+ if(m.h)return;$('hero')?.remove();
+ const d=document.createElement('div');
+ if(m.r==='user'){
+  const ch=[...(m.f||[]),...(m.ni&&!m.imgs?[m.ni+' image']:[])].map(f=>`<span class="fc">${esc(f)}</span>`).join('');
+  d.className='msg u';d.innerHTML=`<div class="bub">${(m.imgs||[]).map(i=>`<img src="${i}">`).join('')}${ch}${esc(m.c)}</div>`;
+ }else{
+  const t=m.c.replace(RX,'').trim();if(!t)return;
+  d.className='msg a';d._t=t;d._m=m;
+  d.innerHTML=`<div class="av">${I('spark',14)}</div><div class="bd"><div class="tx">${md(t)}</div><div class="ft"><button class="ic cp" title="Copy">${I('copy',15)}</button><button class="ic sp" title="Read aloud">${I('spk',15)}</button><button class="ic rg" title="Regenerate">${I('ref',15)}</button><button class="ic up${m.fb===1?' act':''}" title="Achha jawab">${I('up',15)}</button><button class="ic dn${m.fb===-1?' act':''}" title="Bura jawab">${I('dn',15)}</button><small>${esc(m.mod||'')}</small></div></div>`;
+  hl(d);
+ }
+ if(na)d.style.animation='none';$('ct').append(d);if(!quiet)bot();
+}
+function mark(){const a=[...$('ct').querySelectorAll('.msg.a')].filter(e=>e._t);a.forEach(e=>e.classList.remove('last'));a.length&&a[a.length-1].classList.add('last')}
+function renderAll(){
+ const ct=$('ct');ct.innerHTML='';$('ti').textContent=cur&&cur.title||'SuperAI';
+ if(!cur||!cur.m.length)ct.innerHTML=`<div id="hero"><h1>Aaj kya banayein?</h1><p>Code, HTML, PDF, image ya koi bhi sawaal</p><div class="sg">${['Snake game bana ke do','Resume ka PDF banao','Quantum computing simple me samjhao'].map(s=>`<button>${s}</button>`).join('')}</div></div>`;
+ else cur.m.forEach(m=>addMsg(m,1));
+ mark();rl();
+}
+function rl(){
+ const L=[...C].sort((a,b)=>(b.pin-a.pin)||(b.ts-a.ts));
+ $('lst').innerHTML=L.map(c=>`<div class="it${c===cur?' on':''}" data-id="${c.id}">${c.pin?I('pin',13):''}<span class="nm">${esc(c.title||'New chat')}</span><span class="ac"><button data-a="pin">${I('pin',14)}</button><button data-a="ren">${I('edit',14)}</button><button data-a="del">${I('trash',14)}</button></span></div>`).join('');
+}
+
+function closeSb(){if(innerWidth<800)document.body.classList.remove('sbo')}
+function newChat(){if(busy)return note('Jawab aane tak ruko');cur=null;files=[];pv();$('q').value='';grow();speechSynthesis.cancel();renderAll();closeSb();$('q').focus()}
+$('nc').onclick=$('nc2').onclick=newChat;
+$('lst').onclick=e=>{
+ const it=e.target.closest('.it');if(!it)return;const c=C.find(x=>x.id===it.dataset.id),b=e.target.closest('button');
+ if(b){e.stopPropagation();const a=b.dataset.a;
+  if(a==='pin'){c.pin=c.pin?0:1}
+  else if(a==='ren'){const t=prompt('Naya naam',c.title);if(t&&t.trim())c.title=t.trim()}
+  else if(a==='del'&&confirm('Ye chat delete karein?')){C=C.filter(x=>x!==c);if(cur===c){cur=null;renderAll()}}
+  persist();rl();if(cur===c)$('ti').textContent=c.title;return}
+ if(busy)return note('Jawab aane tak ruko');cur=c;renderAll();closeSb();bot();
+};
+
+const slots=()=>parseKeys().filter(x=>x.n).map(x=>({p:{n:x.n,...PROV[x.n]},k:x.k,id:x.n+x.k.slice(-6)}));
+const lastU=ms=>[...ms].reverse().find(m=>!m.h&&m.r==='user');
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const LOG=[];const dbg=t=>{LOG.push(new Date().toLocaleTimeString()+' '+t);if(LOG.length>40)LOG.shift()};
+const bad=(m,st)=>Object.assign(Error(m),{status:st});
+const hot=k=>(cool[k]||0)>Date.now(),cd=(k,ms)=>{cool[k]=Date.now()+ms;ls('cool',JSON.stringify(cool))};
+function task(ms){
+ const u=lastU(ms),t=(u?.c||'')+(u?.x?' file':'');
+ if(web)return'search';if(think)return'reason';
+ if(/```|\b(code|coding|script|function|bug|debug|error|html|css|javascript|python|react|api|sql|app|website|game|program|regex|json|algorithm|calculator)\b/i.test(t))return'code';
+ if(/\b(latest|news|today|aaj|abhi|current|currently|price|weather|score|khabar|live)\b/i.test(t))return'search';
+ if(/\b(math|solve|prove|proof|calculate|logic|puzzle|derive|equation|step by step|analy[sz]e|compare|strategy|optimi[sz]e|why)\b/i.test(t))return'reason';
+ return'gen'}
+let DISC={};try{DISC=JSON.parse(ls('disc')||'{}')}catch(e){}
+const BADK=new Set();
+function rate(p,id,x={}){
+ const l=id.toLowerCase().replace(/^models\//,'');
+ if(/embed|whisper|tts|speech|transcri|audio|realtime|image|dall|guard|moderat|rerank|imagen|veo|lyria|codex|davinci|babbage|aqa|learnlm|\bocr\b/.test(l))return null;
+ if(p==='OpenRouter'&&!x.free)return null;
+ const b=l.split('/').pop();let f=p;
+ if(p==='GitHub'||p==='OpenCode')f=/gpt-oss/.test(l)?'gen':/claude/.test(l)?'Claude':/gpt-|\/o\d|^o\d/.test(l)?'OpenAI':/gemini/.test(l)?'Gemini':/grok/.test(l)?'xAI':/mistral|codestral/.test(l)?'Mistral':'gen';
+ if(p==='OpenCode'&&/^(Claude|OpenAI|Gemini)$/.test(f))return null;
+ let c,r,g,v=x.v?1:0,s=0,w=0;
+ if(f==='Claude'){c=r=g=/opus/.test(b)?10:/sonnet/.test(b)?9:/haiku/.test(b)?7:6;v=1;w=p==='Claude'?1:0}
+ else if(f==='OpenAI'){
+  if(/search/.test(b)){[c,r,g]=[5,5,6];s=p==='OpenAI'?1:0}
+  else if(/^o\d/.test(b)){[c,r,g]=/mini/.test(b)?[8,9,7]:[9,10,8]}
+  else if(/gpt-5/.test(b)){c=r=g=/nano/.test(b)?6:/mini/.test(b)?8:10;v=1}
+  else if(/gpt-4\.1/.test(b)){c=r=g=/mini|nano/.test(b)?6:8;v=1}
+  else if(/gpt-4o/.test(b)){c=r=g=/mini/.test(b)?6:7;v=1}
+  else c=r=g=4}
+ else if(f==='Gemini'){let t=/flash-lite/.test(b)?5:/flash/.test(b)?7:/pro/.test(b)?9:/gemma/.test(b)?4:5;if(/gemini-3/.test(b))t=Math.min(10,t+1);c=r=t;g=t===7?8:t;v=/gemini/.test(b)?1:0}
+ else if(f==='xAI'){c=r=g=/mini|fast/.test(b)?7:/grok-4/.test(b)?10:/grok-3/.test(b)?8:7;if(/code/.test(b))c=9;v=/grok-4|vision/.test(b)?1:0}
+ else if(f==='Mistral'){c=r=g=/large/.test(b)?8:/medium/.test(b)?7:5;if(/codestral|devstral/.test(b)){c=9;g=6}v=/pixtral|medium/.test(b)?1:0}
+ else{
+  const n=+(l.match(/(\d+(?:\.\d+)?)b(?![a-z])/)||[])[1]||0;
+  let t=n>=300?9:n>=100?7.5:n>=60?6.5:n>=25?6:n>=12?5:n?4:5.5;
+  if(/gpt-oss-120|kimi|k2|glm-4|qwen3-(235|max)|deepseek-(v3|chat)|maverick|mistral-large/.test(l))t=Math.max(t,7.5);
+  c=Math.min(10,t+(/coder|code/.test(l)?1.5:0));r=Math.min(10,t+(/r1|reason|think|qwq|gpt-oss/.test(l)?1.5:0));g=t;
+  v=v||(/vision|maverick|scout|gemma-3|pixtral|-vl/.test(l)?1:0);if(/compound/.test(l)){s=1;g=6}}
+ return{c,r,g,v,s,w}}
+async function disc(s){
+ const{p,k}=s;if(p.n==='Pollinations')return null;
+ let u=p.lu||p.u+'/models',h={Authorization:'Bearer '+k};
+ if(p.t==='a'){h={'x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};u+='?limit=100'}
+ const r=await fetch(u,{headers:h,signal:AbortSignal.timeout(8000)});
+ const j=await r.json().catch(()=>({}));if(!r.ok)throw bad(j.error?.message||r.status,r.status);
+ return(Array.isArray(j)?j:(j.data||j.models||[])).map(m=>({id:m.id||m.name,v:m.architecture?.input_modalities?.includes('image')||m.supported_input_modalities?.includes('image'),free:String(m.id).endsWith(':free')||(m.pricing&&+m.pricing.prompt===0&&+m.pricing.completion===0)}))}
+async function ensure(force){
+ if(force){ST={};ls('st2','{}');DISC={};BADK.clear();cool={};ls('cool','{}')}
+ const need=slots().filter(s=>!DISC[s.id]||Date.now()-DISC[s.id].t>432e5);
+ await Promise.race([Promise.all(need.map(async s=>{
+  try{DISC[s.id]={t:Date.now(),l:await disc(s)}}
+  catch(e){dbg(`${s.p.n} model list: ${e.status||''} ${String(e.message).slice(0,100)}`);if(e.status===401||e.status===403)BADK.add(s.id);else DISC[s.id]={t:Date.now()-4e7,l:null}}
+ })),sleep(7000)]);
+ ls('disc',JSON.stringify(DISC))}
+function mlist(s){
+ const d=DISC[s.id]?.l;
+ if(d)return d.map(x=>({m:x.id.replace(/^models\//,''),...rate(s.p.n,x.id,x)})).filter(x=>x.c!==undefined);
+ return MODELS.filter(m=>m.p===s.p.n)}
+const fast=(p,m)=>/^(Groq|Cerebras)$/.test(p)||/flash|mini|haiku|nano|lite|instant|small|[^\d]8b|20b/i.test(m);
+function cands(tk,vis){
+ const out=[];
+ for(const s of slots()){if(BADK.has(s.id))continue;
+  for(const M of mlist(s)){
+   if(vis&&!M.v)continue;if(tk==='search'&&!(M.s||M.w))continue;
+   const o=ST[s.p.n+'|'+M.m];let sc=tk==='search'?M.g+(M.s?2:1):M[tk==='code'?'c':tk==='reason'?'r':'g'];
+   if(o)sc-=Math.min(o.f,3)*1.5;
+   if(o)sc+=Math.max(-2,Math.min(2,((o.up||0)-(o.dn||0))*.5));
+   if(tk==='gen'){if(fast(s.p.n,M.m))sc+=2.5;if(o&&o.n)sc+=Math.max(-1,2-o.t/800);if(/gpt-oss|r1\b|reason|think|qwq|^o\d/.test(M.m))sc-=2}
+   out.push({s,M,sc})}}
+ return out.sort((a,b)=>b.sc-a.sc||b.M.m.localeCompare(a.M.m))}
+function body(m,a,keep){
+ const t=(m.c+(m.x?'\n\n'+m.x:''))||'.',im=keep?(m.imgs||[]):[];
+ if(!im.length)return t;
+ return a?[...im.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d.split(',')[1]}})),{type:'text',text:t}]
+         :[{type:'text',text:t},...im.map(d=>({type:'image_url',image_url:{url:d}}))];
+}
+let ST={};try{ST=JSON.parse(ls('st2')||'{}')}catch(e){}
+function stat(s,M,ms,ok){const k=s.p.n+'|'+M.m,o=ST[k]||(ST[k]={t:0,n:0,f:0});if(ok){o.t=o.n?o.t*.6+ms*.4:ms;o.n++;o.f=0}else o.f++;ls('st2',JSON.stringify(ST))}
+function penal(s,M,e){const st=e.status,k=st===401||st===403;cd(k?'k'+s.id:s.id+'|'+M.m,k?432e5:st===402?36e5:st===404?18e5:st===408||st===400?6e5:3e5);stat(s,M,0,0);dbg(`${M.m} (${s.p.n}) ${st||'net'} ${String(e.message).slice(0,140)}`)}
+const SYSL="You are SuperAI, a fast and helpful assistant. Reply in the user's language, short and clear. Use markdown for code.";
+const nowTxt=()=>{const d=new Date();return`\nCurrent date and time (user's device): ${d.toLocaleString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'})}, timezone ${Intl.DateTimeFormat().resolvedOptions().timeZone}. Always use this for any date, day or time question; never guess it from memory.`};
+const needTools=t=>/pdf|image|photo|picture|tasveer|file|download|html|chart|graph|video/i.test(t||'');
+const statTxt=()=>{const a=Object.entries(ST).filter(([,o])=>o.n).sort((x,y)=>x[1].t-y[1].t).slice(0,8).map(([k,o])=>`${k} ${Math.round(o.t)}ms`);return a.length?'Fastest (first token):\n'+a.join('\n')+'\n\n':''};
+async function call(s,M,msgs,o,on,ac0){
+ const{p,k}=s,a=p.t==='a',lu=lastU(msgs),ac=ac0||new AbortController();
+ const tm=setTimeout(()=>ac.abort(),(o.task==='reason'||think)?35000:o.task==='gen'?7000:15000),all=setTimeout(()=>ac.abort(),120000);
+ let h=msgs.length>14?msgs.slice(-14):msgs;while(h.length>1&&h[0].r!=='user')h=h.slice(1);
+ const ms=h.map(m=>({role:m.r,content:body(m,a,o.vis&&m===lu)})),sys=(o.task==='gen'&&!needTools(lu?.c)?SYSL:SYS)+nowTxt();
+ let url,hd,bd;
+ if(a){
+  bd={model:M.m,max_tokens:think?8000:4096,stream:true,system:sys,messages:ms};
+  if(o.task==='search')bd.tools=[{type:'web_search_20250305',name:'web_search',max_uses:5}];
+  if(think)bd.thinking={type:'enabled',budget_tokens:2048};
+  url=p.u+'/messages';hd={'content-type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+ }else{
+  bd={model:M.m,stream:true,messages:[{role:'system',content:sys},...ms]};
+  if(o.task==='gen'&&/gpt-oss/.test(M.m)&&/^(Groq|Cerebras)$/.test(p.n))bd.reasoning_effort='low';
+  url=p.u+'/chat/completions';hd={'content-type':'application/json',Authorization:'Bearer '+k};
+ }
+ try{
+  const r=await fetch(url,{method:'POST',signal:ac.signal,headers:hd,body:JSON.stringify(bd)});
+  if(!r.ok){const j=await r.json().catch(()=>({}));throw bad((Array.isArray(j)?j[0]:j).error?.message||r.status,r.status)}
+  const rd=r.body.getReader(),dc=new TextDecoder();let buf='',acc='';
+  for(;;){
+   const{done,value}=await rd.read();if(done)break;clearTimeout(tm);
+   buf+=dc.decode(value,{stream:true});const rows=buf.split('\n');buf=rows.pop();
+   for(const ln of rows){
+    if(!ln.startsWith('data:'))continue;const d=ln.slice(5).trim();if(!d||d==='[DONE]')continue;
+    let j;try{j=JSON.parse(d)}catch(e){continue}
+    if(j.error)throw bad(j.error.message||'stream error',500);
+    const t=a?(j.type==='content_block_delta'&&j.delta?.type==='text_delta'?j.delta.text:''):(j.choices?.[0]?.delta?.content||'');
+    if(t){acc+=t;on&&on(acc)}}}
+  if(!acc)throw bad('empty response',502);
+  return acc;
+ }catch(e){if(e.name==='AbortError')throw bad('timeout',408);throw e}
+ finally{clearTimeout(tm);clearTimeout(all)}
+}
+function race(L,msgs,o,live,tag){
+ const acs=L.map(()=>new AbortController()),tf=[];let win=-1,left=L.length;
+ return new Promise((res,rej)=>L.forEach(({s,M},i)=>{
+  const t0=Date.now();
+  call(s,M,msgs,o,t=>{if(win<0){win=i;tf[i]=Date.now()-t0;acs.forEach((a,j)=>j!==i&&a.abort())}if(win===i&&live)live(t)},acs[i])
+   .then(t=>{stat(s,M,tf[i],1);res({t,n:`${M.m} · ${tag} · ⚡${(tf[i]/1000).toFixed(1)}s`,k:s.p.n+'|'+M.m})})
+   .catch(e=>{if(!(win>=0&&win!==i))penal(s,M,e);if(--left===0)rej(e)})}))}
+async function ask(msgs,live){
+ if(slots().some(s=>DISC[s.id]))ensure();else await ensure();
+ if(!slots().length){const e=Error('nokeys');e.nokeys=1;throw e}
+ const tk=task(msgs),t2=tk==='search'?'gen':tk,vis=!!lastU(msgs)?.imgs?.length,on=t=>live&&live(t);
+ const att=async(s,M,t,v,tag)=>{on('');setSt(M.m+' se jawab aa raha hai…');let tf=0;const t0=Date.now();
+  const r=await call(s,M,msgs,{task:t,vis:v},x=>{if(!tf)tf=Date.now()-t0;on(x)});
+  stat(s,M,tf,1);return{t:r,n:`${M.m} · ${tag} · ⚡${(tf/1000).toFixed(1)}s`,k:s.p.n+'|'+M.m}};
+ if(SEL){for(const s of slots().filter(x=>x.p.n===SEL.p)){
+  const M=mlist(s).find(x=>x.m===SEL.m)||{m:SEL.m};
+  try{return await att(s,M,tk,vis&&!!M.v,'manual')}
+  catch(e){dbg(`manual ${SEL.m} (${s.p.n}) ${e.status||'net'} ${String(e.message).slice(0,140)}`)}}}
+ for(const[t,v,res]of[[tk,vis,1],[t2,vis,1],[t2,vis,0],[t2,0,0]]){
+  const L=cands(t,v).filter(x=>!res||!(hot('k'+x.s.id)||hot(x.s.id+'|'+x.M.m))).slice(0,10);
+  const K=think?1:t==='gen'?3:t==='code'?2:1;
+  if(K>1){const seen=new Set(),pk=L.filter(x=>!seen.has(x.s.p.n)&&seen.add(x.s.p.n)).slice(0,K);
+   if(pk.length>1){on('');setSt('Fast models ek saath try ho rahe hain…');try{return await race(pk,msgs,{task:t,vis:v},on,t)}catch(e){}}}
+  for(const{s,M}of L){
+   if(res&&(hot('k'+s.id)||hot(s.id+'|'+M.m)))continue;
+   try{return await att(s,M,t,v,t)}catch(e){penal(s,M,e)}}
+  await sleep(600)}
+ throw Error('fail')}
+
+const clean=h=>{const d=new DOMParser().parseFromString(h,'text/html');d.querySelectorAll('script,iframe,object,embed').forEach(e=>e.remove());d.querySelectorAll('*').forEach(e=>[...e.attributes].forEach(x=>/^on/i.test(x.name)&&e.removeAttribute(x.name)));return d.body.innerHTML};
+async function genImg(pr){
+ const J=async(u,h,b)=>{const r=await fetch(u,{method:'POST',headers:{'content-type':'application/json',...h},body:JSON.stringify(b),signal:AbortSignal.timeout(90000)});const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error?.message||r.status);return j};
+ for(const s of slots()){
+  try{
+   if(s.p.n==='Gemini'){const j=await J('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent',{'x-goog-api-key':s.k},{contents:[{parts:[{text:pr}]}]});
+    const q=j.candidates?.[0]?.content?.parts?.find(x=>x.inlineData||x.inline_data),d=q&&(q.inlineData||q.inline_data);if(d)return`data:${d.mimeType||d.mime_type||'image/png'};base64,${d.data}`;throw Error('no image')}
+   if(s.p.n==='OpenAI'){const j=await J(s.p.u+'/images/generations',{Authorization:'Bearer '+s.k},{model:'gpt-image-1',prompt:pr,size:'1024x1024'});const d=j.data[0];return d.b64_json?'data:image/png;base64,'+d.b64_json:d.url}
+   if(s.p.n==='xAI'){const j=await J(s.p.u+'/images/generations',{Authorization:'Bearer '+s.k},{model:'grok-2-image',prompt:pr});return j.data[0].url||'data:image/png;base64,'+j.data[0].b64_json}
+  }catch(e){dbg('image '+s.p.n+': '+String(e.message).slice(0,100))}}
+ const pk=slots().find(x=>x.p.n==='Pollinations');
+ if(!pk){const w=46e3-(Date.now()-(+ls('pl_t')||0));if(w>0){note(`Free image limit (1 image / 45 sec): ${Math.ceil(w/1000)} sec ruk raha hoon...`);await sleep(w)}ls('pl_t',String(Date.now()))}
+ const url=`https://gen.pollinations.ai/image/${encodeURIComponent(pr)}?model=flux&nologo=true&width=1024&height=1024${pk?'&key='+encodeURIComponent(pk.k):''}`;
+ let r;try{r=await fetch(url,{signal:AbortSignal.timeout(90000)})}catch(e){return url}
+ if(r.status===429)throw Error('Pollinations free limit reached');
+ if(!r.ok)throw Error('Pollinations error '+r.status);
+ return URL.createObjectURL(await r.blob())}
+function printHtml(h){const f=document.createElement('iframe');f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';f.srcdoc='<!doctype html><meta charset=utf-8><body style="font:14px/1.6 Arial,sans-serif;padding:20px">'+h;document.body.append(f);f.onload=()=>{f.contentWindow.focus();f.contentWindow.print();setTimeout(()=>f.remove(),60000)}}
+const TW=t=>{const m=t.match(/<tool name="(\w+)"[^>]*>(?![\s\S]*<\/tool>)/);return m?({run_js:'✍️ Code likh raha hoon…',save_file:'✍️ File likh raha hoon…',preview_html:'✍️ HTML page bana raha hoon…',make_pdf:'✍️ PDF ka content likh raha hoon…',gen_image:'🎨 Image ka prompt bana raha hoon…'}[m[1]]||'⚙️ Kaam kar raha hoon…'):''};
+const TL={run_js:['Code chala raha hoon','Code chal gaya'],save_file:['File bana raha hoon','File ban gayi'],preview_html:['Page preview bana raha hoon','Preview ready'],make_pdf:['PDF bana raha hoon','PDF ready'],gen_image:['Image bana raha hoon','Image ready']};
+function step(n){
+ const[a,b]=TL[n]||[n,n],d=document.createElement('div');d.className='stp';d.innerHTML=`<i class="spn"></i><span>${a}…</span>`;$('ct').append(d);bot();const t0=Date.now();
+ return(ok,det)=>{d.className='stp '+(ok?'ok':'er');d.innerHTML=`<b>${ok?'✓':'✕'}</b><span>${ok?b:a+' — fail hua'} · ${((Date.now()-t0)/1000).toFixed(1)}s</span>`+(det?`<details><summary>Details dekho</summary><pre>${esc(det)}</pre></details>`:'')}}
+const T={
+ run_js(a,b){return new Promise(res=>{
+  const f=document.createElement('iframe');f.sandbox='allow-scripts';f.style.display='none';const out=[];
+  const fin=()=>{removeEventListener('message',h);f.remove();res(out.join('\n').slice(0,3000)||'(no output)')};
+  const h=e=>{if(e.source!==f.contentWindow)return;if(e.data.l!==undefined)out.push(e.data.l);if(e.data.done)fin()};
+  addEventListener('message',h);setTimeout(()=>{out.push('(timeout 10s)');fin()},1e4);
+  const code=JSON.stringify(b).replace(/<\//g,'<\\/');
+  f.srcdoc='<script>console.log=(...a)=>parent.postMessage({l:a.map(String).join(" ")},"*");(async()=>{try{const AF=Object.getPrototypeOf(async function(){}).constructor;const r=await new AF('+code+')();if(r!==undefined)console.log("return: "+r)}catch(e){console.log("Error: "+e.message)}parent.postMessage({done:1},"*")})()<\/script>';
+  document.body.append(f)})},
+ save_file(a,b){card('📄 '+dl(a||'file.txt',new Blob([b])));return 'saved '+a},
+ preview_html(a,b){const c=card('🌐 Preview <a download="page.html" href="'+URL.createObjectURL(new Blob([b],{type:'text/html'}))+'">⬇ HTML</a> <button class="cvb" style="color:#8b9dff">✏ Canvas</button><iframe sandbox="allow-scripts"></iframe>');c.querySelector('iframe').srcdoc=b;c._h=b;return 'preview shown'},
+ async make_pdf(a,b){
+  if(!window.html2pdf)await ld(CDN+'html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+  const h=clean(b),ov=document.createElement('div'),d=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:var(--bg);display:grid;place-items:center;color:var(--tx)';ov.textContent='📄 PDF ban raha hai...';
+  d.className='pdfx';d.style.cssText='position:fixed;left:0;top:0;width:794px;z-index:9998;background:#fff;color:#000;padding:32px;font:14px/1.6 Arial,sans-serif;box-sizing:border-box';
+  d.innerHTML='<style>.pdfx p{margin:0 0 10px}.pdfx h1{font-size:24px;margin:0 0 12px}.pdfx h2{font-size:19px;margin:16px 0 8px}.pdfx h3{font-size:16px;margin:12px 0 6px}.pdfx ul,.pdfx ol{margin:0 0 10px 22px}.pdfx li{display:list-item;margin:2px 0}.pdfx table{border-collapse:collapse;width:100%}.pdfx td,.pdfx th{border:1px solid #999;padding:6px}</style>'+h;
+  document.body.append(d,ov);let small=0;
+  try{
+   await new Promise(r=>setTimeout(r,300));
+   const blob=await html2pdf().from(d).set({margin:10,filename:a,image:{type:'jpeg',quality:.95},html2canvas:{scale:2,useCORS:true,scrollX:0,scrollY:0,windowWidth:794,backgroundColor:'#fff'},jsPDF:{unit:'mm',format:'a4'}}).outputPdf('blob');
+   const c=card('📕 '+dl(a||'file.pdf',blob)+' <button class="pb" style="color:#8b9dff">🖨 Print / Save as PDF</button>');c._h=h;small=blob.size<3000;
+  }finally{d.remove();ov.remove()}
+  return small?'pdf may be empty; tell user to use the Print / Save as PDF button':'pdf ready'},
+ async gen_image(a,b){
+  try{const u=await genImg(b.trim());card(`🖼 Image <a download="image.png" href="${u}">⬇ Save</a><img src="${u}">`);return 'image shown to user'}
+  catch(e){card('🖼 Image nahi ban payi ('+esc(e.message)+'). Keys me Pollinations, Gemini ya OpenAI ki key add karo.');return 'image generation failed: '+e.message+'. Tell the user to add an image provider key.'}}
+};
+
+async function run(){
+ busy=1;$('go').disabled=true;const ch=cur;
+ const ty=document.createElement('div');ty.className='msg a';ty.innerHTML=`<div class="av">${I('spark',14)}</div><div class="dots"><i></i><i></i><i></i></div><span class="stt"></span>`;$('ct').append(ty);setSt=t=>{const e=ty.querySelector('.stt');if(e)e.textContent=t};setSt('Soch raha hoon…');bot();
+ let lv=null,raf=0,vt='',fin=0;
+ const live=t=>{
+  if(!t){if(lv){lv.remove();lv=null}if(!ty.isConnected)$('ct').append(ty);return}
+  vt=t;if(raf)return;
+  raf=requestAnimationFrame(()=>{raf=0;if(fin)return;const x=vt.replace(RX,'').replace(/<tool[\s\S]*$/,'').trim(),tg=TW(vt);if(!x){if(tg)setSt(tg);return}
+   if(!lv){ty.remove();lv=document.createElement('div');lv.className='msg a';lv.innerHTML=`<div class="av">${I('spark',14)}</div><div class="bd"><div class="tx"></div><div class="stt"></div></div>`;$('ct').append(lv)}
+   const c=$('chat'),nb=c.scrollHeight-c.scrollTop-c.clientHeight<150;lv.querySelector('.tx').innerHTML=md(x);lv.querySelector('.stt').textContent=tg;if(nb)c.scrollTop=c.scrollHeight})};
+ try{for(let i=0;i<8;i++){
+  fin=0;const{t,n,k}=await ask(ch.m,live);fin=1;cancelAnimationFrame(raf);raf=0;ty.remove();lv&&lv.remove();lv=null;
+  const m={r:'assistant',c:t||'...',mod:n,pk:k};ch.m.push(m);addMsg(m,0,1);
+  const calls=[...t.matchAll(RX)];if(!calls.length)break;
+  const res=[];
+  for(const c of calls){const dn=step(c[1]);let o;try{o=await T[c[1]](c[2],c[3])}catch(e){o='Error: '+e.message}dn(!/^Error|failed|may be empty/.test(String(o)),c[1]==='run_js'?String(o):'');res.push(`[${c[1]}] ${o}`)}
+  ch.m.push({r:'user',h:1,c:'TOOL_RESULT:\n'+res.join('\n')});$('ct').append(ty);setSt('Natija dekh raha hoon…');bot();
+ }}catch(e){if(e.nokeys)$('ky').click();else{const d=document.createElement('div');d.className='n';d.innerHTML='Abhi koi model jawab nahi de paya. <button class="rt grad" style="display:inline-flex;padding:4px 12px;margin-left:6px">Dobara try</button>';$('ct').append(d);bot()}}
+ ty.remove();lv&&lv.remove();busy=0;$('go').disabled=false;mark();persist();
+}
+function send(){
+ if(busy)return;const q=$('q').value.trim();if(!q&&!files.length)return;
+ if(!cur){cur={id:Date.now()+'',title:'',pin:0,ts:Date.now(),m:[]};C.unshift(cur)}
+ const imgs=files.filter(f=>f.img).map(f=>f.img),docs=files.filter(f=>f.txt!==undefined);
+ const m={r:'user',c:q||'(file)',f:docs.map(f=>f.name),ni:imgs.length,imgs,x:docs.map(f=>`[File: ${f.name}]\n${f.txt}`).join('\n\n')};
+ if(!cur.title)cur.title=(q||files[0].name).slice(0,40);
+ cur.m.push(m);cur.ts=Date.now();files=[];pv();$('q').value='';grow();
+ $('ti').textContent=cur.title;addMsg(m);persist();rl();run();
+}
+function regen(){
+ if(busy||!cur)return;
+ const u=cur.m.map(m=>!m.h&&m.r==='user').lastIndexOf(true);if(u<0)return;
+ cur.m.length=u+1;renderAll();run();
+}
+$('go').onclick=send;
+$('ct').onclick=e=>{
+ const b=e.target.closest('button');if(!b)return;const m=b.closest('.msg.a');
+ if(b.classList.contains('co')){const cb=b.closest('.cb');cvOpen(cb.querySelector('code').innerText,cb.querySelector('.ch span').textContent);return}
+ if(b.classList.contains('up')||b.classList.contains('dn')){fbk(m,b.classList.contains('up')?1:-1);return}
+ if(b.classList.contains('cvb')){cvOpen(b.closest('.card')._h,'html');return}
+ if(b.classList.contains('pb')){printHtml(b.closest('.card')._h);return}
+ if(b.classList.contains('cc')){copy(b.closest('.cb').querySelector('code').innerText);flash(b)}
+ else if(b.classList.contains('cp')){copy(m._t);flash(b)}
+ else if(b.classList.contains('sp'))speak(m._t);
+ else if(b.classList.contains('rg')||b.classList.contains('rt'))regen();
+ else if(b.parentElement.classList.contains('sg')){$('q').value=b.textContent;$('q').focus()}
+};
+
+const grow=()=>{const q=$('q');q.style.height='auto';q.style.height=Math.min(q.scrollHeight,160)+'px'};
+$('q').oninput=grow;
+$('q').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(hover:hover)').matches){e.preventDefault();send()}};
+$('tk').onclick=()=>{think=!think;$('tk').classList.toggle('on',!!think)};
+$('tw').onclick=()=>{web=!web;$('tw').classList.toggle('on',!!web)};
+const pv=()=>{$('pv').innerHTML=files.map((f,i)=>`<div class="pc">${f.img?`<img src="${f.img}">`:`<span class="nm">${esc(f.name)}</span>`}<button data-x="${i}">×</button></div>`).join('')};
+$('pv').onclick=e=>{const b=e.target.closest('button');if(b){files.splice(+b.dataset.x,1);pv()}};
+const shrink=f=>new Promise((res,rej)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.82))};im.onerror=()=>rej(Error('image read nahi hui'));im.src=u});
+async function extract(f){
+ const n=f.name.toLowerCase();
+ if(n.endsWith('.pdf')){
+  if(!window.pdfjsLib){await ld(CDN+'pdf.js/3.11.174/pdf.min.js');pdfjsLib.GlobalWorkerOptions.workerSrc=CDN+'pdf.js/3.11.174/pdf.worker.min.js'}
+  const d=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;let t='';
+  for(let i=1;i<=Math.min(d.numPages,30);i++)t+=(await(await d.getPage(i)).getTextContent()).items.map(x=>x.str).join(' ')+'\n';
+  return t;
+ }
+ if(n.endsWith('.docx')){if(!window.mammoth)await ld(CDN+'mammoth/1.6.0/mammoth.browser.min.js');return(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value}
+ if(n.endsWith('.doc'))throw Error('.doc support nahi, .docx me save karo');
+ return f.text();
+}
+$('at').onclick=()=>$('fi').click();
+$('fi').onchange=async e=>{
+ for(const f of e.target.files){
+  try{const o={name:f.name};if(f.type.startsWith('image/'))o.img=await shrink(f);else o.txt=(await extract(f)).slice(0,20000);files.push(o);pv()}
+  catch(err){note('❌ '+f.name+': '+err.message)}
+ }
+ e.target.value='';
+};
+
+const setTheme=t=>{document.documentElement.dataset.theme=t;ls('st',t);$('th').innerHTML=I(t==='dark'?'sun':'moon')};
+setTheme(ls('st')||'dark');
+$('th').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+$('mb').onclick=()=>document.body.classList.toggle('sbo');
+$('scrim').onclick=()=>document.body.classList.remove('sbo');
+if(innerWidth>=800)document.body.classList.add('sbo');
+const cnt=n=>parseKeys().filter(x=>x.n===n).length;
+const mask=k=>k.length>12?k.slice(0,5)+'••••'+k.slice(-4):'••••';
+function info(n){
+ if(n==='Pollinations')return'Sirf image generation ke liye';
+ const s=slots().find(x=>x.p.n===n);if(!s)return'';if(BADK.has(s.id))return'✗ Key galat lag rahi hai';
+ const l=cands('gen',0).filter(x=>x.s.p.n===n);return l.length?`${l.length} models · best: ${l[0].M.m}`:'models load ho rahe hain…'}
+function kui(){
+ const PK=parseKeys().map((x,i)=>({...x,i})),row=x=>`<div class="kr"><span>${esc(mask(x.k))}</span><button class="ic" data-d="${x.i}">${I('trash',14)}</button></div>`;
+ const un=PK.filter(x=>!x.n);
+ $('set').innerHTML=`<div id="add"><textarea id="nk" rows="2" placeholder="API key paste karo (ek ya kai)"></textarea><select id="np" hidden><option value="">Provider chuno</option>${Object.keys(PROV).map(n=>`<option>${n}</option>`).join('')}</select><div id="dt" class="hint"></div><button class="grad" id="ak">${I('plus',16)} Key add karo</button></div>
+ <div class="kp">${Object.keys(PROV).sort((a,b)=>cnt(b)-cnt(a)).map(n=>{const ks=PK.filter(x=>x.n===n);return`<div class="kc${ks.length?'':' off'}"><div class="kh"><div class="kav">${n[0]}</div><b>${n}</b><span class="st">${ks.length?'Connected':'Not added'}</span></div>${ks.map(row).join('')}${ks.length?`<div class="hint">${esc(info(n))}</div>`:''}</div>`}).join('')}${un.length?`<div class="kc"><b>⚠ Pehchani nahi gayi</b>${un.map(row).join('')}</div>`:''}</div>
+ <details><summary class="hint">Technical log</summary><pre class="hint" style="white-space:pre-wrap">${esc(statTxt()+(LOG.join('\n')||'khaali'))}</pre></details>
+ <button class="ic" id="rf" style="width:auto;padding:0 10px;margin:8px 0">${I('ref',14)}&nbsp;Models refresh</button>`;
+}
+$('ky').onclick=()=>{kui();$('dlg').showModal();ensure().then(()=>{if($('dlg').open&&!$('nk').value)kui()})};
+$('set').oninput=e=>{if(e.target.id!=='nk')return;const t=e.target.value.split(/[\s,]+/).filter(Boolean).map(x=>tok(x).n);$('dt').textContent=t.length?(t.every(Boolean)?'✓ '+[...new Set(t)].join(', ')+' pehchana gaya':'⚠ kuch keys pehchani nahi gayi'):''};
+$('set').onclick=async e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.d!==undefined){const L=getL();L.splice(+b.dataset.d,1);setL(L);kui()}
+ else if(b.id==='rf'){kui();ensure(1).then(()=>{if($('dlg').open&&!$('nk').value)kui()})}
+ else if(b.id==='ak'){
+  const L=getL(),sel=$('np').value;let un=0;
+  for(const x of $('nk').value.split(/[\s,]+/).filter(Boolean)){
+   const t=tok(x),n=t.n||sel;if(!n){un=1;continue}
+   const line=who(t.k)===n?t.k:n+':'+t.k;if(!L.includes(line))L.push(line)}
+  setL(L);
+  if(un){$('np').hidden=false;$('dt').textContent='Kuch keys pehchani nahi gayi. Provider chuno aur dubara Add dabao.';return}
+  kui();ensure().then(()=>{if($('dlg').open&&!$('nk').value)kui()})}
+};
+$('dlg').onclose=()=>ensure();
+$('cls').onclick=()=>$('dlg').close();
+const lbl=()=>{$('mp').textContent=SEL?SEL.m.split('/').pop().slice(0,20)+' ▾':'⚡ Auto ▾'};
+function allModels(){const seen=new Set(),out=[];for(const s of slots()){if(BADK.has(s.id))continue;for(const M of mlist(s)){const k=s.p.n+'|'+M.m;if(seen.has(k))continue;seen.add(k);out.push({p:s.p.n,M})}}return out.sort((a,b)=>a.p.localeCompare(b.p)||b.M.g-a.M.g)}
+function mpr(){
+ const q=$('ms').value.toLowerCase(),L=allModels().filter(x=>(x.p+x.M.m).toLowerCase().includes(q)).slice(0,80);
+ let h=`<div class="mi${SEL?'':' on'}" data-a="1"><b>⚡ Auto</b><span class="hint" style="color:inherit;opacity:.8">best model + auto fallback</span></div>`,g='';
+ for(const x of L){if(x.p!==g){g=x.p;h+=`<div class="mg">${x.p}</div>`}
+  h+=`<div class="mi${SEL&&SEL.p===x.p&&SEL.m===x.M.m?' on':''}" data-p="${x.p}" data-m="${esc(x.M.m)}"><span class="nm">${esc(x.M.m)}</span><span>${x.M.v?'👁':''}${x.M.s||x.M.w?'🌐':''}</span></div>`}
+ $('ml').innerHTML=L.length||!q?h:'<p class="hint">Koi model nahi mila. Pehle Keys me key add karo.</p>'}
+$('mp').onclick=()=>{$('ms').value='';mpr();$('mdlg').showModal()};
+$('ms').oninput=mpr;$('mc').onclick=()=>$('mdlg').close();
+$('ml').onclick=e=>{const i=e.target.closest('.mi');if(!i)return;SEL=i.dataset.a?null:{p:i.dataset.p,m:i.dataset.m};ls('sel',JSON.stringify(SEL));lbl();$('mdlg').close()};
+function fbk(d,v){
+ const m=d&&d._m;if(!m||!m.pk)return;const o=ST[m.pk]||(ST[m.pk]={t:0,n:0,f:0});
+ if(m.fb===1)o.up=Math.max(0,(o.up||0)-1);if(m.fb===-1)o.dn=Math.max(0,(o.dn||0)-1);
+ m.fb=m.fb===v?0:v;if(m.fb===1)o.up=(o.up||0)+1;if(m.fb===-1)o.dn=(o.dn||0)+1;
+ ls('st2',JSON.stringify(ST));persist();
+ d.querySelector('.up').classList.toggle('act',m.fb===1);d.querySelector('.dn').classList.toggle('act',m.fb===-1)}
+let cvL='';
+function cvOpen(code,lang){cvL=(lang||'').toLowerCase();$('cvv').value=code;$('cvt').textContent='Canvas · '+(cvL||'text');$('cvo').innerHTML='';$('cvo').hidden=true;$('cvs').hidden=false}
+async function cvRun(){
+ const c=$('cvv').value,o=$('cvo');o.hidden=false;
+ if(cvL==='html'||/^\s*<(!doctype|html)/i.test(c)){o.innerHTML='<iframe sandbox="allow-scripts"></iframe>';o.firstChild.srcdoc=c}
+ else if(/^(js|javascript)$/.test(cvL)){o.innerHTML='<pre></pre>';o.firstChild.textContent='Chal raha hai...';o.firstChild.textContent=await T.run_js('',c)}
+ else o.innerHTML='<pre>Run/Preview sirf HTML aur JavaScript ke liye hai.</pre>'}
+$('cvr').onclick=cvRun;
+$('cvx').onclick=()=>{$('cvs').hidden=true};
+$('cvc').onclick=e=>{copy($('cvv').value);flash(e.currentTarget)};
+$('cvd').onclick=()=>{const x={html:'html',js:'js',javascript:'js',python:'py',py:'py',css:'css',json:'json',md:'md',markdown:'md'}[cvL]||'txt',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('cvv').value]));a.download='canvas.'+x;a.click()};
+$('cvs2').onclick=()=>{const i=$('cvi').value.trim();if(!i||busy)return;$('q').value=`${i}\n\n\`\`\`${cvL}\n${$('cvv').value}\n\`\`\``;$('cvi').value='';$('cvs').hidden=true;send()};
+$('cvi').onkeydown=e=>{if(e.key==='Enter')$('cvs2').click()};
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+$('mc2').onclick=()=>{
+ if(!SR)return note('Is browser me voice input support nahi hai (Chrome use karo)');
+ if(rec){rec.stop();return}
+ rec=new SR();rec.lang=ls('vl')||'hi-IN';rec.interimResults=true;rec.continuous=true;
+ const base=$('q').value;let fin='';
+ rec.onresult=e=>{let it='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=t;else it+=t}$('q').value=(base?base+' ':'')+fin+it;grow()};
+ rec.onend=()=>{rec=null;$('mc2').classList.remove('rec')};
+ rec.onerror=e=>{if(e.error==='not-allowed')note('Mic ki permission do (browser settings me)')};
+ rec.start();$('mc2').classList.add('rec')};
+$('mc2').oncontextmenu=e=>{e.preventDefault();const l=(ls('vl')||'hi-IN')==='hi-IN'?'en-IN':'hi-IN';ls('vl',l);note('Voice language: '+(l==='hi-IN'?'Hindi/Hinglish':'English'))};
+lbl();renderAll();ensure();
+/* ---------------------------------------------------
+   JS CODE END
+   --------------------------------------------------- */
+</script>
+</body>
+</html>
