@@ -552,6 +552,16 @@ const EXTRA_TOOLS = [
   kw: ['flowchart', 'diagram', 'flow', 'process', 'chart', 'maker', 'draw', 'mindmap'],
   external: 'tools/flowforge/flowforge.html'
 },
+{
+  id: 'superai-pro',
+  name: 'SuperAI Pro',
+  cat: 'ai',
+  icon: '⚡',
+  desc: 'Advanced AI assistant with auto model fallback, PDF/HTML generation, and canvas',
+  howto: 'Add your API keys in settings, then ask anything.',
+  kw: ['ai', 'chat', 'superai', 'assistant', 'gpt', 'gemini', 'claude', 'code', 'canvas'],
+  external: 'tools/superai/superai.html'
+},
   /* ══════════════════════════════════════════════════════
      CREATOR HUB TOOLS
      ══════════════════════════════════════════════════════ */
