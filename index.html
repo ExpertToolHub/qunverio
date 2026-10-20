@@ -1139,78 +1139,35 @@ document.addEventListener('DOMContentLoaded', init);
 <script src="tools/study-notes.js"></script>
 <script src="tools/sarkari-portal-hub.js"></script>
 
-<!-- EK HI SCRIPT SABKO HANDLE KAREGI -->
+<!-- External Tools Redirect Handler -->
 <script>
 (function() {
-    'use strict';
+  'use strict';
+  
+  // Har click pe check karo
+  document.addEventListener('click', function(e) {
+    // Tool card dhundo
+    var card = e.target.closest('.tool-card, .search-result-item, [data-extra-tool]');
+    if (!card) return;
     
-    document.addEventListener('click', function(e) {
-        // Check karo ki click tool card par hua hai ya nahi
-        var card = e.target.closest('.tool-card, .search-result-item, [data-extra-tool]');
-        if (!card) return;
-
-        // Card se tool ka ID nikalo
-        var toolId = card.getAttribute('data-extra-tool');
-        
-        // Agar ID nahi hai, toh text se check karo (fallback)
-        if (!toolId) {
-            var cardText = (card.textContent || '').trim();
-            if (cardText.indexOf('Smart Phone Finder') !== -1) toolId = 'smart-phone';
-            else if (cardText.indexOf('SkillTrack Pro') !== -1) toolId = 'skilltrack-pro';
-            else if (cardText.indexOf('Developer Studio') !== -1) toolId = 'dev-studio';
-            else if (cardText.indexOf('FlowForge') !== -1) toolId = 'flowforge';
-        }
-
-        // Ab decide karo ki kya karna hai
-        if (toolId) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            // 1. Smart Phone Finder (External Link)
-            if (toolId === 'smart-phone') {
-                window.open('https://smartphone-finder-chi.vercel.app/', '_blank');
-                return false;
-            }
-
-            // 2. SkillTrack Pro (Internal Link)
-            if (toolId === 'skilltrack-pro') {
-                window.open('tools/skilltrack/skilltrack.html', '_blank');
-                return false;
-            }
-
-            // 3. FlowForge (Internal Link)
-            if (toolId === 'flowforge') {
-                window.open('tools/flowforge/flowforge.html', '_blank');
-                return false;
-            }
-
-            // 4. Developer Studio (Special Logic for Mobile/Desktop)
-            if (toolId === 'dev-studio') {
-                var url = 'tools/dev-studio.html';
-                var isMobile = window.matchMedia('(max-width: 900px)').matches || 
-                               /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-                // Mobile par normal nayi tab kholo
-                if (isMobile) {
-                    window.open(url, '_blank');
-                    return false;
-                }
-
-                // Desktop par popup window kholo
-                var features = 'popup=yes,left=0,top=0,width=' + screen.availWidth + 
-                               ',height=' + screen.availHeight + ',resizable=yes,scrollbars=yes';
-                var win = window.open(url, 'devStudioWindow', features);
-                
-                if (!win) {
-                    window.open(url, '_blank'); // Agar popup block ho jaye
-                } else if (win.focus) {
-                    win.focus();
-                }
-                return false;
-            }
-        }
-    }, true);
+    var toolId = card.getAttribute('data-extra-tool');
+    
+    // 1. Smart Phone Finder
+    if (toolId === 'smartphone-finder') {
+      e.preventDefault();
+      window.open('https://smartphone-finder-chi.vercel.app/', '_blank');
+      return;
+    }
+    
+    // 2. SuperAI Pro
+    if (toolId === 'superai-pro') {
+      e.preventDefault();
+      window.open('tools/superai/superai.html', '_blank');
+      return;
+    }
+  });
 })();
 </script>
 </body>
 </html>
+        
