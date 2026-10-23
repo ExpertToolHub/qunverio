@@ -913,3 +913,45 @@ window.getToolCategoryName = function(toolId) {
 };
 
 console.log('%c✅ Setup loaded — ' + EXTRA_TOOLS.length + ' tools, ' + CATEGORIES.length + ' categories', 'color:#10b981;font-weight:bold;font-size:14px');
+
+/* ===== Community Tools → setup integration (search, categories, favorites) ===== */
+(function () {
+  var origOpen = window.openExtraTool;
+  window.openExtraTool = function (id) {
+    if (typeof id === 'string' && id.indexOf('cm_') === 0 && window.openCommunityTool) {
+      if (typeof addRecent === 'function') addRecent(id);
+      return window.openCommunityTool(id.slice(3));
+    }
+    var f = document.getElementById('toolFavBtn');
+    if (f) f.style.display = '';
+    return origOpen.apply(this, arguments);
+  };
+
+  function loadCommunity() {
+    if (typeof fbDB === 'undefined' || !fbDB) return;
+    fbDB.ref('tools').once('value').then(function (snap) {
+      for (var i = EXTRA_TOOLS.length - 1; i >= 0; i--) {
+        if (String(EXTRA_TOOLS[i].id).indexOf('cm_') === 0) EXTRA_TOOLS.splice(i, 1);
+      }
+      var added = 0;
+      snap.forEach(function (c) {
+        var v = c.val() || {};
+        var name = v.name || 'Tool';
+        EXTRA_TOOLS.push({
+          id: 'cm_' + c.key, name: name, cat: 'community', icon: '🧩',
+          desc: (v.category || 'Community') + ' tool', howto: '',
+          kw: [name.toLowerCase(), String(v.category || '').toLowerCase(), 'community']
+        });
+        added++;
+      });
+      if (added && !CATEGORIES.some(function (c) { return c.id === 'community'; })) {
+        CATEGORIES.push({
+          id: 'community', name: 'Community Tools', icon: '🧩',
+          desc: 'Naye tools jo Qunverio par add hote rehte hain',
+          gradient: 'linear-gradient(135deg,#6366f1,#ec4899)'
+        });
+      }
+    }).catch(function () {});
+  }
+  setTimeout(loadCommunity, 800);
+})();
