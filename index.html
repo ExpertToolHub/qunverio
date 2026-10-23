@@ -70,6 +70,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css">
 <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
@@ -1168,6 +1169,214 @@ document.addEventListener('DOMContentLoaded', init);
   });
 })();
 </script>
+
+<!-- ===== Qunverio Community Tools: paste this whole block just before </body> ===== -->
+<script>
+(function () {
+  'use strict';
+
+  var tools = [];
+  var activeCat = 'All';
+  var communityOpen = false;
+  var $ = function (id) { return document.getElementById(id); };
+  var auth = function () { return (typeof firebase !== 'undefined' && firebase.auth) ? firebase.auth() : null; };
+
+  /* Firebase Auth SDK loads by itself, no extra line needed in <head> */
+  function loadAuthSdk(cb) {
+    if (typeof firebase !== 'undefined' && firebase.auth) { cb(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js';
+    s.onload = cb; s.onerror = cb;
+    document.head.appendChild(s);
+  }
+
+  var st = document.createElement('style');
+  st.textContent =
+    '.cm-body{overflow-x:auto}' +
+    '.cm-code{min-height:200px!important;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace!important}' +
+    '.cm-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border)}' +
+    '.cm-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px}' +
+    '.cm-err{color:var(--danger);font-size:13px;margin-top:10px;min-height:1.2em}';
+  document.head.appendChild(st);
+
+  function injectHTML(container, html) {
+    container.innerHTML = html;
+    container.querySelectorAll('script').forEach(function (old) {
+      var s = document.createElement('script');
+      for (var i = 0; i < old.attributes.length; i++) s.setAttribute(old.attributes[i].name, old.attributes[i].value);
+      s.textContent = old.textContent;
+      old.replaceWith(s);
+    });
+  }
+
+  function buildSection() {
+    if ($('cmSection')) return;
+    var anchor = document.querySelector('#homeView .why-grid');
+    if (!anchor || !anchor.previousElementSibling) return;
+    var sec = document.createElement('div');
+    sec.id = 'cmSection';
+    sec.style.display = 'none';
+    sec.innerHTML =
+      '<div class="section-title"><h2>🧩 Community Tools</h2></div>' +
+      '<div class="chips-wrap" id="cmChips"></div>' +
+      '<div class="tool-grid" id="cmGrid"></div>';
+    anchor.parentNode.insertBefore(sec, anchor.previousElementSibling);
+  }
+
+  function renderPublic() {
+    var sec = $('cmSection');
+    if (!sec) return;
+    if (!tools.length) { sec.style.display = 'none'; return; }
+    sec.style.display = 'block';
+    var cats = ['All'];
+    tools.forEach(function (t) { if (t.category && cats.indexOf(t.category) < 0) cats.push(t.category); });
+    var chips = $('cmChips');
+    chips.innerHTML = cats.map(function (c) {
+      return '<div class="chip' + (c === activeCat ? ' active' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</div>';
+    }).join('');
+    chips.style.display = cats.length > 2 ? 'flex' : 'none';
+    chips.querySelectorAll('.chip').forEach(function (el) {
+      el.onclick = function () { activeCat = el.getAttribute('data-c'); renderPublic(); };
+    });
+    $('cmGrid').innerHTML = tools
+      .filter(function (t) { return activeCat === 'All' || t.category === activeCat; })
+      .map(function (t) {
+        return '<div class="tool-card" onclick="openCommunityTool(\'' + t.id + '\')">' +
+          '<div class="tool-icon" style="background:var(--gradient)">🧩</div>' +
+          '<div class="tool-name">' + esc(t.name) + '</div>' +
+          '<div class="tool-desc">' + esc(t.category || 'General') + '</div>' +
+          '<div class="tool-open-btn">Open</div></div>';
+      }).join('');
+  }
+
+  function loadTools() {
+    if (typeof fbDB === 'undefined' || !fbDB) return Promise.resolve();
+    return fbDB.ref('tools').once('value').then(function (snap) {
+      tools = [];
+      snap.forEach(function (c) { var v = c.val() || {}; v.id = c.key; tools.push(v); });
+      tools.sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+      renderPublic();
+    }).catch(function (e) { console.warn('Community tools load failed:', e); });
+  }
+
+  window.openCommunityTool = function (id) {
+    var t = tools.filter(function (x) { return x.id === id; })[0];
+    if (!t) return;
+    $('toolTitle').textContent = t.name || 'Tool';
+    $('toolDesc').textContent = t.category || 'Community Tool';
+    $('toolHowTo').style.display = 'none';
+    $('toolFavBtn').style.display = 'none';
+    var body = $('toolBody');
+    body.innerHTML = '';
+    var wrap = document.createElement('div');
+    wrap.className = 'cm-body';
+    body.appendChild(wrap);
+    injectHTML(wrap, t.code || '');
+    communityOpen = true;
+    switchView('toolView');
+  };
+
+  var origClose = window.closeTool;
+  window.closeTool = function () {
+    if (communityOpen) {
+      communityOpen = false;
+      $('toolBody').innerHTML = '';
+      $('toolFavBtn').style.display = '';
+    }
+    origClose();
+  };
+
+  function renderAdmin() {
+    var c = $('modalContent');
+    var a = auth();
+    if (!a) { c.innerHTML = '<div class="modal-header"><h3>Admin</h3><button class="modal-close" onclick="closeModal()">✕</button></div><div class="cm-err">Firebase Auth load nahi hua. Internet check karke page refresh karo.</div>'; return; }
+    if (!a.currentUser || a.currentUser.isAnonymous) {
+      c.innerHTML =
+        '<div class="modal-header"><h3>🔐 Admin login</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+        '<div class="field"><label>Email</label><input type="email" id="cmEmail" autocomplete="username"></div>' +
+        '<div class="field"><label>Password</label><input type="password" id="cmPass" autocomplete="current-password"></div>' +
+        '<div class="btn-group"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" id="cmLogin">Log in</button></div>' +
+        '<div class="cm-err" id="cmErr"></div>';
+      $('cmLogin').onclick = function () {
+        $('cmErr').textContent = 'Logging in…';
+        a.signInWithEmailAndPassword($('cmEmail').value.trim(), $('cmPass').value)
+          .then(renderAdmin)
+          .catch(function () { $('cmErr').textContent = 'Login failed. Email aur password check karo.'; });
+      };
+      return;
+    }
+    c.innerHTML =
+      '<div class="modal-header"><h3>🧩 Manage tools</h3><button class="modal-close" onclick="closeModal()">✕</button></div>' +
+      '<div class="field"><label>Tool name</label><input type="text" id="cmName" maxlength="80"></div>' +
+      '<div class="field"><label>Category</label><input type="text" id="cmCat" maxlength="40" placeholder="Example: Calculators"></div>' +
+      '<div class="field"><label>HTML / JS code</label><textarea id="cmCode" class="cm-code" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea></div>' +
+      '<div class="btn-group"><button class="btn btn-primary" id="cmSave">Save tool</button><button class="btn btn-secondary" id="cmOut">Log out</button></div>' +
+      '<div class="cm-err" id="cmErr"></div>' +
+      '<div class="card-title" style="margin-top:18px">Saved tools</div><div id="cmList"></div>';
+    $('cmOut').onclick = function () { a.signOut().then(renderAdmin); };
+    $('cmSave').onclick = saveTool;
+    renderAdminList();
+  }
+
+  function saveTool() {
+    var name = $('cmName').value.trim(), cat = $('cmCat').value.trim(), code = $('cmCode').value;
+    if (!name || !code.trim()) { $('cmErr').textContent = 'Tool name aur code dono bharo.'; return; }
+    $('cmErr').textContent = 'Saving…';
+    fbDB.ref('tools').push({ name: name, category: cat || 'General', code: code, createdAt: firebase.database.ServerValue.TIMESTAMP })
+      .then(function () {
+        $('cmName').value = ''; $('cmCat').value = ''; $('cmCode').value = '';
+        $('cmErr').textContent = '';
+        toast('Tool saved ✅', 'success');
+        return loadTools().then(renderAdminList);
+      })
+      .catch(function (e) { $('cmErr').textContent = 'Save failed: ' + (e.code || e.message); });
+  }
+
+  function renderAdminList() {
+    var box = $('cmList');
+    if (!box) return;
+    if (!tools.length) { box.innerHTML = '<div class="muted">Abhi koi tool saved nahi hai.</div>'; return; }
+    box.innerHTML = tools.map(function (t) {
+      return '<div class="cm-row"><span>' + esc(t.name) + ' (' + esc(t.category || 'General') + ')</span>' +
+        '<button class="btn btn-sm btn-secondary" data-del="' + t.id + '">Delete</button></div>';
+    }).join('');
+    box.querySelectorAll('[data-del]').forEach(function (b) {
+      b.onclick = function () {
+        if (!confirm('Delete this tool?')) return;
+        fbDB.ref('tools/' + b.getAttribute('data-del')).remove()
+          .then(function () { toast('Deleted', 'success'); return loadTools().then(renderAdminList); })
+          .catch(function (e) { toast('Delete failed: ' + (e.code || ''), 'error'); });
+      };
+    });
+  }
+
+  window.openToolAdmin = function () { openModal('', { wide: true }); renderAdmin(); };
+
+  /* "🧩 Tools" button inside the existing System Panel (secret key flow unchanged) */
+  var origPanel = window.openAdminPanel;
+  if (typeof origPanel === 'function') {
+    window.openAdminPanel = function () {
+      origPanel();
+      var h = document.querySelector('#modalContent .modal-header');
+      if (h && !h.querySelector('.cm-manage')) {
+        var b = document.createElement('button');
+        b.className = 'btn btn-sm btn-primary cm-manage';
+        b.textContent = '🧩 Tools';
+        b.onclick = window.openToolAdmin;
+        h.insertBefore(b, h.lastElementChild);
+      }
+    };
+  }
+
+  function checkHash() { if (location.hash === '#admin') window.openToolAdmin(); }
+  window.addEventListener('hashchange', checkHash);
+
+  function start() { buildSection(); loadTools(); loadAuthSdk(checkHash); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
+</script>
+<!-- ===== end Community Tools ===== -->
+
 </body>
 </html>
-        
