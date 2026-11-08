@@ -1,0 +1,11 @@
+QUNVERIO UPDATE (2026-11-07, admin v2)
+1. NEW  Admin > "Add tool (code)": paste full HTML (CSS+JS inside) or load an .html file, press Save & publish. The tool appears at once on home, its category, search, menu and every count (49 -> 50). Hide it and the count goes down; Delete removes it and its code.
+2. NEW  Admin > Categories: rename, recolour, reorder, hide or add categories (hiding a category hides its tools).
+3. NEW  Admin > Home layout: reorder every home section, add your own HTML blocks, edit numbers strip ({tools} = live count), headings, extra menu links.
+4. NEW  Admin > Theme & design: logo image, light/dark colours, fonts, text size, corner shapes, card style, page width, cards per row, hero banner (colours/photo/layout), switches.
+5. NEW  Admin > Ads: top banner, bottom sticky banner, above/below every tool, 3 home spots (movable), hide on chosen tools. Off until you turn it on.
+6. NEW  Badges (New/Hot/Beta...) on tool cards; "New & trending" home section shows badged tools.
+7. IMPORTANT one-time step: Admin > Advanced > copy "Database rules" and publish them in Firebase (Realtime Database > Rules). Needed so tool code can be saved. firebase-rules.json in this zip is already updated.
+8. Upload ALL files again (every page got the new shared code), then Admin > Save & publish once.
+Note: code tools open at /#tool-name (not a separate SEO page).
+Earlier: removed 5 AI tools; added /background-remover; Tool order and Code & ads tabs.

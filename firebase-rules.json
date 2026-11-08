@@ -1,0 +1,45 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "qv": {
+      "cfg": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email === 'techrakesh196@gmail.com'"
+      },
+      "fest": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email === 'techrakesh196@gmail.com'"
+      },
+      "feedback": {
+        ".read": "auth != null && auth.token.email === 'techrakesh196@gmail.com'",
+        "$id": {
+          ".write": "(auth != null && auth.token.email === 'techrakesh196@gmail.com') || (!data.exists() && newData.exists())",
+          ".validate": "newData.hasChildren(['msg','type']) && newData.child('msg').isString() && newData.child('msg').val().length < 2000"
+        }
+      },
+      "stats": {
+        ".read": "auth != null && auth.token.email === 'techrakesh196@gmail.com'",
+        "tools": {
+          "$id": {
+            ".write": true,
+            ".validate": "newData.isNumber()"
+          }
+        },
+        "days": {
+          "$d": {
+            ".write": true,
+            ".validate": "newData.isNumber()"
+          }
+        }
+      },
+      "code": {
+        "$id": {
+          ".read": true,
+          ".write": "auth != null && auth.token.email === 'techrakesh196@gmail.com'",
+          ".validate": "newData.isString() && newData.val().length < 4000000"
+        }
+      }
+    }
+  }
+}

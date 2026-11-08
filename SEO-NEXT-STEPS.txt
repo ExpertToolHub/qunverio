@@ -1,0 +1,7 @@
+QUNVERIO - SEO NEXT STEPS (you must do these, code cannot)
+1. Buy a custom domain (e.g. qunverio.in / .com), connect it in Vercel > Settings > Domains.
+2. Then find-replace "qunverio.vercel.app" with your new domain in ALL files (canonical, og:url, sitemap, robots, JSON-LD).
+3. Google Search Console: add property, verify, submit https://YOURDOMAIN/sitemap.xml
+4. Bing Webmaster Tools: import from Search Console.
+5. Backlinks: share tools on Reddit India, Quora answers, YouTube descriptions, Telegram/WhatsApp groups, directories.
+6. Check GST Calculator rates: tool still lists 12% and 28% slabs - verify against the latest GST notification and update.

@@ -1,0 +1,11 @@
+QUNVERIO ADMIN SETUP (10 minutes, one time)
+1. console.firebase.google.com > Add project (name it qunverio). Analytics not needed.
+2. Build > Realtime Database > Create database (any region) > start in locked mode.
+3. Realtime Database > Rules > paste the contents of firebase-rules.json > Publish.
+   (Change the email inside the rules if your admin email is different.)
+4. Build > Authentication > Get started > Sign-in method > Email/Password > Enable.
+   Users tab > Add user > your email and a strong password. This is your admin login.
+5. Project settings (gear) > General > copy the Web API key.
+   Realtime Database page > copy the database URL.
+6. Open fb-config.js, paste both values, save.
+7. Upload everything to Vercel. Open yoursite.vercel.app/admin and log in.
